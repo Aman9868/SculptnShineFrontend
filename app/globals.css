@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  
+  --color-cream-50: #fdfbf7;
+  --color-cream-100: #fcf9f2;
+  --color-cream-200: #f5f0e6;
+  --color-cream-300: #eee5d3;
+  
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-700: #b45309;
+  --color-gold-800: #92400e;
+
+  --color-brandDark: #18181b;
+  --color-brandDark-soft: #27272a;
+  --color-brandDark-lighter: #3f3f46;
+}
+
+
+
+:root {
+  --bg-cream: #fcf9f2;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-cream);
+  color: #18181b;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, .font-serif-luxury {
+  font-family: var(--font-serif);
+}
+
+/* Glassmorphism effects */
+@utility glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+@utility glass-card-dark {
+  background: rgba(24, 24, 27, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle luxury card shadows */
+@utility shadow-luxury {
+  box-shadow: 0 10px 30px -10px rgba(180, 83, 9, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+@utility shadow-luxury-hover {
+  box-shadow: 0 20px 40px -12px rgba(180, 83, 9, 0.16), 0 8px 24px rgba(0, 0, 0, 0.06);
+  transform: translateY(-3px);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1ebd9;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4a359;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b45309;
+}
+
+/* Smooth Horizontal Scroll Hide Bar */
+@utility hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Premium Toastify Overrides */
+:root {
+  --toastify-toast-background: rgba(255, 255, 255, 0.9) !important;
+  --toastify-color-light: rgba(255, 255, 255, 0.9) !important;
+  --toastify-text-color-light: #1f2937 !important;
+  --toastify-color-success: #d4af37 !important;
+  --toastify-icon-color-success: #d4af37 !important;
+  --toastify-color-error: #ef4444 !important;
+  --toastify-icon-color-error: #ef4444 !important;
+  --toastify-font-family: inherit !important;
+}
+
+.Toastify__toast {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(212, 175, 55, 0.2) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  font-weight: 600 !important;
+  font-family: var(--font-sans) !important;
+}
+
+.Toastify__progress-bar {
+  background: linear-gradient(to right, #fbbf24, #d97706) !important;
+  height: 4px !important;
+}
+
+.Toastify__close-button {
+  color: #9ca3af !important;
+  opacity: 0.7 !important;
+}
+.Toastify__close-button:hover {
+  opacity: 1 !important;
+  color: #1f2937 !important;
+}

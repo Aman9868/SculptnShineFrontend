@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="132" height="36" viewBox="0 0 132 36" role="img" aria-labelledby="title">
+  <title id="title">Net Banking</title>
+  <g transform="translate(10 7)" fill="none" stroke="#cbd5e1" stroke-width="1.8" stroke-linejoin="round">
+    <path d="M2 8.5h24L14 2 2 8.5z" fill="none"/>
+    <path d="M5 8.5v11M11 8.5v11M17 8.5v11M23 8.5v11"/>
+    <path d="M2.5 19.5h23M1 23h26"/>
+  </g>
+  <text x="43" y="16" fill="#e5e7eb" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="800">NET</text>
+  <text x="43" y="27" fill="#e5e7eb" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="800">BANKING</text>
+  <path d="M108 9h8l-3.4 5.8h6.4L107 28l3.8-8h-6.1L108 9z" fill="#f59e0b"/>
+</svg>
