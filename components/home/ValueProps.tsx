@@ -34,26 +34,26 @@ export const ValueProps = async () => {
   };
 
   return (
-    <section className="bg-white border-b border-cream-300 py-6">
+    <section className="bg-white border-b border-cream-300 py-4 sm:py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-cream-300">
-          {valueProps.map((prop, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-cream-300">
+          {valueProps.map((prop) => (
             <div
               key={prop.id}
-              className={`flex items-center gap-4 justify-center sm:justify-start md:justify-center text-left ${
-                idx !== 0 ? 'pt-4 sm:pt-0' : ''
-              }`}
+              className="py-3.5 sm:py-0 sm:px-6 flex items-center justify-center"
             >
-              <div className="w-10 h-10 rounded-full bg-cream-100 border border-cream-300 flex items-center justify-center shrink-0">
-                {iconMap[prop.icon]}
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 tracking-tight">
-                  {prop.title}
-                </h4>
-                <p className="text-[11px] font-medium text-gray-500">
-                  {prop.subtitle}
-                </p>
+              <div className="flex items-center gap-3.5 w-full max-w-[260px]">
+                <div className="w-10 h-10 rounded-full bg-cream-100 border border-cream-300 flex items-center justify-center shrink-0 shadow-2xs">
+                  {iconMap[prop.icon]}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight leading-snug">
+                    {prop.title}
+                  </h4>
+                  <p className="text-[11px] font-medium text-gray-500 truncate leading-snug">
+                    {prop.subtitle}
+                  </p>
+                </div>
               </div>
             </div>
           ))}
