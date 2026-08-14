@@ -3,8 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { bannerApi, Banner } from '@/lib/api/banner';
+
+interface SlideData {
+  image: string;
+  ctaLink: string;
+  title?: string;
+  subtitle?: string | null;
+  ctaText?: string | null;
+  type?: string;
+  video?: string | null;
+}
 
 export const HomeScreenBanner: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -35,12 +45,31 @@ export const HomeScreenBanner: React.FC = () => {
 
   const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
-  const slides = dynamicSlides.length > 0 ? dynamicSlides.map(b => ({
-    image: b.image.startsWith('http') ? b.image : `${BACKEND_URL}${b.image}`,
-    ctaLink: b.targetType === 'PRODUCT' && b.product ? `/product/${b.product.slug}` :
-             b.targetType === 'CATEGORY' && b.category ? `/category/${b.category.slug}` :
-             b.targetType === 'BRAND' && b.brand ? `/brand/${b.brand.slug}` :
-             b.link || '/category/supplements',
+  const resolveImageUrl = (url: string) => {
+    if (!url) return '/assets/hero_bundle.png';
+    if (url.startsWith('http')) return url;
+    return `${BACKEND_URL}${url}`;
+  };
+
+  const resolveCtaLink = (b: Banner): string => {
+    // If the banner has a product linked, use the product slug
+    if (b.product?.slug) return `/product/${b.product.slug}`;
+    // If there's a direct link set
+    if (b.link) return b.link;
+    // Fallback by targetType
+    if (b.targetType === 'CATEGORY' && b.category?.slug) return `/category/${b.category.slug}`;
+    if (b.targetType === 'BRAND' && b.brand?.slug) return `/brand/${b.brand.slug}`;
+    return '/category/supplements';
+  };
+
+  const slides: SlideData[] = dynamicSlides.length > 0 ? dynamicSlides.map(b => ({
+    image: resolveImageUrl(b.image),
+    ctaLink: resolveCtaLink(b),
+    title: b.title || '',
+    subtitle: b.subtitle,
+    ctaText: b.ctaText,
+    type: b.type,
+    video: b.video,
   })) : [
     {
       image: '/assets/hero_bundle.png',
@@ -51,8 +80,6 @@ export const HomeScreenBanner: React.FC = () => {
       ctaLink: '/category/supplements',
     },
   ];
-
-  const currentSlide = slides[activeSlide];
 
   // Auto-scroll
   useEffect(() => {
@@ -87,14 +114,51 @@ export const HomeScreenBanner: React.FC = () => {
               href={slide.ctaLink}
               className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
             >
-              <Image
-                src={slide.image}
-                alt="Sculpt and Shine Premium Banner"
-                fill
-                priority={index === 0}
-                className="object-cover object-center"
-                sizes="100vw"
-              />
+              {/* Video or Image */}
+              {slide.video ? (
+                <video
+                  src={resolveImageUrl(slide.video)}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                />
+              ) : (
+                <Image
+                  src={slide.image}
+                  alt={slide.title || 'Sculpt and Shine Premium Banner'}
+                  fill
+                  priority={index === 0}
+                  className="object-cover object-center"
+                  sizes="100vw"
+                />
+              )}
+
+              {/* CTA Overlay — only for banners that have ctaText */}
+              {slide.ctaText && (
+                <div className="absolute inset-0 z-10 flex items-end justify-start p-6 sm:p-10 md:p-16">
+                  {/* Gradient scrim for readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+                  
+                  <div className="relative z-10 max-w-xl space-y-3">
+                    {slide.title && (
+                      <h2 className="text-xl sm:text-2xl md:text-4xl font-black text-white leading-tight drop-shadow-lg">
+                        {slide.title}
+                      </h2>
+                    )}
+                    {slide.subtitle && (
+                      <p className="text-sm sm:text-base text-white/80 font-medium drop-shadow-md">
+                        {slide.subtitle}
+                      </p>
+                    )}
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-7 sm:py-3 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-extrabold text-sm sm:text-base rounded-xl shadow-lg shadow-gold-500/30 transition-all hover:scale-105 active:scale-95">
+                      {slide.ctaText}
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </div>
+                </div>
+              )}
             </Link>
           ))}
         </div>
@@ -131,3 +195,4 @@ export const HomeScreenBanner: React.FC = () => {
     </section>
   );
 };
+
