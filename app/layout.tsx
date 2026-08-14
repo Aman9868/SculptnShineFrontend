@@ -3,6 +3,8 @@ import './globals.css';
 import { StoreProvider } from '@/context/StoreContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { HealthProvider } from '@/context/HealthContext';
+import MaintenanceScreen from '@/components/common/MaintenanceScreen';
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Header } from '@/components/layout/Header';
 import { CategoryNav } from '@/components/layout/CategoryNav';
@@ -62,22 +64,25 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className="antialiased min-h-screen flex flex-col justify-between selection:bg-gold-500/20 selection:text-gold-800">
-        <AuthProvider>
-          <NotificationProvider>
-            <StoreProvider>
-              <div>
-                <AnnouncementBar />
-                <Header />
-                <CategoryNav />
-                <MobileMenu />
-                <CartDrawer />
-                <ToastContainer />
-                <main>{children}</main>
-              </div>
-              <Footer />
-            </StoreProvider>
-          </NotificationProvider>
-        </AuthProvider>
+        <HealthProvider>
+          <MaintenanceScreen />
+          <AuthProvider>
+            <NotificationProvider>
+              <StoreProvider>
+                <div>
+                  <AnnouncementBar />
+                  <Header />
+                  <CategoryNav />
+                  <MobileMenu />
+                  <CartDrawer />
+                  <ToastContainer />
+                  <main>{children}</main>
+                </div>
+                <Footer />
+              </StoreProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </HealthProvider>
       </body>
     </html>
   );
