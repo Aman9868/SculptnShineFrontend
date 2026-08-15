@@ -21,7 +21,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sculptshine.shop'),
+  title: {
+    default: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
+    template: '%s | Sculpt & Shine',
+  },
   description:
     'Transform your Body, Mind, Life with Sculpt & Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
   keywords: [
@@ -34,6 +38,36 @@ export const metadata: Metadata = {
     'Wellness',
   ],
   authors: [{ name: 'Sculpt & Shine Team' }],
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://sculptshine.shop',
+    siteName: 'Sculpt & Shine',
+    title: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
+    description:
+      'Transform your Body, Mind, Life with Sculpt & Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Sculpt & Shine - Supplements, Fitness & Wellness',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
+    description:
+      'Transform your Body, Mind, Life with Sculpt & Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
+    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icon.svg',
+  },
 };
 
 const jsonLd = {

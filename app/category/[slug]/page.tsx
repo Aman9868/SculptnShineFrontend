@@ -2,8 +2,36 @@ import React from 'react';
 import { CategoryHeader } from '@/components/category/CategoryHeader';
 import { CategoryLayout } from '@/components/category/CategoryLayout';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { categoryAPI } from '@/lib/api/category';
 import { productAPI } from '@/lib/api/product';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const slug = (await params).slug;
+  const slugFormatted = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
+  return {
+    title: `${slugFormatted} | Sculpt & Shine`,
+    description: `Explore premium ${slugFormatted} products at Sculpt & Shine. 100% genuine supplements, fitness, and wellness.`,
+    openGraph: {
+      title: `${slugFormatted} | Sculpt & Shine`,
+      description: `Explore premium ${slugFormatted} products at Sculpt & Shine. 100% genuine supplements, fitness, and wellness.`,
+      url: `https://sculptshine.shop/category/${slug}`,
+      siteName: 'Sculpt & Shine',
+      images: [
+        {
+          url: '/assets/hero_bundle.png',
+          width: 1200,
+          height: 630,
+          alt: `${slugFormatted} - Sculpt & Shine`,
+        },
+      ],
+    },
+  };
+}
 
 export default async function CategoryPage({
   params,

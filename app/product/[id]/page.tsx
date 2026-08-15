@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { productAPI, Product } from '@/lib/api/product';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductDetails } from '@/components/product/ProductDetails';
@@ -12,6 +13,55 @@ import { SimilarBrandsShowcase } from '@/components/product/SimilarBrandsShowcas
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const idOrSlug = (await params).id;
+  try {
+    const res = await productAPI.getProductById(idOrSlug);
+    if (res.success && res.data) {
+      const product = res.data;
+      const title = `${product.title} | Sculpt & Shine`;
+      const description = `Shop ${product.title} online. Authentic Supplements & Wellness with 100% genuine assurance at Sculpt & Shine.`;
+      const image = product.images?.[0] || '/assets/hero_bundle.png';
+
+      return {
+        title: product.title,
+        description,
+        openGraph: {
+          title,
+          description,
+          url: `https://sculptshine.shop/product/${product.slug || product.id}`,
+          siteName: 'Sculpt & Shine',
+          images: [
+            {
+              url: image,
+              width: 800,
+              height: 800,
+              alt: product.title,
+            },
+          ],
+          type: 'website',
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title,
+          description,
+          images: [image],
+        },
+      };
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  return {
+    title: 'Product Details | Sculpt & Shine',
+  };
+}
 
 export default async function ProductPage({
   params,
