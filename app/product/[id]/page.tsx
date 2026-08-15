@@ -55,17 +55,29 @@ export default async function ProductPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-white">
       {/* Breadcrumbs */}
       <nav className="flex items-center flex-wrap gap-y-2 text-xs text-gray-500 mb-8 font-medium">
-        <Link href="/" className="hover:text-gold-600 transition-colors shrink-0">Home</Link>
-        <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
-        <Link href={`/category/${product.category?.slug || product.categoryId || ''}`} className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap">
-          {product.category?.name || 'Category'}
+        <Link href="/" className="hover:text-gold-600 transition-colors shrink-0 font-medium">
+          Home
         </Link>
+        <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
+        {product.category ? (
+          <Link
+            href={`/category/${product.category.slug || product.categoryId || ''}`}
+            className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap font-medium"
+          >
+            {product.category.name}
+          </Link>
+        ) : (
+          <span className="text-gray-400">Category</span>
+        )}
         {product.subcategory && (
           <>
             <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
-            <span className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap cursor-pointer">
+            <Link
+              href={`/category/${product.category?.slug || product.categoryId || ''}?subcategorySlug=${product.subcategory.slug || product.subcategory.id}`}
+              className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap font-medium"
+            >
               {product.subcategory.name}
-            </span>
+            </Link>
           </>
         )}
         <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
