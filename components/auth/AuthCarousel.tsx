@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { bannerApi, Banner } from '@/lib/api/banner';
+import { getMediaUrl } from '@/lib/media';
 
 const IMAGES = [
   {
@@ -44,10 +45,8 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ bannerType = 'LOGIN_
     fetchBanners();
   }, [bannerType]);
 
-  const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
-
-  const displayImages = dynamicImages.length > 0 ? dynamicImages.map(b => ({
-    src: b.image.startsWith('http') ? b.image : `${BACKEND_URL}${b.image}`,
+  const displayImages = dynamicImages.length > 0 ? dynamicImages.map((b: Banner) => ({
+    src: getMediaUrl(b.image, '/assets/hero_bundle.png'),
     title: b.title,
     subtitle: b.subtitle || ''
   })) : IMAGES;
