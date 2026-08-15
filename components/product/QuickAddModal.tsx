@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Minus, Plus, ShoppingCart, Loader2, Check } from 'lucide-react';
+import { X, Minus, Plus, ShoppingCart, Loader2, Check, Calendar, AlertCircle } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/api/product';
 import { useStore } from '@/context/StoreContext';
 
@@ -26,34 +26,64 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
 
   useEffect(() => {
     if (product) {
-      const defaultVariant = variants.find((v) => v.isDefault) || variants[0];
-      setSelectedFlavor(defaultVariant?.flavor || flavors[0] || '');
-      setSelectedSize(defaultVariant?.weight || sizes[0] || '');
+      // Prioritize in-stock variant on open
+      const inStockDefault = variants.find((v) => v.isDefault && (v.stock || 0) > 0) ||
+                             variants.find((v) => (v.stock || 0) > 0) ||
+                             variants[0];
+      setSelectedFlavor(inStockDefault?.flavor || flavors[0] || '');
+      setSelectedSize(inStockDefault?.weight || sizes[0] || '');
       setQuantity(1);
       setAdded(false);
       setLoading(false);
     }
-  }, [product]);
+  }, [product, isOpen]);
 
   if (!isOpen || !product) return null;
 
-  // Find currently matched variant
-  const currentVariant: ProductVariant | undefined = variants.find((v) => {
-    const matchFlavor = flavors.length === 0 || v.flavor === selectedFlavor;
-    const matchSize = sizes.length === 0 || v.weight === selectedSize;
-    return matchFlavor && matchSize;
-  }) || variants[0];
+  const hasVariants = variants.length > 0;
+
+  // Find all matching batches for the chosen flavor and size
+  const matchingBatches = hasVariants
+    ? variants.filter((v) => {
+        const matchFlavor = flavors.length === 0 || v.flavor === selectedFlavor;
+        const matchSize = sizes.length === 0 || v.weight === selectedSize;
+        return matchFlavor && matchSize;
+      })
+    : [];
+
+  const isInvalidCombination = hasVariants && matchingBatches.length === 0;
+
+  // Pick active batch with earliest expiry date (FEFO)
+  const activeBatchesSorted = matchingBatches
+    .filter((v) => (v.stock || 0) > 0)
+    .sort((a, b) => {
+      const timeA = a.expiryDate ? new Date(a.expiryDate).getTime() : Infinity;
+      const timeB = b.expiryDate ? new Date(b.expiryDate).getTime() : Infinity;
+      return timeA - timeB;
+    });
+
+  const currentVariant = activeBatchesSorted[0] || matchingBatches[0] || undefined;
+
+  // Calculate aggregated stock for this combination
+  const stock = matchingBatches.length > 0
+    ? matchingBatches.reduce((sum, v) => sum + (v.stock || 0), 0)
+    : (hasVariants ? 0 : (product.stock || 0));
+
+  const isOutOfStock = !isInvalidCombination && stock === 0;
+  const isProductInactive = product.status !== 'ACTIVE';
+  const isActionDisabled = isInvalidCombination || isOutOfStock || isProductInactive || loading;
 
   const unitPrice = currentVariant ? currentVariant.unitPrice : product.unitPrice;
-  const discountPercent = currentVariant ? currentVariant.discountPercentage : product.discountPercentage;
-  const stock = currentVariant ? currentVariant.stock : product.stock;
+  const discountPercent = currentVariant ? (currentVariant.discountPercentage || 0) : (product.discountPercentage || 0);
   const finalUnitPrice = discountPercent > 0 ? unitPrice * (1 - discountPercent / 100) : unitPrice;
+
+  const activeExpiryDate = currentVariant?.expiryDate || product.expiryDate;
 
   const imageUrl = (currentVariant?.images && currentVariant.images.length > 0 ? currentVariant.images[0] : null) ||
     (product.images && product.images.length > 0 ? product.images[0] : '/assets/images/category-placeholder.jpg');
 
   const handleAddToCart = async () => {
-    if (stock === 0) return;
+    if (isActionDisabled || !currentVariant && hasVariants) return;
     setLoading(true);
     try {
       const res = await addToCart(product.id, currentVariant?.id, quantity);
@@ -77,19 +107,19 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
       />
 
       {/* Modal Dialog */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 z-10 border border-cream-300 animate-in zoom-in-95 duration-200 overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 z-10 border border-gray-100 animate-in zoom-in-95 duration-200 overflow-hidden">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-cream-100 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
           aria-label="Close modal"
         >
           <X size={20} />
         </button>
 
         {/* Product Info Header */}
-        <div className="flex gap-4 items-start mb-5 pb-4 border-b border-cream-200 pr-6">
-          <div className="w-20 h-20 bg-cream-50 rounded-xl overflow-hidden shrink-0 border border-cream-200 p-1 flex items-center justify-center">
+        <div className="flex gap-4 items-start mb-5 pb-4 border-b border-gray-100 pr-6">
+          <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100 p-1 flex items-center justify-center">
             <img 
               src={imageUrl} 
               alt={product.title}
@@ -103,6 +133,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
             <h3 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 leading-snug">
               {product.title}
             </h3>
+            
             <div className="flex items-baseline gap-2 mt-1.5">
               <span className="text-lg font-extrabold text-brandDark">
                 ₹{finalUnitPrice.toLocaleString()}
@@ -132,15 +163,20 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
               <div className="flex flex-wrap gap-2">
                 {flavors.map((flavor) => {
                   const isSelected = flavor === selectedFlavor;
+                  // Check if this flavor has any valid variant matching current size
+                  const hasStockInFlavor = variants.some((v) => v.flavor === flavor && (v.stock || 0) > 0);
+                  
                   return (
                     <button
                       key={flavor}
                       type="button"
                       onClick={() => setSelectedFlavor(flavor)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-gold-600 text-white border-gold-600 shadow-xs'
-                          : 'bg-white text-gray-700 border-cream-300 hover:border-gold-400 hover:bg-cream-50'
+                          : hasStockInFlavor
+                          ? 'bg-white text-gray-700 border-gray-200 hover:border-gold-400 hover:bg-gold-50/50'
+                          : 'bg-gray-50 text-gray-400 border-gray-200'
                       }`}
                     >
                       {flavor}
@@ -160,15 +196,23 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
               <div className="flex flex-wrap gap-2">
                 {sizes.map((size) => {
                   const isSelected = size === selectedSize;
+                  // Check if this size exists in selected flavor
+                  const existsForFlavor = variants.some((v) => (flavors.length === 0 || v.flavor === selectedFlavor) && v.weight === size);
+                  const hasStockInSize = variants.some((v) => (flavors.length === 0 || v.flavor === selectedFlavor) && v.weight === size && (v.stock || 0) > 0);
+
                   return (
                     <button
                       key={size}
                       type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-gold-600 text-white border-gold-600 shadow-xs'
-                          : 'bg-white text-gray-700 border-cream-300 hover:border-gold-400 hover:bg-cream-50'
+                          : !existsForFlavor
+                          ? 'bg-gray-100 text-gray-400 border-dashed border-gray-300 opacity-60'
+                          : hasStockInSize
+                          ? 'bg-white text-gray-700 border-gray-200 hover:border-gold-400 hover:bg-gold-50/50'
+                          : 'bg-gray-50 text-gray-400 border-gray-200'
                       }`}
                     >
                       {size}
@@ -179,43 +223,55 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
             </div>
           )}
 
-          {/* Stock Status Indicator */}
-          <div className="text-xs font-medium">
-            {stock > 0 ? (
-              <span className="text-emerald-600 flex items-center gap-1.5">
+          {/* Stock & Expiry Status Bar */}
+          <div className="flex items-center justify-between gap-2 pt-1 text-xs font-medium">
+            {isInvalidCombination ? (
+              <span className="text-gray-500 flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-md font-bold text-[11px]">
+                <AlertCircle size={13} className="text-gray-400" />
+                Unavailable Combination
+              </span>
+            ) : isOutOfStock ? (
+              <span className="text-red-600 flex items-center gap-1.5 bg-red-50 px-2.5 py-1 rounded-md font-bold text-[11px]">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                Out of Stock
+              </span>
+            ) : (
+              <span className="text-emerald-700 flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-md font-bold text-[11px]">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 In Stock ({stock} available)
               </span>
-            ) : (
-              <span className="text-red-600 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                Out of Stock
+            )}
+
+            {activeExpiryDate && !isInvalidCombination && !isOutOfStock && (
+              <span className="text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1">
+                <Calendar size={11} className="text-amber-600" />
+                Exp: {new Date(activeExpiryDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
               </span>
             )}
           </div>
         </div>
 
         {/* Quantity and Add to Cart Action */}
-        <div className="mt-6 pt-4 border-t border-cream-200 flex items-center gap-3">
+        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center gap-3">
           {/* Quantity Counter */}
-          <div className="flex items-center border border-cream-300 rounded-xl bg-cream-50 p-1">
+          <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 p-1">
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={quantity <= 1 || stock === 0}
-              className="p-1.5 rounded-lg text-gray-600 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent"
+              disabled={quantity <= 1 || isActionDisabled}
+              className="p-1.5 rounded-lg text-gray-600 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
               aria-label="Decrease quantity"
             >
               <Minus size={14} />
             </button>
-            <span className="w-8 text-center text-xs font-bold text-gray-900">
-              {quantity}
+            <span className={`w-8 text-center text-xs font-bold ${isActionDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
+              {isActionDisabled ? 0 : quantity}
             </span>
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.min(stock || 10, q + 1))}
-              disabled={quantity >= stock || stock === 0}
-              className="p-1.5 rounded-lg text-gray-600 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent"
+              disabled={quantity >= stock || isActionDisabled}
+              className="p-1.5 rounded-lg text-gray-600 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
               aria-label="Increase quantity"
             >
               <Plus size={14} />
@@ -226,11 +282,13 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
           <button
             type="button"
             onClick={handleAddToCart}
-            disabled={loading || stock === 0}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all ${
+            disabled={isActionDisabled}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer ${
               added 
                 ? 'bg-emerald-600 text-white' 
-                : 'bg-gold-600 hover:bg-gold-700 text-white active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed'
+                : isInvalidCombination || isOutOfStock || isProductInactive
+                ? 'bg-gray-200 text-gray-400 shadow-none cursor-not-allowed'
+                : 'bg-gold-600 hover:bg-gold-700 text-white active:scale-98'
             }`}
           >
             {loading ? (
@@ -243,6 +301,12 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
                 <Check size={16} />
                 <span>Added to Cart!</span>
               </>
+            ) : isInvalidCombination ? (
+              <span>Unavailable</span>
+            ) : isOutOfStock ? (
+              <span>Out of Stock</span>
+            ) : isProductInactive ? (
+              <span>Currently Unavailable</span>
             ) : (
               <>
                 <ShoppingCart size={16} />

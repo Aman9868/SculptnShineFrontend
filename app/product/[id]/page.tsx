@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { productAPI, Product } from '@/lib/api/product';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductDetails } from '@/components/product/ProductDetails';
@@ -12,6 +13,55 @@ import { SimilarBrandsShowcase } from '@/components/product/SimilarBrandsShowcas
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const idOrSlug = (await params).id;
+  try {
+    const res = await productAPI.getProductById(idOrSlug);
+    if (res.success && res.data) {
+      const product = res.data;
+      const title = `${product.title} | Sculpt & Shine`;
+      const description = `Shop ${product.title} online. Authentic Supplements & Wellness with 100% genuine assurance at Sculpt & Shine.`;
+      const image = product.images?.[0] || '/assets/hero_bundle.png';
+
+      return {
+        title: product.title,
+        description,
+        openGraph: {
+          title,
+          description,
+          url: `https://sculptshine.shop/product/${product.slug || product.id}`,
+          siteName: 'Sculpt & Shine',
+          images: [
+            {
+              url: image,
+              width: 800,
+              height: 800,
+              alt: product.title,
+            },
+          ],
+          type: 'website',
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title,
+          description,
+          images: [image],
+        },
+      };
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  return {
+    title: 'Product Details | Sculpt & Shine',
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -55,17 +105,29 @@ export default async function ProductPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-white">
       {/* Breadcrumbs */}
       <nav className="flex items-center flex-wrap gap-y-2 text-xs text-gray-500 mb-8 font-medium">
-        <Link href="/" className="hover:text-gold-600 transition-colors shrink-0">Home</Link>
-        <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
-        <Link href={`/category/${product.category?.slug || product.categoryId || ''}`} className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap">
-          {product.category?.name || 'Category'}
+        <Link href="/" className="hover:text-gold-600 transition-colors shrink-0 font-medium">
+          Home
         </Link>
+        <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
+        {product.category ? (
+          <Link
+            href={`/category/${product.category.slug || product.categoryId || ''}`}
+            className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap font-medium"
+          >
+            {product.category.name}
+          </Link>
+        ) : (
+          <span className="text-gray-400">Category</span>
+        )}
         {product.subcategory && (
           <>
             <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
-            <span className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap cursor-pointer">
+            <Link
+              href={`/category/${product.category?.slug || product.categoryId || ''}?subcategorySlug=${product.subcategory.slug || product.subcategory.id}`}
+              className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap font-medium"
+            >
               {product.subcategory.name}
-            </span>
+            </Link>
           </>
         )}
         <span className="mx-2 shrink-0 text-gray-400">&gt;</span>
