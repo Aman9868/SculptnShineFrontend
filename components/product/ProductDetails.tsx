@@ -72,17 +72,31 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
     fetchShippingSettings();
   }, []);
 
-  // Find the currently selected variant
-  const currentVariant = product.variants?.find(
+  // Find all batches matching current flavor and size combination
+  const matchingBatches = (product.variants || []).filter(
     v => (flavors.length === 0 || v.flavor === selectedFlavor) && 
          (sizes.length === 0 || v.weight === selectedSize)
   );
 
-  // Derive active price and stock
+  // Prioritize active batch with earliest expiry date (FEFO)
+  const activeBatchesSorted = matchingBatches
+    .filter(v => (v.stock || 0) > 0)
+    .sort((a, b) => {
+      const timeA = a.expiryDate ? new Date(a.expiryDate).getTime() : Infinity;
+      const timeB = b.expiryDate ? new Date(b.expiryDate).getTime() : Infinity;
+      return timeA - timeB;
+    });
+
+  const currentVariant = activeBatchesSorted[0] || matchingBatches[0];
+
+  // Derive active price and total aggregated stock for this combination
   const originalUnitPrice = currentVariant ? currentVariant.unitPrice : product.unitPrice;
-  const discountPercent = currentVariant ? currentVariant.discountPercentage : product.discountPercentage;
+  const discountPercent = currentVariant ? (currentVariant.discountPercentage || 0) : (product.discountPercentage || 0);
   const gstRate = currentVariant ? currentVariant.gst : product.gst;
-  const stock = currentVariant ? currentVariant.stock : product.stock;
+  
+  const stock = matchingBatches.length > 0 
+    ? matchingBatches.reduce((sum, v) => sum + (v.stock || 0), 0)
+    : (product.stock || 0);
   
   const currentUnitPrice = discountPercent > 0 
     ? originalUnitPrice * (1 - discountPercent / 100) 
