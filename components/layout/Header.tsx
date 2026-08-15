@@ -66,21 +66,21 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-cream-100/95 backdrop-blur-md border-b border-cream-300 shadow-sm transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
 
         {/* Mobile menu toggle & Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <button
             onClick={toggleMobileMenu}
-            className="p-2 text-gray-700 hover:text-gold-700 lg:hidden focus:outline-none"
+            className="p-1.5 sm:p-2 text-gray-700 hover:text-gold-700 lg:hidden focus:outline-none rounded-lg hover:bg-cream-200"
             aria-label="Toggle Navigation Menu"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          <Link href="/" className="flex items-center group flex-shrink-0 transition-opacity hover:opacity-90 -translate-x-2 sm:-translate-x-4 md:-translate-x-8 lg:-translate-x-12">
+          <Link href="/" className="flex items-center group flex-shrink-0 transition-opacity hover:opacity-90">
             {/* Sculpt Logo */}
-            <div className="relative w-48 sm:w-56 md:w-64 lg:w-[280px] h-12 sm:h-16 flex items-center justify-start">
+            <div className="relative w-36 sm:w-48 md:w-56 lg:w-[260px] h-10 sm:h-14 flex items-center justify-start">
               <img
                 src="/assets/logo.svg"
                 alt="Sculpt Logo"
@@ -220,7 +220,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Mobile Search input */}
-      <div className="md:hidden px-4 pb-3">
+      <div className="md:hidden px-4 pb-3 relative">
         <form onSubmit={handleSearchSubmit} className="relative w-full">
           <input
             type="text"
@@ -228,15 +228,18 @@ export const Header: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={openSearch}
-            className="w-full bg-white text-gray-800 text-xs pl-4 pr-10 py-2 rounded-full border border-cream-300 focus:border-gold-600 outline-none"
+            className="w-full bg-white text-gray-800 text-xs pl-4 pr-10 py-2.5 rounded-full border border-cream-300 focus:border-gold-600 focus:ring-2 focus:ring-gold-500/20 outline-none shadow-inner placeholder:text-gray-400"
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-cream-200 hover:bg-gold-600 hover:text-white text-gray-600 flex items-center justify-center transition-colors"
+            aria-label="Search"
           >
             <Search size={14} />
           </button>
         </form>
+        {/* Mobile Search Dropdown */}
+        <SearchOverlay />
       </div>
     </header>
   );

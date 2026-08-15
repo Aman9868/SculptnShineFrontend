@@ -61,7 +61,8 @@ export default async function CategoryPage({
   const dynamicFilters = filtersRes && filtersRes.success ? filtersRes.data : { brands: [], flavors: [], weights: [], preferences: [] };
   
   const subcategories = (category as any).subcategories || [];
-  
+  const bannerImage = category.image || '/assets/promo_muscle.png';
+
   // Map subcategories for the CategoryHeader to objects with name and slug
   const subcatPills = [
     { name: 'All ' + category.name, slug: '' },
@@ -69,11 +70,11 @@ export default async function CategoryPage({
   ];
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 overflow-hidden">
       <CategoryHeader 
         title={category.name}
         description={category.description || `Explore our premium ${category.name} collection.`}
-        imageSrc={category.image || '/assets/images/category-placeholder.jpg'}
+        imageSrc={bannerImage}
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: category.name }

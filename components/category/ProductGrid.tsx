@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutGrid, List, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ProductCard } from './ProductCard';
 import { Product } from '@/lib/api/product';
@@ -14,9 +14,10 @@ interface ProductGridProps {
     limit: number;
     totalPages: number;
   };
+  onOpenFilter?: () => void;
 }
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination }) => {
+export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination, onOpenFilter }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -51,6 +52,23 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination }
   const totalPages = pagination?.totalPages || 1;
   const limit = pagination?.limit || 12;
 
+  // Active filters count
+  const brand = searchParams.get('brand');
+  const weights = searchParams.get('weights');
+  const flavors = searchParams.get('flavors');
+  const preferences = searchParams.get('preferences');
+  const rating = searchParams.get('rating');
+  const minPrice = searchParams.get('minPrice');
+  const maxPrice = searchParams.get('maxPrice');
+
+  let activeFilterCount = 0;
+  if (brand) activeFilterCount += brand.split(',').filter(Boolean).length;
+  if (weights) activeFilterCount += weights.split(',').filter(Boolean).length;
+  if (flavors) activeFilterCount += flavors.split(',').filter(Boolean).length;
+  if (preferences) activeFilterCount += preferences.split(',').filter(Boolean).length;
+  if (rating) activeFilterCount += 1;
+  if (minPrice || maxPrice) activeFilterCount += 1;
+
   // Generate pagination buttons
   const getPageNumbers = () => {
     const pages = [];
@@ -72,19 +90,37 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination }
   return (
     <div className="flex-grow">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-100">
-        <p className="text-sm text-gray-500 font-medium mb-4 sm:mb-0">
-          Showing {total} products
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs sm:text-sm text-gray-500 font-medium">
+            Showing <span className="font-bold text-gray-900">{total}</span> products
+          </p>
+
+          {/* Mobile Filter Trigger Button */}
+          {onOpenFilter && (
+            <button
+              onClick={onOpenFilter}
+              className="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-white border border-cream-300 rounded-lg text-xs font-bold text-gray-800 shadow-xs hover:border-gold-500 hover:text-gold-700 active:scale-95 transition-all"
+            >
+              <SlidersHorizontal size={14} className="text-gold-600" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-gold-600 text-white text-[10px] font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label htmlFor="sort" className="text-sm text-gray-500">Sort by:</label>
+        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-initial justify-start sm:justify-end">
+            <label htmlFor="sort" className="text-xs sm:text-sm text-gray-500 shrink-0">Sort by:</label>
             <select 
               id="sort"
               value={currentSort}
               onChange={handleSortChange}
-              className="text-sm font-semibold text-brandDark px-3 py-1.5 border border-gray-200 rounded-md hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gold-500 cursor-pointer bg-white"
+              className="text-xs sm:text-sm font-semibold text-brandDark px-2.5 py-1.5 border border-gray-200 rounded-lg hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gold-500 cursor-pointer bg-white"
             >
               <option value="popular">Popular</option>
               <option value="newest">Newest Arrivals</option>
@@ -93,24 +129,29 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination }
             </select>
           </div>
           
-          <div className="hidden sm:flex items-center gap-1 border-l border-gray-200 pl-4">
+          {/* Grid / List View Toggle - Visible on both Mobile & Desktop */}
+          <div className="flex items-center gap-1 border-l border-gray-200 pl-2 sm:pl-4 shrink-0">
             <button 
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded border transition-colors ${
+              className={`p-1.5 rounded-lg border transition-all ${
                 viewMode === 'grid' 
-                  ? 'bg-gold-50 text-gold-600 border-gold-200' 
-                  : 'text-gray-400 border-transparent hover:text-brandDark'
+                  ? 'bg-gold-50 text-gold-600 border-gold-300 shadow-xs' 
+                  : 'text-gray-400 border-gray-200 hover:text-brandDark bg-white'
               }`}
+              aria-label="Grid view"
+              title="Grid View"
             >
               <LayoutGrid size={16} />
             </button>
             <button 
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded border transition-colors ${
+              className={`p-1.5 rounded-lg border transition-all ${
                 viewMode === 'list' 
-                  ? 'bg-gold-50 text-gold-600 border-gold-200' 
-                  : 'text-gray-400 border-transparent hover:text-brandDark'
+                  ? 'bg-gold-50 text-gold-600 border-gold-300 shadow-xs' 
+                  : 'text-gray-400 border-gray-200 hover:text-brandDark bg-white'
               }`}
+              aria-label="List view"
+              title="List View"
             >
               <List size={16} />
             </button>

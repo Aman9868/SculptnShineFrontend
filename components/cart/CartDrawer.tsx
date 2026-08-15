@@ -101,67 +101,89 @@ export const CartDrawer: React.FC = () => {
                 </button>
               </div>
             ) : (
-              cart.map((item) => (
-                <div key={item.product.id} className="pt-4 first:pt-0 flex gap-4">
-                  {/* Thumbnail */}
-                  <div className="relative w-20 h-20 rounded-xl bg-cream-100 border border-cream-200 shrink-0 overflow-hidden p-1">
-                    <Image
-                      src={item.product.image}
-                      alt={item.product.name}
-                      fill
-                      className="object-contain"
-                      sizes="80px"
-                    />
-                  </div>
+              cart.map((item) => {
+                const product = item.product || {};
+                const variant = item.variant;
+                const itemId = item.id;
+                
+                // Determine display image with safe fallback
+                const imgSrc = (variant?.images && variant.images.length > 0 ? variant.images[0] : null) ||
+                  product.thumbnail ||
+                  (product.images && product.images.length > 0 ? product.images[0] : null) ||
+                  product.image ||
+                  '/assets/images/category-placeholder.jpg';
 
-                  {/* Info */}
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h4 className="text-xs font-bold text-gray-900 line-clamp-1">
-                          {item.product.name}
-                        </h4>
-                        <button
-                          onClick={() => removeFromCart(item.product.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-gray-500 font-medium">
-                        {item.product.category}
-                      </p>
+                const title = product.title || product.name || 'Product';
+                const subtitle = variant 
+                  ? [variant.flavor, variant.weight].filter(Boolean).join(' • ')
+                  : (product.category?.name || product.category || 'Sculpt & Shine');
+
+                const unitPrice = variant 
+                  ? (variant.discountPercentage > 0 ? variant.unitPrice * (1 - variant.discountPercentage / 100) : variant.unitPrice)
+                  : (product.discountPercentage > 0 ? product.unitPrice * (1 - product.discountPercentage / 100) : (product.unitPrice || product.price || 0));
+
+                return (
+                  <div key={itemId || product.id} className="pt-4 first:pt-0 flex gap-4">
+                    {/* Thumbnail */}
+                    <div className="relative w-20 h-20 rounded-xl bg-cream-100 border border-cream-200 shrink-0 overflow-hidden p-1 flex items-center justify-center">
+                      <img
+                        src={imgSrc || '/assets/images/category-placeholder.jpg'}
+                        alt={title}
+                        className="w-full h-full object-contain mix-blend-multiply"
+                      />
                     </div>
 
-                    {/* Quantity controls & price */}
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-cream-300 rounded-lg overflow-hidden bg-cream-50">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                          className="p-1 text-gray-600 hover:bg-cream-200 transition-colors"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="px-3 text-xs font-bold text-gray-800">
-                          {item.quantity}
+                    {/* Info */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-xs font-bold text-gray-900 line-clamp-1">
+                            {title}
+                          </h4>
+                          <button
+                            onClick={() => removeFromCart(itemId)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-gray-500 font-medium line-clamp-1">
+                          {subtitle}
+                        </p>
+                      </div>
+
+                      {/* Quantity controls & price */}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center border border-cream-300 rounded-lg overflow-hidden bg-cream-50">
+                          <button
+                            onClick={() => updateQuantity(itemId, item.quantity - 1)}
+                            className="p-1 text-gray-600 hover:bg-cream-200 transition-colors"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="px-3 text-xs font-bold text-gray-800">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(itemId, item.quantity + 1)}
+                            className="p-1 text-gray-600 hover:bg-cream-200 transition-colors"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+
+                        <span className="text-xs font-extrabold text-gray-900">
+                          ₹{(unitPrice * item.quantity).toLocaleString('en-IN')}
                         </span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="p-1 text-gray-600 hover:bg-cream-200 transition-colors"
-                        >
-                          <Plus size={12} />
-                        </button>
                       </div>
 
-                      <span className="text-xs font-extrabold text-gray-900">
-                        ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
-                      </span>
                     </div>
-
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

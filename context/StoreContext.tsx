@@ -20,6 +20,7 @@ interface StoreContextType {
   searchResults: Product[];
   toast: ToastMessage | null;
   fetchCart: () => Promise<void>;
+  addToCart: (productId: string, variantId?: string, quantity?: number) => Promise<{ success: boolean; requireLogin?: boolean; message?: string }>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   toggleWishlist: (productId: string) => void;
@@ -40,7 +41,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<any[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>(['prod-1', 'prod-3']);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -49,7 +50,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const fetchCart = async () => {
     try {
-      if (localStorage.getItem('accessToken')) {
+      if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
         const res = await cartAPI.getCart();
         if (res.success && res.data && res.data.items) {
           setCart(res.data.items);
@@ -60,8 +61,42 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const fetchWishlist = async () => {
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+        const { wishlistAPI } = await import('@/lib/api/wishlist');
+        const res = await wishlistAPI.getWishlist();
+        if (res.success && res.data && res.data.data) {
+          const productIds = res.data.data.map((item: any) => item.productId || item.product?.id || item.id);
+          setWishlist(productIds);
+          return;
+        }
+      }
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('sculpt_wishlist');
+        if (saved) {
+          setWishlist(JSON.parse(saved));
+        } else {
+          setWishlist([]);
+        }
+      }
+    } catch {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('sculpt_wishlist');
+        if (saved) {
+          try {
+            setWishlist(JSON.parse(saved));
+          } catch {
+            setWishlist([]);
+          }
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     fetchCart();
+    fetchWishlist();
   }, []);
 
   const searchResults: Product[] = []; // Search removed for brevity as it was using static data
@@ -127,13 +162,49 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const toggleWishlist = (productId: string) => {
-    setWishlist((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
-    // showToast is handled by the component
+  const addToCart = async (productId: string, variantId?: string, quantity: number = 1) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      if (!token) {
+        showToast('Please sign in to add items to your cart', 'info');
+        return { success: false, requireLogin: true };
+      }
+      
+      const res = await cartAPI.addToCart(productId, variantId, quantity);
+      if (res.success) {
+        await fetchCart();
+        showToast('Item added to cart successfully!', 'success');
+        openCart();
+        return { success: true };
+      }
+      showToast(res.message || 'Failed to add item to cart', 'info');
+      return { success: false, message: res.message };
+    } catch (err: any) {
+      console.error('Add to cart error:', err);
+      showToast(err.message || 'Failed to add item to cart', 'info');
+      return { success: false, message: err.message };
+    }
+  };
+
+  const toggleWishlist = async (productId: string) => {
+    const isAdding = !wishlist.includes(productId);
+    const updated = isAdding 
+      ? [...wishlist, productId] 
+      : wishlist.filter((id) => id !== productId);
+    
+    setWishlist(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sculpt_wishlist', JSON.stringify(updated));
+    }
+
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+        const { wishlistAPI } = await import('@/lib/api/wishlist');
+        await wishlistAPI.toggleWishlist(productId);
+      }
+    } catch (err) {
+      console.error('Failed to sync wishlist with API:', err);
+    }
   };
 
   const isInWishlist = (productId: string) => wishlist.includes(productId);
@@ -162,6 +233,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         searchResults,
         toast,
         fetchCart,
+        addToCart,
         removeFromCart,
         updateQuantity,
         toggleWishlist,

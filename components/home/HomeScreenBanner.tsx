@@ -28,11 +28,10 @@ export const HomeScreenBanner: React.FC = () => {
           bannerApi.getPublicBanners('HOME_GENERAL').catch(() => []),
           bannerApi.getPublicBanners('PROMO').catch(() => [])
         ]);
-        
+
         const allBanners = [...(productBanners || []), ...(generalBanners || []), ...(promoBanners || [])];
-        
+
         if (allBanners.length > 0) {
-          // Sort banners by sortOrder
           const sortedBanners = allBanners.sort((a, b) => a.sortOrder - b.sortOrder);
           setDynamicSlides(sortedBanners);
         }
@@ -45,18 +44,17 @@ export const HomeScreenBanner: React.FC = () => {
 
   const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
-  const resolveImageUrl = (url: string) => {
+  const resolveImageUrl = (url?: string | null) => {
     if (!url) return '/assets/hero_bundle.png';
     if (url.startsWith('http')) return url;
-    return `${BACKEND_URL}${url}`;
+    if (url.startsWith('/assets')) return url;
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    return `${BACKEND_URL}${cleanPath}`;
   };
 
   const resolveCtaLink = (b: Banner): string => {
-    // If the banner has a product linked, use the product slug
     if (b.product?.slug) return `/product/${b.product.slug}`;
-    // If there's a direct link set
     if (b.link) return b.link;
-    // Fallback by targetType
     if (b.targetType === 'CATEGORY' && b.category?.slug) return `/category/${b.category.slug}`;
     if (b.targetType === 'BRAND' && b.brand?.slug) return `/brand/${b.brand.slug}`;
     return '/category/supplements';
@@ -101,20 +99,21 @@ export const HomeScreenBanner: React.FC = () => {
 
   return (
     <section className="relative w-full overflow-hidden bg-black group">
-      
+
       {/* Slider Container */}
-      <div 
+      <div
         className="relative w-full flex items-center justify-center bg-black transition-all duration-700 overflow-hidden"
       >
-        {/* We use 21:9 for all desktop screens since the user is exporting exactly 1920x820 (which is 21:9). This prevents ultrawide cropping. */}
-        <div className="relative w-full aspect-square sm:aspect-video md:aspect-[21/9] max-h-[800px]">
+        {/* Responsive full-width banner container - 21:9 ratio preserves full banner width without cropping on mobile */}
+        <div className="relative w-full aspect-[21/9] sm:aspect-[21/9] md:aspect-[21/9] max-h-[750px]">
           {slides.map((slide, index) => (
-            <Link 
+            <Link
               key={index}
               href={slide.ctaLink}
-              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
             >
-              {/* Video or Image */}
+              {/* Video or Image - Always edge-to-edge full cover */}
               {slide.video ? (
                 <video
                   src={resolveImageUrl(slide.video)}
@@ -135,27 +134,26 @@ export const HomeScreenBanner: React.FC = () => {
                 />
               )}
 
-              {/* CTA Overlay — only for banners that have ctaText */}
-              {slide.ctaText && (
-                <div className="absolute inset-0 z-10 flex items-end justify-start p-6 sm:p-10 md:p-16">
-                  {/* Gradient scrim for readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-                  
-                  <div className="relative z-10 max-w-xl space-y-3">
+              {/* Optional Text Overlay - Only if subtitle exists and is not empty */}
+              {slide.subtitle && (
+                <div className="absolute inset-0 z-10 flex items-end justify-start p-4 sm:p-10 md:p-14">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                  <div className="relative z-10 max-w-xl space-y-1.5 sm:space-y-2">
                     {slide.title && (
-                      <h2 className="text-xl sm:text-2xl md:text-4xl font-black text-white leading-tight drop-shadow-lg">
+                      <h2 className="text-sm sm:text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-md">
                         {slide.title}
                       </h2>
                     )}
-                    {slide.subtitle && (
-                      <p className="text-sm sm:text-base text-white/80 font-medium drop-shadow-md">
-                        {slide.subtitle}
-                      </p>
+                    <p className="text-[11px] sm:text-sm md:text-base text-white/90 font-medium drop-shadow-sm line-clamp-2">
+                      {slide.subtitle}
+                    </p>
+                    {slide.ctaText && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-5 sm:py-2.5 bg-gradient-to-r from-gold-500 to-gold-600 text-black font-extrabold text-[11px] sm:text-sm rounded-lg sm:rounded-xl shadow-lg shadow-gold-500/30 transition-all">
+                        {slide.ctaText}
+                        <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      </span>
                     )}
-                    <span className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-7 sm:py-3 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-extrabold text-sm sm:text-base rounded-xl shadow-lg shadow-gold-500/30 transition-all hover:scale-105 active:scale-95">
-                      {slide.ctaText}
-                      <ArrowRight className="h-4 w-4" />
-                    </span>
                   </div>
                 </div>
               )}
@@ -167,27 +165,27 @@ export const HomeScreenBanner: React.FC = () => {
       {/* Carousel Prev / Next Controls */}
       <button
         onClick={handlePrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
         aria-label="Previous Slide"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={20} />
       </button>
 
       <button
         onClick={handleNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
         aria-label="Next Slide"
       >
-        <ChevronRight size={24} />
+        <ChevronRight size={20} />
       </button>
 
       {/* Pagination Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+      <div className="absolute bottom-2 sm:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setActiveSlide(index)}
-            className={`transition-all duration-300 rounded-full ${index === activeSlide ? 'w-8 h-2 bg-gold-500' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
+            className={`transition-all duration-300 rounded-full ${index === activeSlide ? 'w-5 sm:w-8 h-1 sm:h-2 bg-gold-500' : 'w-1 sm:w-2 h-1 sm:h-2 bg-white/50 hover:bg-white/80'}`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
@@ -195,4 +193,3 @@ export const HomeScreenBanner: React.FC = () => {
     </section>
   );
 };
-

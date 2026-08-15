@@ -5,8 +5,10 @@ import { Heart, Trash2, ShoppingCart, ChevronLeft, ChevronRight, Loader2, AlertC
 import { wishlistAPI, WishlistItem } from '@/lib/api/wishlist';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
+import { useStore } from '@/context/StoreContext';
 
 export default function WishlistTab() {
+  const { addToCart } = useStore();
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,88 +106,106 @@ export default function WishlistTab() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="group relative bg-white border border-cream-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-gold-300 transition-all duration-300 flex flex-col"
-              >
-                {/* Remove button */}
-                <button
-                  onClick={() => handleRemove(item.productId)}
-                  className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 focus:outline-none focus:opacity-100"
-                  aria-label="Remove from Wishlist"
-                  title="Remove from Wishlist"
+            {items.map((item) => {
+              const product = (item.product || {}) as any;
+              const unitPrice = product.unitPrice ?? product.price ?? 0;
+              const discountPercentage = product.discountPercentage ?? 0;
+              const finalPrice = discountPercentage > 0 
+                ? unitPrice * (1 - discountPercentage / 100) 
+                : unitPrice;
+              const thumbnail = product.thumbnail || (product.images && product.images[0]) || '/assets/images/category-placeholder.jpg';
+              const title = product.title || product.name || 'Product';
+              const slug = product.slug || product.id || item.productId;
+              const stock = product.stock ?? 1;
+
+              return (
+                <div
+                  key={item.id || item.productId}
+                  className="group relative bg-white border border-cream-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-gold-300 transition-all duration-300 flex flex-col"
                 >
-                  <Trash2 size={16} />
-                </button>
+                  {/* Remove button */}
+                  <button
+                    onClick={() => handleRemove(item.productId)}
+                    className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 focus:outline-none focus:opacity-100"
+                    aria-label="Remove from Wishlist"
+                    title="Remove from Wishlist"
+                  >
+                    <Trash2 size={16} />
+                  </button>
 
-                {/* Product Image */}
-                <Link href={`/product/${item.product.slug}`} className="block relative aspect-square bg-cream-50 overflow-hidden">
-                  {item.product.thumbnail ? (
-                    <img
-                      src={item.product.thumbnail}
-                      alt={item.product.name}
-                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      No image
-                    </div>
-                  )}
-                  
-                  {item.product.discountPercentage && item.product.discountPercentage > 0 && (
-                    <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide z-10 shadow-sm">
-                      Sale
-                    </div>
-                  )}
-                  
-                  {item.product.stock === 0 && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-                      <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wide">
-                        Out of Stock
-                      </span>
-                    </div>
-                  )}
-                </Link>
-
-                {/* Product Info */}
-                <div className="p-4 flex flex-col flex-1">
-                  <Link href={`/product/${item.product.slug}`} className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 group-hover:text-gold-700 transition-colors">
-                      {item.product.name}
-                    </h3>
+                  {/* Product Image */}
+                  <Link href={`/product/${slug}`} className="block relative aspect-square bg-cream-50 overflow-hidden">
+                    {thumbnail ? (
+                      <img
+                        src={thumbnail}
+                        alt={title}
+                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        No image
+                      </div>
+                    )}
+                    
+                    {discountPercentage > 0 && (
+                      <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide z-10 shadow-sm">
+                        Sale
+                      </div>
+                    )}
+                    
+                    {stock === 0 && (
+                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                        <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wide">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
                   </Link>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      {item.product.discountPercentage && item.product.discountPercentage > 0 ? (
-                        <>
-                          <span className="text-lg font-bold text-gray-900">
-                            ₹{(item.product.unitPrice * (1 - item.product.discountPercentage / 100)).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                          </span>
-                          <span className="text-xs text-gray-400 line-through">
-                            ₹{item.product.unitPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-lg font-bold text-gray-900">
-                          ₹{item.product.unitPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                        </span>
-                      )}
-                    </div>
+                  {/* Product Info */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <Link href={`/product/${slug}`} className="flex-1">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 group-hover:text-gold-700 transition-colors">
+                        {title}
+                      </h3>
+                    </Link>
 
-                    <button
-                      disabled={item.product.stock === 0}
-                      className="w-10 h-10 rounded-full bg-cream-100 text-gold-700 flex items-center justify-center hover:bg-gold-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cream-100 disabled:hover:text-gold-700"
-                      aria-label="Add to cart"
-                      title="Add to cart"
-                    >
-                      <ShoppingCart size={18} />
-                    </button>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        {discountPercentage > 0 ? (
+                          <>
+                            <span className="text-lg font-bold text-gray-900">
+                              ₹{finalPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                            </span>
+                            <span className="text-xs text-gray-400 line-through">
+                              ₹{unitPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-lg font-bold text-gray-900">
+                            ₹{unitPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          await addToCart(item.productId, undefined, 1);
+                        }}
+                        disabled={stock === 0}
+                        className="w-10 h-10 rounded-full bg-cream-100 text-gold-700 flex items-center justify-center hover:bg-gold-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cream-100 disabled:hover:text-gold-700 active:scale-95 shadow-xs"
+                        aria-label="Add to cart"
+                        title="Add to cart"
+                      >
+                        <ShoppingCart size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination Controls */}

@@ -27,11 +27,19 @@
   --bg-cream: #fcf9f2;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-cream);
   color: #18181b;
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
+  position: relative;
 }
 
 h1, h2, h3, .font-serif-luxury {

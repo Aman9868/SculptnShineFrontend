@@ -21,20 +21,24 @@ export const SearchOverlay: React.FC = () => {
 
   // Close when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      // Don't close if clicking inside the overlay or on the search input
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Element | null;
       if (
-        overlayRef.current && 
-        !overlayRef.current.contains(e.target as Node) &&
-        !(e.target as Element).closest('form')
+        target?.closest('[data-search-overlay]') ||
+        target?.closest('form')
       ) {
-        closeSearch();
+        return;
       }
+      closeSearch();
     };
     if (isSearchOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, [isSearchOpen, closeSearch]);
 
   // Debounce search query and reset page
@@ -91,8 +95,9 @@ export const SearchOverlay: React.FC = () => {
   return (
     <div 
       ref={overlayRef}
+      data-search-overlay="true"
       onScroll={handleScroll}
-      className="absolute top-full mt-2 left-0 w-full bg-white border border-cream-300 shadow-[0_4px_24px_rgba(0,0,0,0.1)] rounded-xl z-50 max-h-[70vh] overflow-y-auto overflow-x-hidden"
+      className="absolute top-full mt-1.5 left-4 right-4 md:left-0 md:right-auto md:w-full bg-white border border-cream-300 shadow-[0_8px_30px_rgba(0,0,0,0.15)] rounded-2xl z-50 max-h-[70vh] overflow-y-auto overflow-x-hidden"
     >
       <div className="p-4 sm:p-5">
         

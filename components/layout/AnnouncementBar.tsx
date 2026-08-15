@@ -32,11 +32,11 @@ export const AnnouncementBar = async () => {
         </div>
 
         {/* Middle Offer Code */}
-        <div className="flex items-center justify-center gap-2 font-semibold text-gold-400 bg-brandDark-soft/70 px-4 py-1 rounded-full border border-gold-500/20 w-max mx-auto max-w-full overflow-hidden">
-          <Tag size={13} className="text-gold-400 shrink-0" />
-          <span className="truncate text-[11px] lg:text-xs">
-            <span className="text-white">10% OFF</span> ON FIRST ORDER <span className="hidden sm:inline">&nbsp;|&nbsp;</span><span className="sm:hidden"> </span>USE CODE:{' '}
-            <span className="text-amber-300 underline underline-offset-2">SHINE10</span>
+        <div className="flex items-center justify-center gap-1.5 font-semibold text-gold-400 bg-brandDark-soft/70 px-3 py-1 rounded-full border border-gold-500/20 w-auto max-w-full mx-auto overflow-hidden">
+          <Tag size={12} className="text-gold-400 shrink-0" />
+          <span className="truncate text-[10px] sm:text-[11px] lg:text-xs">
+            <span className="text-white">10% OFF</span> ON 1ST ORDER <span className="hidden sm:inline">&nbsp;|&nbsp;</span><span className="sm:hidden"> </span>CODE:{' '}
+            <span className="text-amber-300 underline underline-offset-2 font-bold">SHINE10</span>
           </span>
         </div>
 

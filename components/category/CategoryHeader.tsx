@@ -25,9 +25,9 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
   activeSubcategorySlug = ''
 }) => {
   return (
-    <div className="mb-10">
+    <div className="mb-6 sm:mb-10 max-w-full">
       {/* Breadcrumbs */}
-      <nav className="flex items-center flex-wrap gap-y-1 text-xs sm:text-sm text-gray-500 mb-6">
+      <nav className="flex items-center flex-wrap gap-y-1 text-xs text-gray-500 mb-4 sm:mb-6">
         {breadcrumbs.map((crumb, idx) => (
           <React.Fragment key={idx}>
             {idx > 0 && <span className="mx-1.5 text-gray-400 shrink-0">&gt;</span>}
@@ -36,58 +36,61 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-gray-900 font-medium shrink-0 whitespace-nowrap">{crumb.label}</span>
+              <span className="text-gray-900 font-medium shrink-0 whitespace-nowrap truncate max-w-[200px]">{crumb.label}</span>
             )}
           </React.Fragment>
         ))}
       </nav>
 
-      <div className="flex flex-col md:flex-row gap-8 mb-8 items-start md:items-center">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-6 sm:mb-8 items-start md:items-center">
         {/* Title Section */}
-        <div className="md:w-1/3 z-10">
-          <h1 className="text-4xl md:text-5xl font-serif-luxury text-brandDark mb-3 uppercase tracking-wider">
+        <div className="w-full md:w-1/3 z-10">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-extrabold text-brandDark mb-2 sm:mb-3 uppercase tracking-wide break-words">
             {title}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
             {description}
           </p>
         </div>
 
         {/* Hero Image */}
-        <div className="w-full md:w-2/3 h-48 md:h-64 relative rounded-2xl overflow-hidden shadow-luxury">
+        <div className="w-full md:w-2/3 h-40 sm:h-52 md:h-64 relative rounded-2xl overflow-hidden shadow-luxury bg-cream-200 shrink-0">
           <Image
-            src={imageSrc}
+            src={imageSrc || '/assets/promo_muscle.png'}
             alt={title}
             fill
             className="object-cover object-center"
             priority
+            sizes="(max-width: 768px) 100vw, 66vw"
           />
           {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-brandDark/20 to-transparent mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brandDark/30 via-transparent to-transparent mix-blend-overlay"></div>
         </div>
       </div>
 
       {/* Subcategory Pills */}
-      <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0">
-        {subcategories.map((sub, idx) => {
-          const isActive = activeSubcategorySlug === sub.slug;
-          
-          return (
-            <Link
-              key={idx}
-              href={`?subcategorySlug=${sub.slug}`}
-              className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold border transition-all duration-300 flex-shrink-0 ${
-                isActive
-                  ? 'bg-gold-500 text-white border-gold-500 shadow-md'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-gold-300 hover:text-gold-600'
-              }`}
-              scroll={false}
-            >
-              {sub.name}
-            </Link>
-          );
-        })}
-      </div>
+      {subcategories && subcategories.length > 0 && (
+        <div className="flex overflow-x-auto hide-scrollbar gap-2 sm:gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0 touch-pan-x">
+          {subcategories.map((sub, idx) => {
+            const isActive = activeSubcategorySlug === sub.slug;
+            
+            return (
+              <Link
+                key={idx}
+                href={`?subcategorySlug=${sub.slug}`}
+                className={`whitespace-nowrap px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-300 flex-shrink-0 ${
+                  isActive
+                    ? 'bg-gold-500 text-white border-gold-500 shadow-md'
+                    : 'bg-white text-gray-700 border-cream-300 hover:border-gold-300 hover:text-gold-600'
+                }`}
+                scroll={false}
+              >
+                {sub.name}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
