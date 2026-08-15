@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/context/StoreContext';
 import { addressAPI } from '@/lib/api/address';
 import { checkoutAPI } from '@/lib/api/checkout';
-import { X } from 'lucide-react';
+import { authAPI } from '@/lib/api/auth';
+import { couponAPI, CouponData, CouponValidationResult } from '@/lib/api/coupon';
+import { X, Tag, Check, Sparkles, AlertCircle, Phone } from 'lucide-react';
 
 
 const steps = [
@@ -22,6 +24,8 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
+  const [contactPhone, setContactPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('phonepe');
   const [isLoading, setIsLoading] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -31,6 +35,66 @@ export default function CheckoutPage() {
   const [orderDetails, setOrderDetails] = useState<any | null>(null);
   const [shippingCharge, setShippingCharge] = useState(0);
   const [shippingLoading, setShippingLoading] = useState(false);
+
+  // Coupon & Voucher State
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResult | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<CouponData[]>([]);
+  const [showOffers, setShowOffers] = useState(false);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const res = await couponAPI.getPublicVouchers();
+        if (res.success && res.data) {
+          setAvailableCoupons(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch public coupons', err);
+      }
+    };
+    fetchOffers();
+
+    // Check if user came with a clipped coupon
+    const savedCode = localStorage.getItem('sculptnshine_active_coupon');
+    if (savedCode && cart.length > 0) {
+      handleApplyCoupon(savedCode);
+    }
+  }, [cartSubtotal]);
+
+  const handleApplyCoupon = async (codeToApply?: string) => {
+    const code = (codeToApply || couponInput).trim();
+    if (!code) return;
+
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+
+    try {
+      const res = await couponAPI.validateCoupon(code, cart, cartSubtotal);
+      if (res.success && res.data) {
+        setAppliedCoupon(res.data);
+        setCouponInput('');
+        try {
+          localStorage.setItem('sculptnshine_active_coupon', res.data.coupon.code);
+        } catch {}
+      }
+    } catch (err: any) {
+      setCouponError(err.message || 'Failed to apply coupon');
+      setAppliedCoupon(null);
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    try {
+      localStorage.removeItem('sculptnshine_active_coupon');
+    } catch {}
+  };
 
   useEffect(() => {
     const fetchShipping = async () => {
@@ -91,32 +155,53 @@ export default function CheckoutPage() {
 
   const fetchAddresses = async () => {
     try {
-      const res = await addressAPI.getAddresses();
-      if (res.success && res.data.length > 0) {
-        setAddresses(res.data);
-        const defaultAddr = res.data.find((a: any) => a.isDefault);
-        setSelectedAddress(defaultAddr || res.data[0]);
+      const [addrRes, profileRes] = await Promise.all([
+        addressAPI.getAddresses().catch(() => ({ success: false, data: [] })),
+        authAPI.getProfile().catch(() => ({ success: false, data: null })),
+      ]);
+
+      if (profileRes.success && profileRes.data) {
+        setUserProfile(profileRes.data);
+        if (profileRes.data.phone) setContactPhone(profileRes.data.phone);
+      }
+
+      if (addrRes.success && addrRes.data.length > 0) {
+        setAddresses(addrRes.data);
+        const defaultAddr = addrRes.data.find((a: any) => a.isDefault);
+        const initialAddr = defaultAddr || addrRes.data[0];
+        setSelectedAddress(initialAddr);
+        if (initialAddr.userPhone && !contactPhone) {
+          setContactPhone(initialAddr.userPhone);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch addresses', err);
     }
   };
 
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
   const handleCreateOrder = async () => {
     if (!selectedAddress) {
-      alert('Please select a delivery address');
+      setCheckoutError('Please select a delivery address');
       return;
     }
     
     setIsLoading(true);
+    setCheckoutError(null);
+
+    const finalPhone = (contactPhone || selectedAddress.userPhone || userProfile?.phone || '').trim();
+    const finalName = (selectedAddress.userName || `${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`).trim() || 'Customer';
+
     try {
       const res = await checkoutAPI.createOrder({
-        shippingName: selectedAddress.userName,
-        shippingPhone: selectedAddress.userPhone,
+        shippingName: finalName,
+        shippingPhone: finalPhone,
         shippingAddress: `${selectedAddress.flatHouse}, ${selectedAddress.areaStreet}${selectedAddress.landmark ? ', ' + selectedAddress.landmark : ''}`,
         shippingCity: selectedAddress.townCity,
         shippingState: selectedAddress.state,
         shippingPincode: selectedAddress.pincode,
+        couponCode: appliedCoupon?.coupon.code || undefined,
       });
       
       if (res.success) {
@@ -126,7 +211,15 @@ export default function CheckoutPage() {
         setCurrentStep(3); // Go to review
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to create order');
+      const msg = err.message || 'Failed to create order';
+      setCheckoutError(msg);
+      if (msg.toLowerCase().includes('coupon')) {
+        setCouponError(msg);
+        setAppliedCoupon(null);
+        try {
+          localStorage.removeItem('sculptnshine_active_coupon');
+        } catch {}
+      }
     } finally {
       setIsLoading(false);
     }
@@ -229,8 +322,10 @@ export default function CheckoutPage() {
 
   const finalTotal = (originalTotal - discountTotal) + gstTotal;
   const discount = discountTotal;
+  const couponDiscountAmount = appliedCoupon ? appliedCoupon.discountAmount : (orderDetails?.couponDiscount ?? 0);
+  const payableBeforeShipping = Math.max(0, finalTotal - couponDiscountAmount);
   const effectiveShippingCharge = orderDetails?.shippingAmount ?? shippingCharge;
-  const total = orderDetails?.totalAmount ?? finalTotal + effectiveShippingCharge;
+  const total = orderDetails?.totalAmount ?? (payableBeforeShipping + effectiveShippingCharge);
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -306,6 +401,29 @@ export default function CheckoutPage() {
                     ))}
                   </div>
                 )}
+
+                {/* Contact Mobile Phone Number Input */}
+                <div className="mt-5 p-4 bg-gray-50/80 rounded-xl border border-gray-200 space-y-2">
+                  <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                    <Phone size={14} className="text-gold-600" />
+                    Contact Mobile Number (For Delivery & Order Updates)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-bold text-gray-700">
+                      🇮🇳 +91
+                    </span>
+                    <input
+                      type="tel"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="Enter 10-digit mobile number"
+                      className="flex-1 px-3.5 py-2 bg-white border border-gray-300 rounded-xl text-xs font-bold text-gray-900 focus:ring-1 focus:ring-gold-500 focus:border-gold-500 outline-none"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    We will send SMS updates and order tracking notifications to this number.
+                  </p>
+                </div>
                 
                 <div className="mt-8 flex justify-end">
                   <button 
@@ -343,6 +461,22 @@ export default function CheckoutPage() {
                     100% Secure & Encrypted
                   </div>
                 </div>
+
+                {checkoutError && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle size={16} className="text-red-500 shrink-0" />
+                      <span>{checkoutError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutError(null)}
+                      className="text-red-400 hover:text-red-700 text-xs underline ml-3 shrink-0 cursor-pointer"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
                 
                 <div className="mt-8 flex justify-between items-center">
                   <button onClick={() => setCurrentStep(1)} className="text-gray-500 hover:text-gray-900 font-medium text-sm flex items-center gap-1">
@@ -492,8 +626,14 @@ export default function CheckoutPage() {
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Discount</span>
+                      <span>Product Discount</span>
                       <span>-₹{discount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  {couponDiscountAmount > 0 && (
+                    <div className="flex justify-between text-gold-900 font-bold bg-gold-50 p-2 rounded-lg border border-gold-300">
+                      <span>Coupon Discount {appliedCoupon ? `(${appliedCoupon.coupon.code})` : ''}</span>
+                      <span>-₹{couponDiscountAmount.toLocaleString('en-IN')}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-gray-600">
@@ -507,6 +647,90 @@ export default function CheckoutPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Promo Code Box in Checkout */}
+                {currentStep < 3 && (
+                  <div className="py-4 border-b border-gray-100 space-y-2">
+                    {appliedCoupon ? (
+                      <div className="p-2.5 bg-gold-50 border border-gold-300 rounded-xl flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-gold-600 text-white flex items-center justify-center">
+                            <Check size={12} />
+                          </div>
+                          <div>
+                            <span className="font-mono font-bold text-gold-950">{appliedCoupon.coupon.code}</span>
+                            <span className="text-[10px] text-gold-800 block font-semibold">Saved ₹{appliedCoupon.discountAmount}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="text-gray-400 hover:text-red-500 text-xs font-bold px-2 py-1 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Tag size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="text"
+                              value={couponInput}
+                              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleApplyCoupon();
+                              }}
+                              placeholder="PROMO CODE"
+                              className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-xs font-mono font-bold uppercase focus:ring-1 focus:ring-gold-500 outline-none"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleApplyCoupon()}
+                            disabled={isApplyingCoupon || !couponInput.trim()}
+                            className="px-3 py-1.5 bg-gray-900 hover:bg-gold-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            {isApplyingCoupon ? '...' : 'APPLY'}
+                          </button>
+                        </div>
+                        {couponError && (
+                          <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1">
+                            <AlertCircle size={11} />
+                            <span>{couponError}</span>
+                          </p>
+                        )}
+                        {availableCoupons.length > 0 && (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setShowOffers(!showOffers)}
+                              className="text-[11px] font-bold text-gold-700 hover:underline flex items-center gap-1 cursor-pointer mt-1"
+                            >
+                              <Sparkles size={11} />
+                              <span>{showOffers ? 'Hide Offers' : `View ${availableCoupons.length} Available Offers`}</span>
+                            </button>
+                            {showOffers && (
+                              <div className="mt-2 space-y-1 max-h-28 overflow-y-auto p-1 bg-gray-50 rounded-lg border border-gray-200">
+                                {availableCoupons.map((c) => (
+                                  <div
+                                    key={c.id}
+                                    onClick={() => handleApplyCoupon(c.code)}
+                                    className="p-1.5 bg-white rounded border border-gray-200 hover:border-gold-400 cursor-pointer flex items-center justify-between text-[11px]"
+                                  >
+                                    <span className="font-mono font-bold text-gray-900">{c.code}</span>
+                                    <span className="text-[10px] font-bold text-gold-700">Apply</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <div className="pt-4 flex justify-between items-center mb-6">
                   <div>

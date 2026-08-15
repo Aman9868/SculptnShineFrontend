@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { Scissors, Package, Droplets, Sparkles, Leaf, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
 import { categoryAPI, Category } from '@/lib/api/category';
 
-const CATEGORY_MAPPING: Record<string, React.ReactNode> = {
-  'proteins-fitness-supplements': <Package size={18} />,
-  'skincare-facial-care': <Droplets size={18} />,
-  'salon-haircare-excellence': <Scissors size={18} />,
-  'beauty-luxury-cosmetics': <Sparkles size={18} />,
-  'wellness-daily-health': <Leaf size={18} />,
+const getCategoryIcon = (slug: string = '') => {
+  const s = slug.toLowerCase();
+  if (s.includes('protein') || s.includes('supplement') || s.includes('fitness')) return <Package size={18} />;
+  if (s.includes('skin')) return <Droplets size={18} />;
+  if (s.includes('hair') || s.includes('salon')) return <Scissors size={18} />;
+  if (s.includes('beauty') || s.includes('cosmetic')) return <Sparkles size={18} />;
+  if (s.includes('wellness') || s.includes('health')) return <Leaf size={18} />;
+  return <LayoutGrid size={18} />;
 };
 
 export const CategoryNav: React.FC = () => {
@@ -32,7 +34,7 @@ export const CategoryNav: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const res = await categoryAPI.getCategories();
-        if (res.success) {
+        if (res.success && res.data.categories) {
           setCategories(res.data.categories);
         }
       } catch (error) {
@@ -71,11 +73,11 @@ export const CategoryNav: React.FC = () => {
             ))
           ) : (
             categories.map((cat) => {
-              const icon = CATEGORY_MAPPING[cat.slug] || <LayoutGrid size={18} />;
+              const icon = getCategoryIcon(cat.slug);
               const displayName = cat.name;
 
               return (
-                <li key={cat.id} className="flex items-center justify-center h-full w-full min-w-0 px-2">
+                <li key={cat.id || cat.slug} className="flex items-center justify-center h-full w-full min-w-0 px-2">
                   <Link
                     href={`/category/${cat.slug}`}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-gold-700 transition-colors py-1.5 px-2 rounded-lg hover:bg-cream-200/80 group max-w-full"

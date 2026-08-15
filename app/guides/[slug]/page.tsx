@@ -143,11 +143,11 @@ function renderGuide(guide: any) {
         
         {/* Back Button */}
         <Link 
-          href="/guides" 
-          className="inline-flex items-center gap-2 text-gold-600 hover:text-gold-700 transition-colors font-medium mb-10 text-sm"
+          href="/" 
+          className="inline-flex items-center gap-2 text-gold-700 hover:text-gold-800 transition-colors font-semibold mb-8 sm:mb-10 text-xs sm:text-sm bg-white/80 hover:bg-white px-4 py-2 rounded-full border border-cream-300 shadow-xs active:scale-95"
         >
-          <ArrowLeft size={18} />
-          Back to All Articles
+          <ArrowLeft size={16} />
+          Back to Home Screen
         </Link>
 
         {/* Article Header */}

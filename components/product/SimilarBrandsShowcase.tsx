@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Star, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { Product } from '@/lib/api/product';
 
@@ -54,6 +55,7 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
   currentProduct,
   allProducts,
 }) => {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -168,13 +170,16 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
             ? originalPrice * (1 - discountPercent / 100)
             : originalPrice;
 
+          const productHref = `/product/${product.slug || product.id}`;
+
           return (
             <div
               key={idx}
-              className="w-[320px] sm:w-[360px] shrink-0 snap-start bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+              onClick={() => router.push(productHref)}
+              className="w-[320px] sm:w-[360px] shrink-0 snap-start bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
             >
-              {/* Top Hero Lifestyle Banner (Clean image without fake video button) */}
-              <Link href={`/product/${product.id}`} className="relative h-44 w-full block overflow-hidden bg-gray-900">
+              {/* Top Hero Lifestyle Banner */}
+              <Link href={productHref} className="relative h-44 w-full block overflow-hidden bg-gray-900">
                 <img
                   src={heroMediaUrl}
                   alt={brandName}
@@ -212,7 +217,7 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
 
               {/* Bottom Featured Product Box */}
               <div className="p-4 bg-gray-50/50 flex-grow flex flex-col justify-between border-t border-gray-100">
-                <Link href={`/product/${product.id}`} className="flex gap-3 items-start mb-3 group/prod">
+                <Link href={productHref} className="flex gap-3 items-start mb-3 group/prod">
                   {/* Mini Product Packaging Thumbnail with onError handler */}
                   <div className="w-16 h-16 shrink-0 rounded-xl bg-white border border-gray-200 p-1.5 flex items-center justify-center overflow-hidden shadow-2xs">
                     <img
@@ -262,8 +267,8 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
                   </div>
 
                   <Link
-                    href={`/product/${product.id}`}
-                    className="px-3.5 py-1.5 rounded-xl bg-brandDark text-white text-xs font-bold hover:bg-gold-600 transition-all flex items-center gap-1 shadow-xs"
+                    href={productHref}
+                    className="px-3.5 py-1.5 rounded-xl bg-brandDark text-white text-xs font-bold hover:bg-gold-600 active:scale-95 transition-all flex items-center gap-1 shadow-xs"
                   >
                     <span>View Deal</span>
                     <ArrowRight className="w-3.5 h-3.5" />

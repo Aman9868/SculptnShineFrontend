@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, Search, ShoppingBag, Heart, User, LogOut } from 'lucide-react';
+import { Menu, X, Search, ShoppingBag, Heart, User, LogOut, Trash2, AlertTriangle } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchOverlay } from './SearchOverlay';
@@ -12,8 +12,10 @@ import { NotificationBell } from './NotificationBell';
 
 export const Header: React.FC = () => {
   const router = useRouter();
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, deleteAccount, isLoading } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const {
     cartTotalCount,
@@ -31,6 +33,20 @@ export const Header: React.FC = () => {
     await logout();
     setShowUserMenu(false);
     router.push('/login');
+  };
+
+  const handleDeleteProfile = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      setShowDeleteModal(false);
+      setShowUserMenu(false);
+      router.push('/');
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Get user initials for avatar
@@ -66,21 +82,21 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-cream-100/95 backdrop-blur-md border-b border-cream-300 shadow-sm transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
 
         {/* Mobile menu toggle & Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <button
             onClick={toggleMobileMenu}
-            className="p-2 text-gray-700 hover:text-gold-700 lg:hidden focus:outline-none"
+            className="p-1.5 sm:p-2 text-gray-700 hover:text-gold-700 lg:hidden focus:outline-none rounded-lg hover:bg-cream-200"
             aria-label="Toggle Navigation Menu"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          <Link href="/" className="flex items-center group flex-shrink-0 transition-opacity hover:opacity-90 -translate-x-2 sm:-translate-x-4 md:-translate-x-8 lg:-translate-x-12">
+          <Link href="/" className="flex items-center group flex-shrink-0 transition-opacity hover:opacity-90">
             {/* Sculpt Logo */}
-            <div className="relative w-48 sm:w-56 md:w-64 lg:w-[280px] h-12 sm:h-16 flex items-center justify-start">
+            <div className="relative w-36 sm:w-48 md:w-56 lg:w-[260px] h-10 sm:h-14 flex items-center justify-start">
               <img
                 src="/assets/logo.svg"
                 alt="Sculpt Logo"
@@ -197,10 +213,21 @@ export const Header: React.FC = () => {
                   
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-cream-100 transition-colors border-b border-cream-100"
                   >
                     <LogOut size={16} />
                     Logout
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowDeleteModal(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+                  >
+                    <Trash2 size={16} />
+                    Delete Profile
                   </button>
                 </div>
               )}
@@ -219,8 +246,55 @@ export const Header: React.FC = () => {
 
       </div>
 
+      {/* Delete Profile Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-red-100 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-3 bg-red-100 rounded-full">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Delete Profile & Account?</h3>
+                <p className="text-xs text-gray-500">This action is permanent and cannot be reversed.</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Are you sure you want to permanently delete your account, <strong>{user?.firstName}</strong>? All your personal details, shipping addresses, wishlist, and shopping cart will be wiped.
+            </p>
+
+            <div className="flex gap-3 justify-end pt-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProfile}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>Deleting Profile...</>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Search input */}
-      <div className="md:hidden px-4 pb-3">
+      <div className="md:hidden px-4 pb-3 relative">
         <form onSubmit={handleSearchSubmit} className="relative w-full">
           <input
             type="text"
@@ -228,15 +302,18 @@ export const Header: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={openSearch}
-            className="w-full bg-white text-gray-800 text-xs pl-4 pr-10 py-2 rounded-full border border-cream-300 focus:border-gold-600 outline-none"
+            className="w-full bg-white text-gray-800 text-xs pl-4 pr-10 py-2.5 rounded-full border border-cream-300 focus:border-gold-600 focus:ring-2 focus:ring-gold-500/20 outline-none shadow-inner placeholder:text-gray-400"
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-cream-200 hover:bg-gold-600 hover:text-white text-gray-600 flex items-center justify-center transition-colors"
+            aria-label="Search"
           >
             <Search size={14} />
           </button>
         </form>
+        {/* Mobile Search Dropdown */}
+        <SearchOverlay />
       </div>
     </header>
   );

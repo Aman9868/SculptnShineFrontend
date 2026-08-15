@@ -10,13 +10,37 @@ import { categoryAPI } from '@/lib/api/category';
 export const ShopByCategory: React.FC = () => {
   const [categories, setCategories] = useState<any[]>(STATIC_CATEGORIES);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const itemWidth = container.firstElementChild ? (container.firstElementChild as HTMLElement).offsetWidth : container.clientWidth;
+    const newIndex = Math.round(scrollLeft / (itemWidth || 1));
+    setActiveIndex(Math.min(Math.max(0, newIndex), categories.length - 1));
+  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const { scrollLeft, clientWidth } = scrollContainerRef.current;
       const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
       scrollContainerRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToIndex = (index: number) => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const items = container.children;
+    if (items[index]) {
+      (items[index] as HTMLElement).scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'start'
+      });
+      setActiveIndex(index);
     }
   };
 
@@ -44,6 +68,7 @@ export const ShopByCategory: React.FC = () => {
     };
     fetchCategories();
   }, []);
+
   return (
     <section className="py-12 lg:py-16 bg-cream-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -83,12 +108,13 @@ export const ShopByCategory: React.FC = () => {
           {/* Category Cards Scroll Area */}
           <div
             ref={scrollContainerRef}
-            className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 lg:gap-8 snap-x snap-mandatory pb-4"
+            onScroll={handleScroll}
+            className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 lg:gap-8 snap-x snap-mandatory pb-4 touch-pan-x"
           >
             {loading ? (
               // Skeleton Loader
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="min-w-[75%] sm:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1.33rem)] shrink-0 snap-start bg-white rounded-2xl p-4 sm:p-5 border border-cream-300 shadow-luxury flex flex-col items-center">
+                <div key={i} className="min-w-full sm:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1.33rem)] shrink-0 snap-start bg-white rounded-2xl p-4 sm:p-5 border border-cream-300 shadow-luxury flex flex-col items-center">
                   <div className="w-full h-40 sm:h-48 lg:h-56 rounded-xl bg-cream-200 animate-pulse mb-4" />
                   <div className="w-24 h-5 bg-cream-200 animate-pulse rounded" />
                 </div>
@@ -98,7 +124,7 @@ export const ShopByCategory: React.FC = () => {
                 <Link
                   key={cat.id}
                   href={cat.href}
-                  className="min-w-[75%] sm:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1.33rem)] shrink-0 snap-start group bg-white rounded-2xl p-4 sm:p-5 border border-cream-300 shadow-luxury hover:shadow-luxury-hover transition-all duration-300 flex flex-col items-center justify-between text-center"
+                  className="min-w-full sm:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1.33rem)] shrink-0 snap-start group bg-white rounded-2xl p-4 sm:p-5 border border-cream-300 shadow-luxury hover:shadow-luxury-hover transition-all duration-300 flex flex-col items-center justify-between text-center"
                 >
                   {/* Image Container with fixed height to match Why Choose Us proportions */}
                   <div className="relative w-full h-40 sm:h-48 lg:h-56 rounded-xl overflow-hidden mb-4 bg-cream-50 border border-cream-200">
@@ -107,7 +133,7 @@ export const ShopByCategory: React.FC = () => {
                       alt={cat.name}
                       fill
                       className="object-cover group-hover:scale-108 transition-transform duration-500"
-                      sizes="(max-width: 768px) 70vw, (max-width: 1024px) 33vw, 25vw"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 25vw"
                     />
                   </div>
 
@@ -124,9 +150,28 @@ export const ShopByCategory: React.FC = () => {
               ))
             )}
           </div>
+
+          {/* Pagination Dots */}
+          {!loading && categories.length > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4 sm:mt-6">
+              {categories.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => scrollToIndex(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    activeIndex === index 
+                      ? 'w-6 bg-gold-600' 
+                      : 'w-2 bg-cream-300 hover:bg-cream-400'
+                  }`}
+                  aria-label={`Go to category slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
     </section>
   );
 };
+
