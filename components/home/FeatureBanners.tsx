@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { PROMO_BANNERS } from '@/data/categories';
 import { bannerApi, Banner } from '@/lib/api/banner';
+import { getMediaUrl } from '@/lib/media';
 
 export const FeatureBanners: React.FC = () => {
   const [dynamicBanners, setDynamicBanners] = useState<Banner[]>([]);
@@ -24,13 +25,11 @@ export const FeatureBanners: React.FC = () => {
     fetchPromos();
   }, []);
 
-  const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
-
-  const displayBanners = dynamicBanners.length > 0 ? dynamicBanners.map(b => ({
+  const displayBanners = dynamicBanners.length > 0 ? dynamicBanners.map((b: Banner) => ({
     id: b.id,
     title: b.title,
     subtitle: b.subtitle || '',
-    image: b.image.startsWith('http') ? b.image : `${BACKEND_URL}${b.image}`,
+    image: getMediaUrl(b.image, '/assets/promo_muscle.png'),
     actionText: b.ctaText || 'SHOP NOW',
     link: b.targetType === 'PRODUCT' && b.product ? `/product/${b.product.slug}` :
           b.targetType === 'CATEGORY' && b.category ? `/category/${b.category.slug}` :

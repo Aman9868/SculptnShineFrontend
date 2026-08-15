@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { bannerApi, Banner } from '@/lib/api/banner';
+import { getMediaUrl } from '@/lib/media';
 
 interface SlideData {
   image: string;
@@ -42,12 +43,6 @@ export const HomeScreenBanner: React.FC = () => {
     fetchBanners();
   }, []);
 
-  const resolveImageUrl = (url?: string | null) => {
-    if (!url) return '/assets/hero_bundle.png';
-    if (url.startsWith('http') || url.startsWith('/')) return url;
-    return `/${url}`;
-  };
-
   const resolveCtaLink = (b: Banner): string => {
     if (b.product?.slug) return `/product/${b.product.slug}`;
     if (b.link) return b.link;
@@ -57,13 +52,13 @@ export const HomeScreenBanner: React.FC = () => {
   };
 
   const slides: SlideData[] = dynamicSlides.length > 0 ? dynamicSlides.map(b => ({
-    image: resolveImageUrl(b.image),
+    image: getMediaUrl(b.image, '/assets/hero_bundle.png'),
     ctaLink: resolveCtaLink(b),
     title: b.title || '',
     subtitle: b.subtitle,
     ctaText: b.ctaText,
     type: b.type,
-    video: b.video,
+    video: b.video ? getMediaUrl(b.video, null as any) : null,
   })) : [
     {
       image: '/assets/hero_bundle.png',
@@ -112,7 +107,7 @@ export const HomeScreenBanner: React.FC = () => {
               {/* Video or Image - Always edge-to-edge full cover */}
               {slide.video ? (
                 <video
-                  src={resolveImageUrl(slide.video)}
+                  src={slide.video}
                   autoPlay
                   muted
                   loop
