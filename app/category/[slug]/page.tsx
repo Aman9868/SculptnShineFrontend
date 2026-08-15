@@ -14,19 +14,19 @@ export async function generateMetadata({
   const slug = (await params).slug;
   const slugFormatted = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
   return {
-    title: `${slugFormatted} | Sculpt & Shine`,
-    description: `Explore premium ${slugFormatted} products at Sculpt & Shine. 100% genuine supplements, fitness, and wellness.`,
+    title: `${slugFormatted} | Sculpt N Shine`,
+    description: `Explore premium ${slugFormatted} products at Sculpt N Shine. 100% genuine supplements, fitness, and wellness.`,
     openGraph: {
-      title: `${slugFormatted} | Sculpt & Shine`,
-      description: `Explore premium ${slugFormatted} products at Sculpt & Shine. 100% genuine supplements, fitness, and wellness.`,
+      title: `${slugFormatted} | Sculpt N Shine`,
+      description: `Explore premium ${slugFormatted} products at Sculpt N Shine. 100% genuine supplements, fitness, and wellness.`,
       url: `https://sculptshine.shop/category/${slug}`,
-      siteName: 'Sculpt & Shine',
+      siteName: 'Sculpt N Shine',
       images: [
         {
-          url: '/assets/hero_bundle.png',
+          url: '/og-image.png',
           width: 1200,
           height: 630,
-          alt: `${slugFormatted} - Sculpt & Shine`,
+          alt: `${slugFormatted} - Sculpt N Shine`,
         },
       ],
     },

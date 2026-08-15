@@ -60,7 +60,7 @@ export const Footer: React.FC = () => {
               </div>
               <div>
                 <span className="font-serif text-xl font-bold text-white tracking-wide block">
-                  SCULPT & SHINE
+                  SCULPT N SHINE
                 </span>
                 <span className="text-[10px] text-gold-400 uppercase tracking-widest font-semibold">
                   SUPPLEMENTS &middot; FITNESS &middot; WELLNESS
@@ -69,7 +69,7 @@ export const Footer: React.FC = () => {
             </div>
 
             <p className="text-gray-400 leading-relaxed max-w-sm">
-              Sculpt & Shine is India&apos;s premier destination for authentic sports nutrition, clean wellness formulas, and high-performance beauty care.
+              Sculpt N Shine is India&apos;s premier destination for authentic sports nutrition, clean wellness formulas, and high-performance beauty care.
             </p>
 
             <div className="flex items-start gap-2 text-gray-400 leading-relaxed max-w-sm">
@@ -158,7 +158,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-brandDark-soft flex flex-col md:flex-row items-center justify-between gap-4 text-center text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Sculpt & Shine. All Rights Reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Sculpt N Shine. All Rights Reserved.</p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-gray-400 font-semibold text-[11px]">
             <span className="inline-flex items-center gap-1.5 text-gray-300">

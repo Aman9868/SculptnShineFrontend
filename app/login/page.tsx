@@ -72,7 +72,7 @@ export default function LoginPage() {
             </div>
             <div className="flex flex-col text-center">
               <span className="font-serif text-2xl font-bold tracking-tight text-gray-900 leading-none">
-                SCULPT & SHINE
+                SCULPT N SHINE
               </span>
             </div>
           </div>

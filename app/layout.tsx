@@ -23,12 +23,13 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sculptshine.shop'),
   title: {
-    default: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
-    template: '%s | Sculpt & Shine',
+    default: 'Sculpt N Shine | Premium Supplements, Fitness & Wellness',
+    template: '%s | Sculpt N Shine',
   },
   description:
-    'Transform your Body, Mind, Life with Sculpt & Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
+    'Transform your Body, Mind, Life with Sculpt N Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
   keywords: [
+    'Sculpt N Shine',
     'Sculpt and Shine',
     'Whey Protein',
     'Pre Workout',
@@ -37,29 +38,29 @@ export const metadata: Metadata = {
     'Skincare',
     'Wellness',
   ],
-  authors: [{ name: 'Sculpt & Shine Team' }],
+  authors: [{ name: 'Sculpt N Shine Team' }],
   openGraph: {
     type: 'website',
     locale: 'en_IN',
     url: 'https://sculptshine.shop',
-    siteName: 'Sculpt & Shine',
-    title: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
+    siteName: 'Sculpt N Shine',
+    title: 'Sculpt N Shine | Premium Supplements, Fitness & Wellness',
     description:
-      'Transform your Body, Mind, Life with Sculpt & Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
+      'Transform your Body, Mind, Life with Sculpt N Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Sculpt & Shine - Supplements, Fitness & Wellness',
+        alt: 'Sculpt N Shine - Supplements, Fitness & Wellness',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sculpt & Shine | Premium Supplements, Fitness & Wellness',
+    title: 'Sculpt N Shine | Premium Supplements, Fitness & Wellness',
     description:
-      'Transform your Body, Mind, Life with Sculpt & Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
+      'Transform your Body, Mind, Life with Sculpt N Shine. Shop 100% authentic Whey Protein, Pre-Workout, Creatine, Skincare, Haircare, and Wellness products.',
     images: ['/og-image.png'],
   },
   icons: {
@@ -73,9 +74,9 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Store',
-  name: 'Sculpt & Shine',
+  name: 'Sculpt N Shine',
   description: 'Premium Supplements, Fitness & Wellness Store',
-  url: 'https://sculptnshine.com',
+  url: 'https://sculptnshine.shop',
   telephone: '+91-800-SCULPT',
   priceRange: '₹799 - ₹3499',
   address: {

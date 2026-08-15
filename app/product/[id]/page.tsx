@@ -24,8 +24,8 @@ export async function generateMetadata({
     const res = await productAPI.getProductById(idOrSlug);
     if (res.success && res.data) {
       const product = res.data;
-      const title = `${product.title} | Sculpt & Shine`;
-      const description = `Shop ${product.title} online. Authentic Supplements & Wellness with 100% genuine assurance at Sculpt & Shine.`;
+      const title = `${product.title} | Sculpt N Shine`;
+      const description = `Shop ${product.title} online. Authentic Supplements & Wellness with 100% genuine assurance at Sculpt N Shine.`;
       const image = product.images?.[0] || '/assets/hero_bundle.png';
 
       return {
@@ -35,7 +35,7 @@ export async function generateMetadata({
           title,
           description,
           url: `https://sculptshine.shop/product/${product.slug || product.id}`,
-          siteName: 'Sculpt & Shine',
+          siteName: 'Sculpt N Shine',
           images: [
             {
               url: image,
@@ -59,7 +59,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: 'Product Details | Sculpt & Shine',
+    title: 'Product Details | Sculpt N Shine',
   };
 }
 

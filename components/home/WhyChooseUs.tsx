@@ -36,7 +36,7 @@ export default function WhyChooseUs() {
             <div className="h-px bg-gradient-to-l from-transparent to-gold-600/40 flex-1" />
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight uppercase">
-            WHY CHOOSE SCULPT & SHINE?
+            WHY CHOOSE SCULPT N SHINE?
           </h2>
         </div>
 
