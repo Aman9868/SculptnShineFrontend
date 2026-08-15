@@ -95,8 +95,8 @@ export const HomeScreenBanner: React.FC = () => {
       <div
         className="relative w-full flex items-center justify-center bg-black transition-all duration-700 overflow-hidden"
       >
-        {/* Responsive full-width banner container - 21:9 ratio preserves full banner width without cropping on mobile */}
-        <div className="relative w-full aspect-[21/9] sm:aspect-[21/9] md:aspect-[21/9] max-h-[750px]">
+        {/* Responsive full-width banner container */}
+        <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[21/9] max-h-[750px]">
           {slides.map((slide, index) => (
             <Link
               key={index}
@@ -127,22 +127,22 @@ export const HomeScreenBanner: React.FC = () => {
 
               {/* Optional Text Overlay - Only if subtitle exists and is not empty */}
               {slide.subtitle && (
-                <div className="absolute inset-0 z-10 flex items-end justify-start p-4 sm:p-10 md:p-14">
+                <div className="absolute inset-0 z-10 flex items-end justify-start p-6 sm:p-10 md:p-14">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-                  <div className="relative z-10 max-w-xl space-y-1.5 sm:space-y-2">
+                  <div className="relative z-10 max-w-xl space-y-2">
                     {slide.title && (
-                      <h2 className="text-sm sm:text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-md">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-md">
                         {slide.title}
                       </h2>
                     )}
-                    <p className="text-[11px] sm:text-sm md:text-base text-white/90 font-medium drop-shadow-sm line-clamp-2">
+                    <p className="text-xs sm:text-sm md:text-base text-white/90 font-medium drop-shadow-sm">
                       {slide.subtitle}
                     </p>
                     {slide.ctaText && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-5 sm:py-2.5 bg-gradient-to-r from-gold-500 to-gold-600 text-black font-extrabold text-[11px] sm:text-sm rounded-lg sm:rounded-xl shadow-lg shadow-gold-500/30 transition-all">
+                      <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gold-500 to-gold-600 text-black font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-gold-500/30 transition-all">
                         {slide.ctaText}
-                        <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     )}
                   </div>
@@ -156,27 +156,27 @@ export const HomeScreenBanner: React.FC = () => {
       {/* Carousel Prev / Next Controls */}
       <button
         onClick={handlePrev}
-        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
         aria-label="Previous Slide"
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={24} />
       </button>
 
       <button
         onClick={handleNext}
-        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/90 text-white hover:text-black backdrop-blur-md shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:outline-none z-20"
         aria-label="Next Slide"
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={24} />
       </button>
 
       {/* Pagination Dots */}
-      <div className="absolute bottom-2 sm:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setActiveSlide(index)}
-            className={`transition-all duration-300 rounded-full ${index === activeSlide ? 'w-5 sm:w-8 h-1 sm:h-2 bg-gold-500' : 'w-1 sm:w-2 h-1 sm:h-2 bg-white/50 hover:bg-white/80'}`}
+            className={`transition-all duration-300 rounded-full ${index === activeSlide ? 'w-8 h-2 bg-gold-500' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
