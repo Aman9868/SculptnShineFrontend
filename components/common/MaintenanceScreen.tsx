@@ -24,11 +24,15 @@ export default function MaintenanceScreen() {
     nextRetrySeconds 
   } = useHealth();
 
-  if (!isMaintenance && !isOffline) {
+  const envMaintenance =
+    process.env.NEXT_PUBLIC_WEBSITE_MAINTENANCE_MODE === 'true' ||
+    process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
+
+  if (!isMaintenance && !isOffline && !envMaintenance) {
     return null;
   }
 
-  const isScheduled = isMaintenance;
+  const isScheduled = isMaintenance || envMaintenance;
   const title = isScheduled 
     ? "Scheduled Maintenance in Progress" 
     : "System Upgrade & Connectivity";

@@ -4,13 +4,12 @@ import { Truck, ShieldCheck, Tag } from 'lucide-react';
 async function getShippingSettings() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/shipping`, {
-      cache: 'no-store'
+      next: { revalidate: 30 },
     });
     if (!res.ok) return {};
     const data = await res.json();
     return data.success ? data.data : {};
   } catch (error) {
-    console.error("Error fetching shipping settings:", error);
     return {};
   }
 }
@@ -18,7 +17,7 @@ async function getShippingSettings() {
 async function getAnnouncementCoupon() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/coupons/announcement`, {
-      cache: 'no-store'
+      next: { revalidate: 30 },
     });
     if (!res.ok) return null;
     const data = await res.json();
