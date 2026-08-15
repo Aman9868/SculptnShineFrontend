@@ -65,14 +65,14 @@ export default function SignupPage() {
             </div>
             <div className="flex flex-col text-center">
               <span className="font-serif text-2xl font-bold tracking-tight text-gray-900 leading-none">
-                SCULPT & SHINE
+                SCULPT N SHINE
               </span>
             </div>
           </div>
 
           <div className="mb-8 text-center lg:text-left">
             <h1 className="text-3xl md:text-4xl font-serif font-bold text-brandDark mb-3">Create Account</h1>
-            <p className="text-gray-500 text-sm md:text-base font-medium">Join Sculpt & Shine for high-quality wellness solutions</p>
+            <p className="text-gray-500 text-sm md:text-base font-medium">Join Sculpt N Shine for high-quality wellness solutions</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>            {/* Full Name with Icon */}

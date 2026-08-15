@@ -58,7 +58,7 @@ export default function MaintenanceScreen() {
             <Sparkles className="h-5 w-5 text-black" />
           </div>
           <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-white via-gold-200 to-gold-400 bg-clip-text text-transparent">
-            SCULPT & SHINE
+            SCULPT N SHINE
           </span>
         </div>
 

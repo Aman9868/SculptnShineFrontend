@@ -60,7 +60,7 @@ export const MobileMenu: React.FC = () => {
                 <span className="font-serif font-bold text-gold-700 text-lg">S</span>
               </div>
               <span className="font-serif font-bold text-lg text-gray-900">
-                SCULPT & SHINE
+                SCULPT N SHINE
               </span>
             </div>
             <button
