@@ -10,6 +10,7 @@ export interface ProductVariant {
   unitPrice: number;
   discountPercentage: number;
   gst: number;
+  expiryDate?: string | null;
   stock: number;
   images: string[];
   isDefault: boolean;
