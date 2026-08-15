@@ -113,7 +113,7 @@ export default function WishlistTab() {
               const finalPrice = discountPercentage > 0 
                 ? unitPrice * (1 - discountPercentage / 100) 
                 : unitPrice;
-              const thumbnail = product.thumbnail || (product.images && product.images[0]) || '/assets/images/category-placeholder.jpg';
+              const thumbnail = product.thumbnail || (product.images && product.images.length > 0 && product.images[0]) || '/assets/product-placeholder.png';
               const title = product.title || product.name || 'Product';
               const slug = product.slug || product.id || item.productId;
               const stock = product.stock ?? 1;
@@ -134,18 +134,19 @@ export default function WishlistTab() {
                   </button>
 
                   {/* Product Image */}
-                  <Link href={`/product/${slug}`} className="block relative aspect-square bg-cream-50 overflow-hidden">
-                    {thumbnail ? (
-                      <img
-                        src={thumbnail}
-                        alt={title}
-                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        No image
-                      </div>
-                    )}
+                  <Link
+                    href={`/product/${slug}`}
+                    className="block aspect-square bg-cream-50 p-6 relative overflow-hidden flex items-center justify-center border-b border-cream-100"
+                  >
+                    <img
+                      src={thumbnail}
+                      alt={title}
+                      onError={(e: any) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/assets/product-placeholder.png';
+                      }}
+                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                    />
                     
                     {discountPercentage > 0 && (
                       <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide z-10 shadow-sm">

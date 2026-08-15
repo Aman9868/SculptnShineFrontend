@@ -20,6 +20,7 @@ interface SlideData {
 export const HomeScreenBanner: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [dynamicSlides, setDynamicSlides] = useState<Banner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -38,6 +39,8 @@ export const HomeScreenBanner: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to fetch home banners:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchBanners();
@@ -51,27 +54,19 @@ export const HomeScreenBanner: React.FC = () => {
     return '/category/supplements';
   };
 
-  const slides: SlideData[] = dynamicSlides.length > 0 ? dynamicSlides.map(b => ({
-    image: getMediaUrl(b.image, '/assets/hero_bundle.png'),
+  const slides: SlideData[] = dynamicSlides.map(b => ({
+    image: getMediaUrl(b.image, '/assets/og-image.png'),
     ctaLink: resolveCtaLink(b),
     title: b.title || '',
     subtitle: b.subtitle,
     ctaText: b.ctaText,
     type: b.type,
     video: b.video ? getMediaUrl(b.video, null as any) : null,
-  })) : [
-    {
-      image: '/assets/hero_bundle.png',
-      ctaLink: '/category/supplements',
-    },
-    {
-      image: '/assets/iso_whey.png',
-      ctaLink: '/category/supplements',
-    },
-  ];
+  }));
 
   // Auto-scroll
   useEffect(() => {
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setActiveSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
     }, 5000);
@@ -87,6 +82,24 @@ export const HomeScreenBanner: React.FC = () => {
     e.preventDefault();
     setActiveSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
+
+  if (isLoading) {
+    return (
+      <section className="relative w-full overflow-hidden bg-zinc-950">
+        <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[21/9] max-h-[750px] bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 animate-pulse flex items-center justify-center">
+          <img
+            src="/assets/sculpt.png"
+            alt="Loading Sculpt N Shine"
+            className="h-10 sm:h-14 opacity-20 object-contain animate-pulse"
+          />
+        </div>
+      </section>
+    );
+  }
+
+  if (slides.length === 0) {
+    return null;
+  }
 
   return (
     <section className="relative w-full overflow-hidden bg-black group">

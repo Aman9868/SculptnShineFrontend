@@ -114,8 +114,12 @@ export default function CartPage() {
                         <div className="col-span-1 sm:col-span-6 flex items-center gap-4">
                           <div className="w-20 h-20 sm:w-24 sm:h-24 bg-cream-100 rounded-md overflow-hidden shrink-0 border border-cream-200">
                             <img 
-                              src={product.images?.[0] || '/product-placeholder.png'} 
+                              src={product.images?.[0] || '/assets/product-placeholder.png'} 
                               alt={product.title} 
+                              onError={(e: any) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/assets/product-placeholder.png';
+                              }}
                               className="w-full h-full object-cover"
                             />
                           </div>

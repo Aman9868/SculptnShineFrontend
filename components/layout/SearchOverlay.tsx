@@ -132,12 +132,15 @@ export const SearchOverlay: React.FC = () => {
                 onClick={closeSearch}
                 className={`flex items-center gap-4 py-3 group hover:bg-cream-50 transition-colors -mx-4 px-4 sm:-mx-5 sm:px-5 ${idx !== suggestions.length - 1 ? 'border-b border-cream-100' : ''}`}
               >
-                <div className="relative w-14 h-14 bg-cream-100 rounded-lg overflow-hidden shrink-0">
-                  <Image
-                    src={product.images[0] || '/assets/default-product.png'}
+                <div className="relative w-14 h-14 bg-cream-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                  <img
+                    src={product.images && product.images.length > 0 && product.images[0] ? product.images[0] : '/assets/product-placeholder.png'}
                     alt={product.title}
-                    fill
-                    className="object-contain p-1"
+                    onError={(e: any) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/assets/product-placeholder.png';
+                    }}
+                    className="w-full h-full object-contain p-1"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

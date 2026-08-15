@@ -17,8 +17,8 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images, productN
 
   const mainImageRef = useRef<HTMLDivElement>(null);
 
-  const displayImages = images && images.length > 0 ? images : ['/assets/images/placeholder.jpg'];
-  const activeImgSrc = displayImages[activeImage];
+  const displayImages = images && images.length > 0 && images[0] ? images : ['/assets/product-placeholder.png'];
+  const activeImgSrc = displayImages[activeImage] || '/assets/product-placeholder.png';
 
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -92,6 +92,10 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images, productN
             <img 
               src={img} 
               alt={`${productName} thumbnail ${idx + 1}`} 
+              onError={(e: any) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/assets/product-placeholder.png';
+              }}
               className="object-contain w-full h-full" 
             />
           </button>
@@ -130,6 +134,10 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images, productN
         <img 
           src={activeImgSrc} 
           alt={productName} 
+          onError={(e: any) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/assets/product-placeholder.png';
+          }}
           className="object-contain max-h-full max-w-full mix-blend-multiply transition-opacity duration-200 pointer-events-none" 
         />
 

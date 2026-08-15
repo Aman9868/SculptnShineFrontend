@@ -82,10 +82,10 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-cream-100/95 backdrop-blur-md border-b border-cream-300 shadow-sm transition-all">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 md:h-22 flex items-center justify-between gap-3 sm:gap-6">
 
         {/* Mobile menu toggle & Logo */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={toggleMobileMenu}
             className="p-1.5 sm:p-2 text-gray-700 hover:text-gold-700 lg:hidden focus:outline-none rounded-lg hover:bg-cream-200"
@@ -96,11 +96,11 @@ export const Header: React.FC = () => {
 
           <Link href="/" className="flex items-center group flex-shrink-0 transition-opacity hover:opacity-90">
             {/* Sculpt Logo */}
-            <div className="relative w-36 sm:w-48 md:w-56 lg:w-[260px] h-10 sm:h-14 flex items-center justify-start">
+            <div className="flex items-center justify-start">
               <img
-                src="/assets/logo.svg"
-                alt="Sculpt Logo"
-                className="w-full h-full object-contain object-left mix-blend-multiply"
+                src="/assets/sculpt.png"
+                alt="Sculpt N Shine Logo"
+                className="h-9 sm:h-13 md:h-15 lg:h-16 w-auto max-w-[200px] sm:max-w-[300px] md:max-w-[360px] lg:max-w-[420px] object-contain object-left"
               />
             </div>
           </Link>

@@ -17,10 +17,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
-  // Use first image if available, else a placeholder
-  const imageUrl = product.images && product.images.length > 0 
+  // Use first image if available, else brand logo placeholder
+  const imageUrl = product.images && product.images.length > 0 && product.images[0]
     ? product.images[0] 
-    : '/assets/images/category-placeholder.jpg';
+    : '/assets/product-placeholder.png';
     
   // Calculate discount percentage
   const discountPercent = product.discountPercentage || 0;
@@ -69,7 +69,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
               alt={product.title}
               loading="lazy"
               onError={(e: any) => {
-                e.currentTarget.src = 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=600&q=80';
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/assets/product-placeholder.png';
               }}
               className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform duration-500"
             />
@@ -78,7 +79,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
           {/* Content */}
           <div className={`p-3 sm:p-4 flex flex-col flex-grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
             <p className="text-[10px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1 line-clamp-1 uppercase tracking-wider">
-              {product.brand?.name || 'Sculpt & Shine'}
+              {product.brand?.name || 'Sculpt N Shine'}
             </p>
             <h3 className={`text-xs sm:text-sm font-semibold text-brandDark mb-1 sm:mb-2 transition-colors group-hover:text-gold-600 ${viewMode === 'list' ? 'line-clamp-2 text-xs sm:text-base mb-1.5 sm:mb-4' : 'line-clamp-2 min-h-[36px] sm:min-h-[40px] leading-snug'}`}>
               {product.title}
