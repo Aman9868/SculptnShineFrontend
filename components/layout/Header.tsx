@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, Search, ShoppingBag, Heart, User, LogOut } from 'lucide-react';
+import { Menu, X, Search, ShoppingBag, Heart, User, LogOut, Trash2, AlertTriangle } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchOverlay } from './SearchOverlay';
@@ -12,8 +12,10 @@ import { NotificationBell } from './NotificationBell';
 
 export const Header: React.FC = () => {
   const router = useRouter();
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, deleteAccount, isLoading } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const {
     cartTotalCount,
@@ -31,6 +33,20 @@ export const Header: React.FC = () => {
     await logout();
     setShowUserMenu(false);
     router.push('/login');
+  };
+
+  const handleDeleteProfile = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      setShowDeleteModal(false);
+      setShowUserMenu(false);
+      router.push('/');
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Get user initials for avatar
@@ -197,10 +213,21 @@ export const Header: React.FC = () => {
                   
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-cream-100 transition-colors border-b border-cream-100"
                   >
                     <LogOut size={16} />
                     Logout
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowDeleteModal(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+                  >
+                    <Trash2 size={16} />
+                    Delete Profile
                   </button>
                 </div>
               )}
@@ -218,6 +245,53 @@ export const Header: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Delete Profile Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-red-100 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-3 bg-red-100 rounded-full">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Delete Profile & Account?</h3>
+                <p className="text-xs text-gray-500">This action is permanent and cannot be reversed.</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Are you sure you want to permanently delete your account, <strong>{user?.firstName}</strong>? All your personal details, shipping addresses, wishlist, and shopping cart will be wiped.
+            </p>
+
+            <div className="flex gap-3 justify-end pt-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProfile}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>Deleting Profile...</>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Search input */}
       <div className="md:hidden px-4 pb-3 relative">

@@ -189,4 +189,20 @@ export const authAPI = {
 
     return response.json();
   },
+
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete account');
+    }
+
+    return response.json();
+  },
 };

@@ -1,18 +1,21 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { withAuth } from '@/lib/withAuth';
 import { authAPI } from '@/lib/api/auth';
-import { User, Phone, Camera, Lock } from 'lucide-react';
+import { User, Phone, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import ChangePasswordTab from '@/components/profile/ChangePasswordTab';
 
 function ProfileSettingsPage() {
-  const { user, updateUser } = useAuth();
+  const router = useRouter();
+  const { user, updateUser, deleteAccount } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -23,7 +26,6 @@ function ProfileSettingsPage() {
     bio: user?.bio || '',
   });
   const [isSaving, setIsSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (user && !isEditing) {
@@ -38,32 +40,6 @@ function ProfileSettingsPage() {
       });
     }
   }, [user, isEditing]);
-
-  const getUserInitials = () => {
-    if (!user) return 'U';
-    return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U';
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB');
-        return;
-      }
-
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -118,6 +94,19 @@ function ProfileSettingsPage() {
       gender: user?.gender || '',
       bio: user?.bio || '',
     });
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      setShowDeleteModal(false);
+      router.push('/');
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -256,12 +245,14 @@ function ProfileSettingsPage() {
           {isEditing && (
             <div className="flex gap-4 justify-end pt-4">
               <button
+                type="button"
                 onClick={handleCancel}
                 className="px-8 py-2.5 border-2 border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={isSaving}
                 className="px-8 py-2.5 bg-[#d87c1c] hover:bg-[#c26e17] disabled:opacity-50 text-white font-bold rounded-lg transition-colors"
@@ -272,6 +263,81 @@ function ProfileSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Danger Zone */}
+      <div className="bg-white rounded-xl shadow-sm border border-red-100 p-8">
+        <div className="flex items-center gap-3 mb-2 text-red-600">
+          <Trash2 size={24} />
+          <h2 className="text-xl font-bold text-gray-900">
+            Danger Zone
+          </h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-6">
+          Permanently delete your account, saved addresses, wishlist, and profile details.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-red-50/50 rounded-xl border border-red-100">
+          <div>
+            <p className="font-bold text-sm text-gray-900">Delete Account & Profile</p>
+            <p className="text-xs text-gray-500">Once deleted, your account cannot be recovered.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition-colors shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <Trash2 size={14} />
+            Delete Profile
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-red-100 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-3 bg-red-100 rounded-full">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Delete Profile & Account?</h3>
+                <p className="text-xs text-gray-500">This action is permanent and cannot be reversed.</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Are you sure you want to permanently delete your account, <strong>{user?.firstName}</strong>? All your personal details, shipping addresses, wishlist, and shopping cart will be wiped.
+            </p>
+
+            <div className="flex gap-3 justify-end pt-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>Deleting Profile...</>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
