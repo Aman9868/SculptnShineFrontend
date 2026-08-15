@@ -8,7 +8,7 @@ declare const process: {
   };
 };
 
-export const getMediaUrl = (url?: string | null, fallback = '/assets/hero_bundle.png'): string => {
+export const getMediaUrl = (url?: string | null, fallback = '/assets/product-placeholder.png'): string => {
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return fallback;
   }

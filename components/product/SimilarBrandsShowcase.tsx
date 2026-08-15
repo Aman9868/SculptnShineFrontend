@@ -49,7 +49,7 @@ const BRAND_HEROES: Record<string, { banner: string; tagline: string }> = {
   },
 };
 
-const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=300&q=80';
+const FALLBACK_PRODUCT_IMAGE = '/assets/product-placeholder.png';
 
 export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
   currentProduct,
@@ -65,7 +65,7 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
     const brandsMap: Record<string, Product> = {};
 
     for (const p of allProducts) {
-      const bName = p.brand?.name || (p as any).brandName || 'Sculpt & Shine';
+      const bName = p.brand?.name || (p as any).brandName || 'Sculpt N Shine';
       if (!brandsMap[bName] && p.id !== currentProduct.id) {
         brandsMap[bName] = p;
       }

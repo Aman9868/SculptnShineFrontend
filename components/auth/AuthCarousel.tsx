@@ -7,7 +7,7 @@ import { getMediaUrl } from '@/lib/media';
 
 const IMAGES = [
   {
-    src: '/assets/hero_bundle.png',
+    src: '/assets/salon_banner.png',
     title: 'Welcome Back.',
     subtitle: 'Continue your journey towards a healthier, stronger, and more radiant you.'
   },

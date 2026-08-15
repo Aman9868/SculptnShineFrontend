@@ -55,13 +55,12 @@ export const MobileMenu: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           {/* Header inside drawer */}
           <div className="p-4 border-b border-cream-300 flex items-center justify-between bg-cream-100 sticky top-0 z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gold-600/20 border border-gold-600 flex items-center justify-center">
-                <span className="font-serif font-bold text-gold-700 text-lg">S</span>
-              </div>
-              <span className="font-serif font-bold text-lg text-gray-900">
-                SCULPT N SHINE
-              </span>
+            <div className="flex items-center">
+              <img
+                src="/assets/sculpt.png"
+                alt="Sculpt N Shine Logo"
+                className="h-10 w-auto object-contain"
+              />
             </div>
             <button
               onClick={closeMobileMenu}

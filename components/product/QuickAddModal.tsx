@@ -80,7 +80,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
   const activeExpiryDate = currentVariant?.expiryDate || product.expiryDate;
 
   const imageUrl = (currentVariant?.images && currentVariant.images.length > 0 ? currentVariant.images[0] : null) ||
-    (product.images && product.images.length > 0 ? product.images[0] : '/assets/images/category-placeholder.jpg');
+    (product.images && product.images.length > 0 && product.images[0] ? product.images[0] : '/assets/product-placeholder.png');
 
   const handleAddToCart = async () => {
     if (isActionDisabled || !currentVariant && hasVariants) return;
@@ -109,12 +109,11 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
       {/* Modal Dialog */}
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 z-10 border border-gray-100 animate-in zoom-in-95 duration-200 overflow-hidden">
         {/* Close Button */}
-        <button
+        <button 
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-          aria-label="Close modal"
+          className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         {/* Product Info Header */}
@@ -123,12 +122,16 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
             <img 
               src={imageUrl} 
               alt={product.title}
+              onError={(e: any) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/assets/product-placeholder.png';
+              }}
               className="max-h-full max-w-full object-contain mix-blend-multiply"
             />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold text-gold-700 uppercase tracking-wider mb-0.5">
-              {product.brand?.name || 'Sculpt & Shine'}
+              {product.brand?.name || 'Sculpt N Shine'}
             </p>
             <h3 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 leading-snug">
               {product.title}

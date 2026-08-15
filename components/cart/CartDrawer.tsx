@@ -174,12 +174,12 @@ export const CartDrawer: React.FC = () => {
                   product.thumbnail ||
                   (product.images && product.images.length > 0 ? product.images[0] : null) ||
                   product.image ||
-                  '/assets/images/category-placeholder.jpg';
+                  '/assets/product-placeholder.png';
 
                 const title = product.title || product.name || 'Product';
                 const subtitle = variant 
                   ? [variant.flavor, variant.weight].filter(Boolean).join(' • ')
-                  : (product.category?.name || product.category || 'Sculpt & Shine');
+                  : (product.category?.name || product.category || 'Sculpt N Shine');
 
                 const unitPrice = variant 
                   ? (variant.discountPercentage > 0 ? variant.unitPrice * (1 - variant.discountPercentage / 100) : variant.unitPrice)
@@ -190,8 +190,12 @@ export const CartDrawer: React.FC = () => {
                     {/* Thumbnail */}
                     <div className="relative w-20 h-20 rounded-xl bg-cream-100 border border-cream-200 shrink-0 overflow-hidden p-1 flex items-center justify-center">
                       <img
-                        src={imgSrc || '/assets/images/category-placeholder.jpg'}
+                        src={imgSrc || '/assets/product-placeholder.png'}
                         alt={title}
+                        onError={(e: any) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/assets/product-placeholder.png';
+                        }}
                         className="w-full h-full object-contain mix-blend-multiply"
                       />
                     </div>

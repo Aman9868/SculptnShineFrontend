@@ -538,7 +538,15 @@ export default function CheckoutPage() {
                         }
                         return (
                           <div key={item.id} className="flex gap-4 items-center border border-gray-100 p-3 rounded-lg">
-                            <img src={item.product.images?.[0] || '/product-placeholder.png'} alt={item.product.title} className="w-16 h-16 object-cover rounded bg-gray-50" />
+                            <img 
+                              src={item.product.images?.[0] || '/assets/product-placeholder.png'} 
+                              alt={item.product.title} 
+                              onError={(e: any) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/assets/product-placeholder.png';
+                              }}
+                              className="w-16 h-16 object-cover rounded bg-gray-50" 
+                            />
                             <div className="flex-1">
                               <h4 className="text-sm font-bold text-gray-900 line-clamp-1">{item.product.title}</h4>
                               {item.variant && <p className="text-xs text-gray-500">{item.variant.flavor} | {item.variant.weight}</p>}

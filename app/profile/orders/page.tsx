@@ -342,13 +342,15 @@ export default function MyOrdersPage() {
                           <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                             <div className="flex items-center gap-4 flex-1">
                               <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-md overflow-hidden p-2">
-                                {item.product.images && item.product.images.length > 0 ? (
-                                  <img src={item.product.images[0]} alt={item.product.title} className="w-full h-full object-contain mix-blend-multiply" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                    <Package size={24} />
-                                  </div>
-                                )}
+                                <img 
+                                  src={item.product?.images && item.product.images.length > 0 && item.product.images[0] ? item.product.images[0] : '/assets/product-placeholder.png'} 
+                                  alt={item.product?.title || 'Product'} 
+                                  onError={(e: any) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = '/assets/product-placeholder.png';
+                                  }}
+                                  className="w-full h-full object-contain mix-blend-multiply" 
+                                />
                               </div>
                               
                               <div className="flex-1">
