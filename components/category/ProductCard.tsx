@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
       <div className={`group relative bg-white border border-gray-100 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-luxury-hover hover:border-gold-200 ${viewMode === 'list' ? 'flex flex-row min-h-[130px] sm:h-48' : 'flex flex-col h-full'}`}>
         <Link href={`/product/${product.id}`} className={`cursor-pointer ${viewMode === 'list' ? 'flex flex-row w-full' : 'flex flex-col flex-grow'}`}>
           {/* Badges */}
-          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-10 flex flex-col gap-2">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-10 flex flex-col gap-1 items-start">
             {discountPercent > 0 && (
               <span className="bg-orange-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 uppercase rounded-sm tracking-wide shadow-sm">
                 {discountPercent}% OFF

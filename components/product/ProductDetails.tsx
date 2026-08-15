@@ -8,6 +8,7 @@ import { cartAPI } from '@/lib/api/cart';
 import { shippingAPI } from '@/lib/api/shipping';
 import { useStore } from '@/context/StoreContext';
 import { useRouter } from 'next/navigation';
+import { ProductVoucherBadge } from './ProductVoucherBadge';
 
 interface ProductDetailsProps {
   product: Product;
@@ -284,7 +285,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
       })()}
 
       {/* Pricing */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex items-end gap-3 mb-1">
           <span className="text-4xl font-bold text-brandDark">₹{price.toLocaleString()}</span>
           {originalPrice && originalPrice > price && (
@@ -295,6 +296,16 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
           )}
         </div>
         <p className="text-xs text-gray-400">(Inclusive of all taxes)</p>
+      </div>
+
+      {/* Amazon-Style Clip-able Voucher Widget */}
+      <div className="mb-6">
+        <ProductVoucherBadge
+          productId={product.id}
+          categoryId={product.categoryId}
+          brandId={product.brandId || (product.brand as any)?.id}
+          variant="full"
+        />
       </div>
 
       {/* Flavors */}

@@ -11,6 +11,7 @@ export const checkoutAPI = {
     shippingState: string;
     shippingPincode: string;
     notes?: string;
+    couponCode?: string;
   }) {
     const response = await apiFetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
