@@ -8,6 +8,7 @@ import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchOverlay } from './SearchOverlay';
 import { NotificationBell } from './NotificationBell';
+import { getMediaUrl } from '@/lib/media';
 
 
 export const Header: React.FC = () => {
@@ -178,15 +179,19 @@ export const Header: React.FC = () => {
                 {/* Avatar */}
                 {user.profileImage ? (
                   <img
-                    src={user.profileImage}
+                    src={getMediaUrl(user.profileImage, '/assets/sculpt.png')}
                     alt={user.firstName}
+                    onError={(e: any) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback');
+                      if (fallback) fallback.classList.remove('hidden');
+                    }}
                     className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover shadow-md border border-cream-200"
                   />
-                ) : (
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-gold-600 to-gold-700 flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-md">
-                    {getUserInitials()}
-                  </div>
-                )}
+                ) : null}
+                <div className={`avatar-fallback w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-gold-600 to-gold-700 flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-md ${user.profileImage ? 'hidden' : ''}`}>
+                  {getUserInitials()}
+                </div>
                 <span className="hidden sm:inline text-xs font-semibold text-gray-700 truncate max-w-[100px]">
                   {user.firstName}
                 </span>

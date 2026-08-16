@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -17,20 +17,28 @@ import {
   LayoutGrid, 
   Trash2, 
   ChevronRight, 
-  AlertTriangle 
+  AlertTriangle,
+  Camera,
+  Loader2
 } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/hooks/useAuth';
+import { authAPI } from '@/lib/api/auth';
+import { apiFetch } from '@/lib/api/apiFetch';
 import { categoryAPI, Category } from '@/lib/api/category';
+import { getMediaUrl } from '@/lib/media';
+import { toast } from 'react-toastify';
 
 export const MobileMenu: React.FC = () => {
   const router = useRouter();
   const { isMobileMenuOpen, closeMobileMenu, cartTotalCount, wishlist, openCart } = useStore();
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, updateUser } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -61,6 +69,59 @@ export const MobileMenu: React.FC = () => {
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U';
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    // Validate size (< 5MB) and type
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const uploadRes = await apiFetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadData.success || !uploadData.data?.url) {
+        throw new Error(uploadData.message || 'Failed to upload photo');
+      }
+
+      const uploadedUrl = uploadData.data.url;
+
+      // Update user profile in backend
+      const updateRes = await authAPI.updateProfile(user.id, {
+        profileImage: uploadedUrl,
+      });
+
+      if (updateRes.data) {
+        updateUser(updateRes.data);
+      } else {
+        updateUser({ ...user, profileImage: uploadedUrl });
+      }
+
+      toast.success('Profile photo updated successfully!');
+    } catch (err: any) {
+      console.error('Failed to upload profile photo:', err);
+      toast.error(err.message || 'Failed to update profile photo');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleLogout = () => {
@@ -122,24 +183,79 @@ export const MobileMenu: React.FC = () => {
             <div className="p-4 bg-white/70">
               {user ? (
                 <div className="space-y-3">
-                  {/* User Profile Card */}
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-cream-100 to-cream-200/60 rounded-2xl border border-cream-300">
-                    {user.profileImage ? (
-                      <img
-                        src={user.profileImage}
-                        alt={user.firstName}
-                        className="w-11 h-11 rounded-full object-cover shadow-sm border border-gold-400"
-                      />
-                    ) : (
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-gold-600 to-gold-700 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0">
-                        {getUserInitials()}
+                  {/* Hidden File Input for Avatar Upload */}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleImageFileChange} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
+
+                  {/* User Profile Card with Change Photo Option */}
+                  <div className="p-3.5 bg-gradient-to-r from-cream-100 to-cream-200/60 rounded-2xl border border-cream-300 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar with Camera Overlay */}
+                      <div className="relative shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                          className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-gold-500 shadow-sm flex items-center justify-center bg-gradient-to-br from-gold-600 to-gold-700 text-white font-bold text-base cursor-pointer hover:opacity-90 transition-opacity group"
+                          title="Click to change profile picture"
+                        >
+                          {isUploadingImage ? (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                              <Loader2 size={18} className="animate-spin text-white" />
+                            </div>
+                          ) : user.profileImage ? (
+                            <img
+                              src={getMediaUrl(user.profileImage, '/assets/sculpt.png')}
+                              alt={user.firstName}
+                              onError={(e: any) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{getUserInitials()}</span>
+                          )}
+
+                          {/* Hover camera badge */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Camera size={16} className="text-white" />
+                          </div>
+                        </button>
+
+                        {/* Floating Camera Icon Badge */}
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                          className="absolute -bottom-1 -right-1 w-5 h-5 bg-white border border-gold-500 rounded-full flex items-center justify-center text-gold-700 shadow-xs hover:bg-gold-50 cursor-pointer transition-transform hover:scale-110"
+                          title="Change Profile Photo"
+                          aria-label="Upload photo"
+                        >
+                          <Camera size={10} />
+                        </button>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">
-                        {user.firstName} {user.lastName || ''}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+
+                      {/* User Text Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">
+                          {user.firstName} {user.lastName || ''}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate mb-1">{user.email}</p>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                          className="text-[11px] font-bold text-gold-700 hover:text-gold-800 hover:underline flex items-center gap-1 cursor-pointer transition-colors bg-transparent border-none p-0"
+                        >
+                          <Camera size={11} />
+                          <span>{isUploadingImage ? 'Uploading...' : 'Change Photo'}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
