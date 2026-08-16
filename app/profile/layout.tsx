@@ -1,14 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
-import { User, Lock, MapPin, ShoppingBag, Heart, Bell, LogOut, Headset } from 'lucide-react';
+import { User, Lock, MapPin, ShoppingBag, Heart, Bell, LogOut, Headset, Camera, Loader2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { authAPI } from '@/lib/api/auth';
+import { apiFetch } from '@/lib/api/apiFetch';
+import { getMediaUrl } from '@/lib/media';
+import { toast } from 'react-toastify';
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigation = [
     { name: 'Profile Information', href: '/profile/settings', icon: User },
@@ -23,6 +29,57 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U';
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const uploadRes = await apiFetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadData.success || !uploadData.data?.url) {
+        throw new Error(uploadData.message || 'Failed to upload photo');
+      }
+
+      const uploadedUrl = uploadData.data.url;
+
+      const updateRes = await authAPI.updateProfile(user.id, {
+        profileImage: uploadedUrl,
+      });
+
+      if (updateRes.data) {
+        updateUser(updateRes.data);
+      } else {
+        updateUser({ ...user, profileImage: uploadedUrl });
+      }
+
+      toast.success('Profile photo updated successfully!');
+    } catch (err: any) {
+      console.error('Failed to update photo:', err);
+      toast.error(err.message || 'Failed to update profile photo');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -54,19 +111,52 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               
               {/* User Info block */}
               <div className="flex flex-col items-center mb-6 relative">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleImageChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+
                 <div className="relative mb-4">
-                  <div className="w-24 h-24 rounded-full bg-[#d87c1c] text-white flex items-center justify-center text-3xl font-bold shadow-sm overflow-hidden">
-                    {user?.profileImage ? (
-                      <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-24 h-24 rounded-full bg-[#d87c1c] text-white flex items-center justify-center text-3xl font-bold shadow-sm overflow-hidden relative cursor-pointer group"
+                    title="Change Profile Picture"
+                  >
+                    {isUploading ? (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <Loader2 size={24} className="animate-spin text-white" />
+                      </div>
+                    ) : user?.profileImage ? (
+                      <img 
+                        src={getMediaUrl(user.profileImage, '/assets/sculpt.png')} 
+                        alt="Profile" 
+                        onError={(e: any) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
                       getUserInitials()
                     )}
-                  </div>
+
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Camera size={22} className="text-white" />
+                    </div>
+                  </button>
+
                   <button 
-                    className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-[#d87c1c] shadow-sm transition-colors"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-[#d87c1c] shadow-sm transition-colors cursor-pointer"
                     title="Change Profile Picture"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                    <Camera size={14} />
                   </button>
                 </div>
                 <h2 className="text-xl font-serif font-bold text-gray-900 text-center">
