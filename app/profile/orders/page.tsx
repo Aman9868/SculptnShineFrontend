@@ -80,28 +80,41 @@ export default function MyOrdersPage() {
     return false;
   });
 
-  const getStatusStepIndex = (status: string) => {
+  const getStatusStepIndex = (status?: string) => {
+    if (!status) return 0;
     // Map initial statuses to PENDING in the timeline
     if (status === 'PENDING_PAYMENT' || status === 'PAID') return 0;
     return ORDER_STATUS_STEPS.indexOf(status);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return '';
+    }
   };
   
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const formatTime = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    } catch {
+      return '';
+    }
   };
 
   // Stats for the sidebar
   const totalOrders = orders.length;
-  const inProgress = orders.filter(o => ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(o.status)).length;
-  const delivered = orders.filter(o => o.status === 'DELIVERED').length;
-  const cancelled = orders.filter(o => o.status === 'CANCELLED').length;
-  const totalSpent = orders.reduce((acc, o) => o.status !== 'CANCELLED' ? acc + o.totalAmount : acc, 0);
+  const inProgress = orders.filter(o => ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(o?.status)).length;
+  const delivered = orders.filter(o => o?.status === 'DELIVERED').length;
+  const cancelled = orders.filter(o => o?.status === 'CANCELLED').length;
+  const totalSpent = orders.reduce((acc, o) => o?.status !== 'CANCELLED' ? acc + (Number(o?.totalAmount) || 0) : acc, 0);
 
   // Function to handle invoice download
   const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
@@ -198,9 +211,10 @@ export default function MyOrdersPage() {
           ) : (
             <div className="space-y-6">
               {filteredOrders.map((order) => {
-                const currentStepIndex = getStatusStepIndex(order.status);
-                const isCancelled = order.status === 'CANCELLED';
-                const isDelivered = order.status === 'DELIVERED';
+                const currentStepIndex = getStatusStepIndex(order?.status);
+                const isCancelled = order?.status === 'CANCELLED';
+                const isDelivered = order?.status === 'DELIVERED';
+                const orderTotal = Number(order?.totalAmount) || 0;
 
                 return (
                   <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -210,19 +224,19 @@ export default function MyOrdersPage() {
                       <div className="flex gap-8">
                         <div>
                           <span className="block mb-1 font-semibold uppercase">Order Placed</span>
-                          <span className="text-gray-900">{formatDate(order.createdAt)}</span>
+                          <span className="text-gray-900">{formatDate(order?.createdAt)}</span>
                         </div>
                         <div>
                           <span className="block mb-1 font-semibold uppercase">Total</span>
-                          <span className="text-gray-900">₹{order.totalAmount.toLocaleString('en-IN')}</span>
+                          <span className="text-gray-900">₹{orderTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                         </div>
                         <div>
                           <span className="block mb-1 font-semibold uppercase">Ship To</span>
-                          <span className="text-gray-900">{order.shippingName}</span>
+                          <span className="text-gray-900">{order?.shippingName || 'Customer'}</span>
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end">
-                        <span className="block mb-1 font-semibold uppercase text-gray-900">Order # {order.orderNumber}</span>
+                        <span className="block mb-1 font-semibold uppercase text-gray-900">Order # {order?.orderNumber}</span>
                         <button 
                           onClick={() => handleDownloadInvoice(order.id, order.orderNumber)}
                           className="text-[#d87c1c] hover:text-[#b36310] hover:underline font-medium inline-flex items-center gap-1 mt-1 text-sm bg-transparent border-none cursor-pointer"
@@ -238,9 +252,9 @@ export default function MyOrdersPage() {
                         isCancelled ? 'text-red-600' : isDelivered ? 'text-green-600' : 'text-orange-500'
                       }`}>
                         {isCancelled ? <XCircle size={20} /> : isDelivered ? <CheckCircle size={20} /> : <Clock size={20} />}
-                        {isCancelled ? `Cancelled on ${formatDate(order.updatedAt)}` 
-                          : isDelivered ? `Delivered on ${formatDate(order.updatedAt)}` 
-                          : `Arriving soon (${order.status.replace(/_/g, ' ')})`}
+                        {isCancelled ? `Cancelled on ${formatDate(order?.updatedAt)}` 
+                          : isDelivered ? `Delivered on ${formatDate(order?.updatedAt)}` 
+                          : `Arriving soon (${(order?.status || 'PROCESSING').replace(/_/g, ' ')})`}
                       </h3>
                       
                       {/* Timeline (Only show if not cancelled) */}
@@ -259,7 +273,7 @@ export default function MyOrdersPage() {
                                 const isCompleted = idx <= currentStepIndex;
                                 const isActive = idx === currentStepIndex;
                                 // Find history for this step if it exists to show exact date
-                                const historyEntry = order.statusHistory?.find((h: any) => h.status === step || (step === 'PENDING' && (h.status === 'PENDING_PAYMENT' || h.status === 'PAID')));
+                                const historyEntry = order?.statusHistory?.find((h: any) => h?.status === step || (step === 'PENDING' && (h?.status === 'PENDING_PAYMENT' || h?.status === 'PAID')));
                                 
                                 return (
                                   <div key={step} className="flex flex-col items-center">
@@ -278,7 +292,7 @@ export default function MyOrdersPage() {
                                       {isCompleted && historyEntry ? (
                                         <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(historyEntry.createdAt)}</span>
                                       ) : idx === 0 ? (
-                                        <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order.createdAt)}</span>
+                                        <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order?.createdAt)}</span>
                                       ) : null}
                                     </div>
                                   </div>
@@ -307,7 +321,7 @@ export default function MyOrdersPage() {
                                 </div>
                                 <div className="mt-2 text-center">
                                   <span className="block text-xs font-medium text-gray-900">Order Placed</span>
-                                  <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order.createdAt)}</span>
+                                  <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order?.createdAt)}</span>
                                 </div>
                               </div>
                               <div className="flex flex-col items-center">
@@ -316,7 +330,7 @@ export default function MyOrdersPage() {
                                 </div>
                                 <div className="mt-2 text-center">
                                   <span className="block text-xs font-medium text-red-600 font-bold">Cancelled</span>
-                                  <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order.updatedAt)}</span>
+                                  <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order?.updatedAt)}</span>
                                 </div>
                               </div>
                               <div className="flex flex-col items-center">
@@ -338,62 +352,91 @@ export default function MyOrdersPage() {
 
                       {/* Items */}
                       <div className="space-y-4">
-                        {order.items.map((item: any) => (
-                          <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                            <div className="flex items-center gap-4 flex-1">
-                              <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-md overflow-hidden p-2">
-                                <img 
-                                  src={item.product?.images && item.product.images.length > 0 && item.product.images[0] ? item.product.images[0] : '/assets/product-placeholder.png'} 
-                                  alt={item.product?.title || 'Product'} 
-                                  onError={(e: any) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = '/assets/product-placeholder.png';
-                                  }}
-                                  className="w-full h-full object-contain mix-blend-multiply" 
-                                />
-                              </div>
-                              
-                              <div className="flex-1">
-                                <Link href={`/product/${item.product.id}`} className="font-semibold text-gray-900 hover:text-orange-600 line-clamp-1 mb-1">
-                                  {item.product.title}
-                                </Link>
+                        {(order?.items || []).map((item: any) => {
+                          const productTitle = item.product?.title || item.productName || 'Product';
+                          const productImage = (item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0 && item.product.images[0])
+                            ? item.product.images[0]
+                            : '/assets/product-placeholder.png';
+                          const productId = item.product?.id || item.productId;
+                          const productUrl = productId ? `/product/${productId}` : null;
+                          const quantity = item.quantity || 1;
+                          const unitPrice = Number(item.unitPrice) || 0;
+                          const discountPct = Number(item.discountPercentage) || 0;
+                          const itemTotal = unitPrice * (1 - discountPct / 100) * quantity;
+
+                          return (
+                            <div key={item.id || Math.random()} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-md overflow-hidden p-2">
+                                  <img 
+                                    src={productImage} 
+                                    alt={productTitle} 
+                                    onError={(e: any) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src = '/assets/product-placeholder.png';
+                                    }}
+                                    className="w-full h-full object-contain mix-blend-multiply" 
+                                  />
+                                </div>
                                 
-                                {item.variantId && (
-                                  <p className="text-xs text-gray-500 mb-1">Variant selected</p>
-                                )}
-                                
-                                <div className="flex items-center gap-4 mt-2">
-                                  <span className="text-xs font-medium text-gray-600">
-                                    Qty: {item.quantity}
-                                  </span>
-                                  <span className="text-sm font-bold text-gray-900">
-                                    ₹{(item.unitPrice * (1 - (item.discountPercentage || 0) / 100) * item.quantity).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                                  </span>
+                                <div className="flex-1">
+                                  {productUrl ? (
+                                    <Link href={productUrl} className="font-semibold text-gray-900 hover:text-orange-600 line-clamp-1 mb-1">
+                                      {productTitle}
+                                    </Link>
+                                  ) : (
+                                    <span className="font-semibold text-gray-900 line-clamp-1 mb-1">
+                                      {productTitle}
+                                    </span>
+                                  )}
+                                  
+                                  {item.variantId && (
+                                    <p className="text-xs text-gray-500 mb-1">Variant selected</p>
+                                  )}
+                                  
+                                  <div className="flex items-center gap-4 mt-2">
+                                    <span className="text-xs font-medium text-gray-600">
+                                      Qty: {quantity}
+                                    </span>
+                                    <span className="text-sm font-bold text-gray-900">
+                                      ₹{itemTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
+                              
+                              <div className="flex sm:flex-row items-center gap-3 mt-2 sm:mt-0">
+                                <button 
+                                  onClick={() => setSelectedOrderTracking(order)}
+                                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                  <MapPin size={16} className="text-gray-400" />
+                                  Track Package
+                                </button>
+                                {productUrl ? (
+                                  <Link 
+                                    href={productUrl}
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <RefreshCw size={16} />
+                                    Buy it again
+                                  </Link>
+                                ) : (
+                                  <button 
+                                    disabled
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
+                                  >
+                                    <RefreshCw size={16} />
+                                    Buy it again
+                                  </button>
+                                )}
+                                <button className="hidden sm:block p-2 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
+                                  <ChevronDown size={16} />
+                                </button>
+                              </div>
                             </div>
-                            
-                            <div className="flex sm:flex-row items-center gap-3 mt-2 sm:mt-0">
-                              <button 
-                                onClick={() => setSelectedOrderTracking(order)}
-                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                              >
-                                <MapPin size={16} className="text-gray-400" />
-                                Track Package
-                              </button>
-                              <Link 
-                                href={`/product/${item.product.id}`}
-                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                              >
-                                <RefreshCw size={16} className="text-gray-400" />
-                                Buy it again
-                              </Link>
-                              <button className="hidden sm:block p-2 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
-                                <ChevronDown size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
