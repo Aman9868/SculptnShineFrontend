@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { orderAPI } from '@/lib/api/order';
 import { Search, Filter, Package, Truck, CheckCircle, Clock, XCircle, FileText, ChevronDown, MapPin, RefreshCw, X } from 'lucide-react';
 import io from 'socket.io-client';
+import { getMediaUrl } from '@/lib/media';
 
 const ORDER_STATUS_STEPS = ['PENDING', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
 
@@ -343,7 +344,10 @@ export default function MyOrdersPage() {
                             <div className="flex items-center gap-4 flex-1">
                               <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-md overflow-hidden p-2">
                                 <img 
-                                  src={item.product?.images && item.product.images.length > 0 && item.product.images[0] ? item.product.images[0] : '/assets/product-placeholder.png'} 
+                                  src={getMediaUrl(
+                                    item.product?.images && item.product.images.length > 0 && item.product.images[0] ? item.product.images[0] : null,
+                                    '/assets/product-placeholder.png'
+                                  )} 
                                   alt={item.product?.title || 'Product'} 
                                   onError={(e: any) => {
                                     e.currentTarget.onerror = null;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Star, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { Product } from '@/lib/api/product';
+import { getMediaUrl } from '@/lib/media';
 
 interface SimilarBrandsShowcaseProps {
   currentProduct: Product;
@@ -18,38 +19,9 @@ interface BrandShowcaseItem {
   product: Product;
 }
 
-const BRAND_HEROES: Record<string, { banner: string; tagline: string }> = {
-  'Dymatize': {
-    banner: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80',
-    tagline: 'ISO100 Hydrolyzed 100% Whey Isolate & Athletic Fuel',
-  },
-  'Optimum Nutrition': {
-    banner: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80',
-    tagline: "The World's #1 Gold Standard Whey Protein",
-  },
-  'One Science Nutrition': {
-    banner: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-    tagline: 'Grass-Fed European Whey & Gourmet Formulations',
-  },
-  'BSN Nutrition': {
-    banner: 'https://images.unsplash.com/photo-1593095940071-007d80173876?auto=format&fit=crop&w=800&q=80',
-    tagline: 'Syntha-6 Legendary Ultra-Premium Sustained Matrix',
-  },
-  'Scitec Nutrition': {
-    banner: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=800&q=80',
-    tagline: '100% Whey Professional Fortified with Amino Enzymes',
-  },
-  'Pro JYM': {
-    banner: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
-    tagline: 'Scientific Tri-Phase Protein Matrix by Dr. Jim Stoppani',
-  },
-  'Labrada Nutrition': {
-    banner: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80',
-    tagline: 'IFBB Pro Formulated High-Calorie Muscle Mass Gainers',
-  },
-};
-
-const FALLBACK_PRODUCT_IMAGE = '/assets/product-placeholder.png';
+const FALLBACK_BANNER_IMAGE = '/og-image.png';
+const FALLBACK_PRODUCT_IMAGE = '/product-placeholder.png';
+const DEFAULT_BRAND_LOGO = '/logo.png';
 
 export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
   currentProduct,
@@ -72,15 +44,14 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
     }
 
     return Object.entries(brandsMap).map(([brandName, prod]) => {
-      const meta = BRAND_HEROES[brandName] || {
-        banner: prod.images?.[1] || prod.images?.[0] || 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80',
-        tagline: 'Certified Authentic Fitness & Sports Nutrition',
-      };
+      // Use authentic brand banner, or product image, or default Sculpt N Shine banner
+      const brandBanner = (prod.brand as any)?.banner || prod.brand?.logo || (prod.brand as any)?.image || prod.images?.[1] || prod.images?.[0] || FALLBACK_BANNER_IMAGE;
+      const brandTagline = (prod.brand as any)?.description || (prod.brand as any)?.tagline || `${brandName} Authentic Formulations`;
 
       return {
         brandName,
-        brandTagline: meta.tagline,
-        heroMediaUrl: meta.banner,
+        brandTagline,
+        heroMediaUrl: getMediaUrl(brandBanner, FALLBACK_BANNER_IMAGE),
         product: prod,
       };
     });
@@ -190,23 +161,16 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                {/* Brand Badge Over Hero with API Logo or Shield Icon */}
-                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md flex items-center gap-2 border border-gray-100">
-                  {product.brand?.logo ? (
-                    <img
-                      src={product.brand.logo}
-                      alt={brandName}
-                      className="h-4 max-w-[65px] object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <ShieldCheck className="w-3.5 h-3.5 text-gold-600 shrink-0" />
-                  )}
-                  <span className="text-xs font-extrabold text-brandDark uppercase tracking-wider">
-                    {brandName}
-                  </span>
+                {/* Brand Logo Floating Badge Over Hero (No Text Label, uses getMediaUrl with /logo.png fallback) */}
+                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-gray-100/90 flex items-center justify-center h-8 min-w-[70px] max-w-[120px]">
+                  <img
+                    src={getMediaUrl(product.brand?.logo || (product.brand as any)?.image, '/logo.png')}
+                    alt={brandName}
+                    className="max-h-5 max-w-[95px] object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/logo.png';
+                    }}
+                  />
                 </div>
 
                 {/* Brand Tagline */}
@@ -221,7 +185,7 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
                   {/* Mini Product Packaging Thumbnail with onError handler */}
                   <div className="w-16 h-16 shrink-0 rounded-xl bg-white border border-gray-200 p-1.5 flex items-center justify-center overflow-hidden shadow-2xs">
                     <img
-                      src={product.images?.[0] || FALLBACK_PRODUCT_IMAGE}
+                      src={getMediaUrl(product.images?.[0], FALLBACK_PRODUCT_IMAGE)}
                       alt={product.title}
                       className="max-h-full max-w-full object-contain group-hover/prod:scale-105 transition-transform"
                       onError={(e) => {

@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { getMediaUrl } from '@/lib/media';
 
 interface ProductGalleryProps {
   images: string[];
@@ -17,7 +18,9 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images, productN
 
   const mainImageRef = useRef<HTMLDivElement>(null);
 
-  const displayImages = images && images.length > 0 && images[0] ? images : ['/assets/product-placeholder.png'];
+  const displayImages = images && images.length > 0 && images[0]
+    ? images.map((img) => getMediaUrl(img, '/assets/product-placeholder.png'))
+    : ['/assets/product-placeholder.png'];
   const activeImgSrc = displayImages[activeImage] || '/assets/product-placeholder.png';
 
   const nextImage = (e?: React.MouseEvent) => {

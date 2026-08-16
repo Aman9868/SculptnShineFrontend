@@ -6,6 +6,7 @@ import { Star, ShoppingCart, Loader2 } from 'lucide-react';
 import { Product } from '@/lib/api/product';
 import { useStore } from '@/context/StoreContext';
 import { QuickAddModal } from '@/components/product/QuickAddModal';
+import { getMediaUrl } from '@/lib/media';
 
 interface ProductCardProps {
   product: Product;
@@ -18,9 +19,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
   const [isAdding, setIsAdding] = useState(false);
 
   // Use first image if available, else brand logo placeholder
-  const imageUrl = product.images && product.images.length > 0 && product.images[0]
-    ? product.images[0] 
-    : '/assets/product-placeholder.png';
+  const imageUrl = getMediaUrl(
+    product.images && product.images.length > 0 && product.images[0] ? product.images[0] : null,
+    '/assets/product-placeholder.png'
+  );
     
   // Calculate discount percentage
   const discountPercent = product.discountPercentage || 0;

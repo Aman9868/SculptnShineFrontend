@@ -6,6 +6,7 @@ import { wishlistAPI, WishlistItem } from '@/lib/api/wishlist';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
+import { getMediaUrl } from '@/lib/media';
 
 export default function WishlistTab() {
   const { addToCart } = useStore();
@@ -113,7 +114,10 @@ export default function WishlistTab() {
               const finalPrice = discountPercentage > 0 
                 ? unitPrice * (1 - discountPercentage / 100) 
                 : unitPrice;
-              const thumbnail = product.thumbnail || (product.images && product.images.length > 0 && product.images[0]) || '/assets/product-placeholder.png';
+              const thumbnail = getMediaUrl(
+                product.thumbnail || (product.images && product.images.length > 0 ? product.images[0] : null),
+                '/assets/product-placeholder.png'
+              );
               const title = product.title || product.name || 'Product';
               const slug = product.slug || product.id || item.productId;
               const stock = product.stock ?? 1;

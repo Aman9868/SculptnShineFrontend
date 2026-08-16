@@ -7,6 +7,7 @@ import { addressAPI } from '@/lib/api/address';
 import { checkoutAPI } from '@/lib/api/checkout';
 import { authAPI } from '@/lib/api/auth';
 import { couponAPI, CouponData, CouponValidationResult } from '@/lib/api/coupon';
+import { getMediaUrl } from '@/lib/media';
 import { X, Tag, Check, Sparkles, AlertCircle, Phone } from 'lucide-react';
 
 
@@ -539,7 +540,7 @@ export default function CheckoutPage() {
                         return (
                           <div key={item.id} className="flex gap-4 items-center border border-gray-100 p-3 rounded-lg">
                             <img 
-                              src={item.product.images?.[0] || '/assets/product-placeholder.png'} 
+                              src={getMediaUrl(item.product.images?.[0], '/assets/product-placeholder.png')} 
                               alt={item.product.title} 
                               onError={(e: any) => {
                                 e.currentTarget.onerror = null;
