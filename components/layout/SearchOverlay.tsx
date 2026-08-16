@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Loader2, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getMediaUrl } from '@/lib/media';
 
 export const SearchOverlay: React.FC = () => {
   const { isSearchOpen, closeSearch, searchQuery, setSearchQuery } = useStore();
@@ -134,7 +135,10 @@ export const SearchOverlay: React.FC = () => {
               >
                 <div className="relative w-14 h-14 bg-cream-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                   <img
-                    src={product.images && product.images.length > 0 && product.images[0] ? product.images[0] : '/assets/product-placeholder.png'}
+                    src={getMediaUrl(
+                      product.images && product.images.length > 0 && product.images[0] ? product.images[0] : null,
+                      '/assets/product-placeholder.png'
+                    )}
                     alt={product.title}
                     onError={(e: any) => {
                       e.currentTarget.onerror = null;

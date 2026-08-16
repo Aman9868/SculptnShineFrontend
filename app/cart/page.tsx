@@ -7,6 +7,7 @@ import { ShoppingBag, ArrowRight, Trash2, Plus, Minus, ArrowLeft } from 'lucide-
 import { useStore } from '@/context/StoreContext';
 import { cartAPI } from '@/lib/api/cart';
 import { shippingAPI, ShippingData } from '@/lib/api/shipping';
+import { getMediaUrl } from '@/lib/media';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, cartSubtotal, cartTotalCount } = useStore();
@@ -114,7 +115,7 @@ export default function CartPage() {
                         <div className="col-span-1 sm:col-span-6 flex items-center gap-4">
                           <div className="w-20 h-20 sm:w-24 sm:h-24 bg-cream-100 rounded-md overflow-hidden shrink-0 border border-cream-200">
                             <img 
-                              src={product.images?.[0] || '/assets/product-placeholder.png'} 
+                              src={getMediaUrl(product.images?.[0], '/assets/product-placeholder.png')} 
                               alt={product.title} 
                               onError={(e: any) => {
                                 e.currentTarget.onerror = null;

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { CATEGORIES as STATIC_CATEGORIES } from '@/data/categories';
 import { categoryAPI } from '@/lib/api/category';
+import { getMediaUrl } from '@/lib/media';
 
 export const ShopByCategory: React.FC = () => {
   const [categories, setCategories] = useState<any[]>(STATIC_CATEGORIES);
@@ -54,7 +55,7 @@ export const ShopByCategory: React.FC = () => {
             return {
               id: c.id,
               name: c.name,
-              image: c.image || staticCat?.image || '/assets/promo_muscle.png',
+              image: getMediaUrl(c.image || staticCat?.image || '/assets/promo_muscle.png'),
               href: `/category/${c.slug}`,
             };
           });

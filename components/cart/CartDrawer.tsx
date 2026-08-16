@@ -7,6 +7,7 @@ import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Tag, Check, Sparkles, 
 import { useStore } from '@/context/StoreContext';
 import { shippingAPI, ShippingData } from '@/lib/api/shipping';
 import { couponAPI, CouponData, CouponValidationResult } from '@/lib/api/coupon';
+import { getMediaUrl } from '@/lib/media';
 
 export const CartDrawer: React.FC = () => {
   const router = useRouter();
@@ -190,7 +191,7 @@ export const CartDrawer: React.FC = () => {
                     {/* Thumbnail */}
                     <div className="relative w-20 h-20 rounded-xl bg-cream-100 border border-cream-200 shrink-0 overflow-hidden p-1 flex items-center justify-center">
                       <img
-                        src={imgSrc || '/assets/product-placeholder.png'}
+                        src={getMediaUrl(imgSrc, '/assets/product-placeholder.png')}
                         alt={title}
                         onError={(e: any) => {
                           e.currentTarget.onerror = null;

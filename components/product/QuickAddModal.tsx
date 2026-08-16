@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Minus, Plus, ShoppingCart, Loader2, Check, Calendar, AlertCircle } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/api/product';
 import { useStore } from '@/context/StoreContext';
+import { getMediaUrl } from '@/lib/media';
 
 interface QuickAddModalProps {
   product: Product | null;
@@ -79,8 +80,11 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
 
   const activeExpiryDate = currentVariant?.expiryDate || product.expiryDate;
 
-  const imageUrl = (currentVariant?.images && currentVariant.images.length > 0 ? currentVariant.images[0] : null) ||
-    (product.images && product.images.length > 0 && product.images[0] ? product.images[0] : '/assets/product-placeholder.png');
+  const imageUrl = getMediaUrl(
+    (currentVariant?.images && currentVariant.images.length > 0 ? currentVariant.images[0] : null) ||
+    (product.images && product.images.length > 0 && product.images[0] ? product.images[0] : null),
+    '/assets/product-placeholder.png'
+  );
 
   const handleAddToCart = async () => {
     if (isActionDisabled || !currentVariant && hasVariants) return;

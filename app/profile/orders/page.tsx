@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { orderAPI } from '@/lib/api/order';
 import { Search, Filter, Package, Truck, CheckCircle, Clock, XCircle, FileText, ChevronDown, MapPin, RefreshCw, X } from 'lucide-react';
 import io from 'socket.io-client';
+import { getMediaUrl } from '@/lib/media';
 
 const ORDER_STATUS_STEPS = ['PENDING', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
 
@@ -354,9 +355,10 @@ export default function MyOrdersPage() {
                       <div className="space-y-4">
                         {(order?.items || []).map((item: any) => {
                           const productTitle = item.product?.title || item.productName || 'Product';
-                          const productImage = (item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0 && item.product.images[0])
+                          const rawImage = (item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0 && item.product.images[0])
                             ? item.product.images[0]
-                            : '/assets/product-placeholder.png';
+                            : null;
+                          const productImage = getMediaUrl(rawImage, '/assets/product-placeholder.png');
                           const productId = item.product?.id || item.productId;
                           const productUrl = productId ? `/product/${productId}` : null;
                           const quantity = item.quantity || 1;
