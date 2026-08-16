@@ -131,3 +131,24 @@ h1, h2, h3, .font-serif-luxury {
   opacity: 1 !important;
   color: #1f2937 !important;
 }
+
+/* Live Marquee Ticker Animation */
+@keyframes ticker-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-ticker-marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: ticker-scroll 32s linear infinite;
+}
+
+.animate-ticker-marquee:hover {
+  animation-play-state: paused;
+}
