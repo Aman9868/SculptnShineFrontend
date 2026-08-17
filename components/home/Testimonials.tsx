@@ -222,32 +222,9 @@ export default function Testimonials() {
                       )}
 
                       {/* Review Comment */}
-                      <p className="text-gray-700 text-xs sm:text-sm leading-relaxed mb-4 line-clamp-4 font-normal">
+                      <p className="text-gray-700 text-xs sm:text-sm leading-relaxed mb-4 line-clamp-5 font-normal">
                         &ldquo;{review.comment}&rdquo;
                       </p>
-
-                      {/* Review Attached Photos (if uploaded) */}
-                      {reviewPhotos.length > 0 && (
-                        <div className="flex items-center gap-2 mb-4 pt-1">
-                          {reviewPhotos.slice(0, 3).map((photoUrl: string, pIdx: number) => (
-                            <div 
-                              key={pIdx}
-                              className="w-12 h-12 rounded-xl overflow-hidden border border-cream-300 bg-cream-100 relative shrink-0 shadow-2xs"
-                            >
-                              <img 
-                                src={getMediaUrl(photoUrl)} 
-                                alt="Customer review photo"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
-                          {reviewPhotos.length > 3 && (
-                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-lg">
-                              +{reviewPhotos.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
 
                     {/* Reviewer Details Footer */}
