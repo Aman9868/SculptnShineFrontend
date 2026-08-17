@@ -103,11 +103,11 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">My Profile</h1>
         <p className="text-gray-600 mb-8">Manage your account settings and profile information</p>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           
-          {/* Sidebar */}
-          <aside className="lg:w-72 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 p-6">
+          {/* Sticky Sidebar */}
+          <aside className="lg:w-72 flex-shrink-0 w-full lg:sticky lg:top-24 self-start">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100/90 overflow-hidden mb-6 p-6 backdrop-blur-xs">
               
               {/* User Info block */}
               <div className="flex flex-col items-center mb-6 relative">
@@ -186,11 +186,60 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     </Link>
                   );
                 })}
-                <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors rounded-lg w-full text-left">
+                <button 
+                  onClick={logout}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors rounded-lg w-full text-left cursor-pointer"
+                >
                   <LogOut size={18} className="text-gray-400" />
                   Logout
                 </button>
               </nav>
+            </div>
+
+            {/* Sculpt Elite VIP Membership Card */}
+            <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-600 rounded-2xl p-5 text-white shadow-md relative overflow-hidden mb-6">
+              {/* Background Glow Pattern */}
+              <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <span className="text-[10px] font-black tracking-widest uppercase bg-white/20 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                  ★ ELITE GOLD
+                </span>
+                <span className="text-[11px] font-bold text-amber-100">
+                  Tier 2 Member
+                </span>
+              </div>
+              <h4 className="font-serif font-black text-lg tracking-tight leading-tight mb-1 relative z-10">
+                Sculpt & Shine Club
+              </h4>
+              <p className="text-xs text-amber-100 mb-4 relative z-10">
+                Enjoy 5% rewards on all supplement orders & free express shipping.
+              </p>
+              <div className="pt-3 border-t border-white/20 flex items-center justify-between text-xs relative z-10">
+                <span className="text-amber-100 font-medium">Reward Points</span>
+                <span className="font-black text-base text-white tracking-tight">480 pts</span>
+              </div>
+            </div>
+
+            {/* 24/7 Dedicated Support Card */}
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs">
+              <div className="flex items-center gap-3 mb-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <Headset size={18} />
+                </div>
+                <div>
+                  <h5 className="font-bold text-gray-900 text-xs sm:text-sm">Need Help With Orders?</h5>
+                  <p className="text-[11px] text-gray-500 font-medium">24/7 Priority Assistance</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+                Have questions regarding delivery tracking, returns, or nutrition advice? Our team is always ready.
+              </p>
+              <Link
+                href="/profile/support"
+                className="block text-center w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-800 rounded-xl text-xs font-bold border border-gray-200 transition-colors"
+              >
+                Open Support Ticket
+              </Link>
             </div>
           </aside>
 

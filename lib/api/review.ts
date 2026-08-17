@@ -7,6 +7,7 @@ export interface ProductReview {
   productId: string;
   userProfile?: {
     user: { firstName: string; lastName: string };
+    profileImage?: string | null;
   };
   rating: number;
   title?: string;
@@ -43,6 +44,16 @@ export const reviewAPI = {
 
   checkEligibility: async (productId: string) => {
     const response = await apiFetch(`${API_BASE_URL}/reviews/eligibility/${productId}`);
+    return response.json();
+  },
+
+  getMyReview: async (productId: string) => {
+    const response = await apiFetch(`${API_BASE_URL}/reviews/my/${productId}`);
+    return response.json();
+  },
+
+  getMyReviewedProductIds: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/reviews/my-reviewed-product-ids`);
     return response.json();
   }
 };

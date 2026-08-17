@@ -7,6 +7,7 @@ export interface Banner {
   title: string;
   subtitle: string | null;
   image: string;
+  mobileImage?: string | null;
   video: string | null;
   link: string | null;
   ctaText: string | null;

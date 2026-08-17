@@ -9,6 +9,7 @@ import { getMediaUrl } from '@/lib/media';
 
 interface SlideData {
   image: string;
+  mobileImage?: string | null;
   ctaLink: string;
   title?: string;
   subtitle?: string | null;
@@ -51,11 +52,12 @@ export const HomeScreenBanner: React.FC = () => {
     if (b.link) return b.link;
     if (b.targetType === 'CATEGORY' && b.category?.slug) return `/category/${b.category.slug}`;
     if (b.targetType === 'BRAND' && b.brand?.slug) return `/brand/${b.brand.slug}`;
-    return '/category/supplements';
+    return '/category/proteins-fitness-supplements';
   };
 
   const slides: SlideData[] = dynamicSlides.map(b => ({
     image: getMediaUrl(b.image, '/assets/og-image.png'),
+    mobileImage: b.mobileImage ? getMediaUrl(b.mobileImage, null as any) : null,
     ctaLink: resolveCtaLink(b),
     title: b.title || '',
     subtitle: b.subtitle,
@@ -113,11 +115,11 @@ export const HomeScreenBanner: React.FC = () => {
   if (isLoading) {
     return (
       <section className="relative w-full overflow-hidden bg-zinc-950">
-        <div className="relative w-full aspect-[16/7] xs:aspect-[16/7] sm:aspect-[21/9] md:aspect-[21/9] max-h-[750px] bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 animate-pulse flex items-center justify-center">
+        <div className="relative w-full aspect-[16/9] sm:aspect-[1920/800] bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 animate-pulse flex items-center justify-center">
           <img
             src="/assets/sculpt.png"
             alt="Loading Sculpt N Shine"
-            className="h-8 sm:h-14 opacity-20 object-contain animate-pulse"
+            className="h-10 sm:h-16 opacity-20 object-contain animate-pulse"
           />
         </div>
       </section>
@@ -129,7 +131,7 @@ export const HomeScreenBanner: React.FC = () => {
   }
 
   return (
-    <section 
+    <section
       className="relative w-full overflow-hidden bg-black group select-none"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -137,17 +139,16 @@ export const HomeScreenBanner: React.FC = () => {
     >
       {/* Slider Container */}
       <div className="relative w-full flex items-center justify-center bg-black transition-all duration-700 overflow-hidden">
-        {/* Full-width banner container that preserves full banner width on mobile without cropping */}
-        <div className="relative w-full aspect-[16/7] xs:aspect-[16/7] sm:aspect-[21/9] md:aspect-[21/9] max-h-[750px]">
+        {/* Balanced, elegant 16:9 mobile aspect ratio and 1920x800 desktop aspect ratio */}
+        <div className="relative w-full aspect-[16/9] sm:aspect-[1920/800]">
           {slides.map((slide, index) => (
             <Link
               key={index}
               href={slide.ctaLink}
-              className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
-                index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-              }`}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`}
             >
-              {/* Video or Image - full coverage without cropping text */}
+              {/* Video or Image */}
               {slide.video ? (
                 <video
                   src={slide.video}
@@ -157,6 +158,27 @@ export const HomeScreenBanner: React.FC = () => {
                   playsInline
                   className="absolute inset-0 w-full h-full object-contain sm:object-cover object-center"
                 />
+              ) : slide.mobileImage ? (
+                <>
+                  {/* Dedicated Mobile-Optimized Banner */}
+                  <Image
+                    src={slide.mobileImage}
+                    alt={slide.title || 'Sculpt and Shine Banner'}
+                    fill
+                    priority={index === 0}
+                    className="block sm:hidden object-cover object-center"
+                    sizes="(max-width: 640px) 100vw, 1px"
+                  />
+                  {/* Desktop Banner */}
+                  <Image
+                    src={slide.image}
+                    alt={slide.title || 'Sculpt and Shine Premium Banner'}
+                    fill
+                    priority={index === 0}
+                    className="hidden sm:block object-cover object-center"
+                    sizes="100vw"
+                  />
+                </>
               ) : (
                 <Image
                   src={slide.image}
@@ -219,11 +241,10 @@ export const HomeScreenBanner: React.FC = () => {
           <button
             key={index}
             onClick={() => setActiveSlide(index)}
-            className={`transition-all duration-300 rounded-full cursor-pointer ${
-              index === activeSlide 
-                ? 'w-6 h-1.5 sm:w-8 sm:h-2 bg-gold-400 shadow-xs' 
+            className={`transition-all duration-300 rounded-full cursor-pointer ${index === activeSlide
+                ? 'w-6 h-1.5 sm:w-8 sm:h-2 bg-gold-400 shadow-xs'
                 : 'w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/40 hover:bg-white/70'
-            }`}
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}

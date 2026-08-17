@@ -34,7 +34,7 @@ export const FeatureBanners: React.FC = () => {
     link: b.targetType === 'PRODUCT' && b.product ? `/product/${b.product.slug}` :
           b.targetType === 'CATEGORY' && b.category ? `/category/${b.category.slug}` :
           b.targetType === 'BRAND' && b.brand ? `/brand/${b.brand.slug}` :
-          b.link || '/category/supplements',
+          b.link || '/category/proteins-fitness-supplements',
   })) : PROMO_BANNERS;
 
   return (

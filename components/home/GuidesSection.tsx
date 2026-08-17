@@ -76,7 +76,7 @@ export default function GuidesSection() {
   return (
     <section className="py-12 lg:py-16 bg-cream-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header with Decorative Lines */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-4 max-w-md mx-auto mb-2">
@@ -88,35 +88,41 @@ export default function GuidesSection() {
             FITNESS & NUTRITION GUIDES
           </h2>
         </div>
-        
+
         <div className="flex justify-end mb-6">
           <Link href="/guides" className="hidden md:flex items-center gap-2 text-sm font-semibold text-gold-600 hover:text-gold-700 transition-colors">
             View All Articles <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7">
           {guides.map((guide) => (
             <Link key={guide.id} href={`/guides/${guide.slug}`} className="group block">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 mb-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={guide.image}
-                  alt={guide.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                  <span className="text-xs font-bold text-gray-900 tracking-wider uppercase">{guide.category}</span>
+              <div className="bg-white rounded-2xl border border-cream-300 shadow-luxury hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                {/* Image */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={guide.image}
+                    alt={guide.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-2xs">
+                    <span className="text-[10px] font-black text-gray-900 tracking-wider uppercase">{guide.category}</span>
+                  </div>
                 </div>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2 group-hover:text-gold-600 transition-colors line-clamp-2">
-                {guide.title}
-              </h3>
-              <div className="flex items-center text-sm font-medium text-gray-500 gap-2">
-                <span>{new Date(guide.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                <span>•</span>
-                <span>{guide.readTime}</span>
+
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="text-base sm:text-lg font-extrabold text-gray-900 leading-snug mb-2.5 group-hover:text-gold-700 transition-colors line-clamp-2">
+                    {guide.title}
+                  </h3>
+                  <div className="flex items-center justify-between text-xs font-medium text-gray-400">
+                    <span>{new Date(guide.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span className="text-gold-600 font-bold">{guide.readTime}</span>
+                  </div>
+                </div>
               </div>
             </Link>
           ))}

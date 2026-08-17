@@ -3,47 +3,103 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, Sparkles, Flame } from 'lucide-react';
 import { CATEGORIES as STATIC_CATEGORIES } from '@/data/categories';
 import { categoryAPI } from '@/lib/api/category';
 import { getMediaUrl } from '@/lib/media';
 
+interface CategoryItem {
+  id: string;
+  name: string;
+  tagline: string;
+  badge?: string;
+  image: string;
+  href: string;
+}
+
+const ENRICHED_CATEGORIES: CategoryItem[] = [
+  {
+    id: 'wellness-daily-health',
+    name: 'Wellness & Daily Health',
+    tagline: 'Vitamins, Omega-3 & Daily Vitality',
+    badge: 'Essential',
+    image: '/assets/cat_wellness.png',
+    href: '/category/wellness-daily-health',
+  },
+  {
+    id: 'beauty-luxury-cosmetics',
+    name: 'Beauty & Luxury Cosmetics',
+    tagline: 'Skincare Serums, Makeup & SPFs',
+    badge: 'Trending',
+    image: '/assets/cat_beauty.png',
+    href: '/category/beauty-luxury-cosmetics',
+  },
+  {
+    id: 'salon-haircare-excellence',
+    name: 'Salon & Haircare Excellence',
+    tagline: 'Shampoos, Nourishing Oils & Masks',
+    badge: 'Pro Grade',
+    image: '/assets/cat_haircare.png',
+    href: '/category/salon-haircare-excellence',
+  },
+  {
+    id: 'skincare-facial-care',
+    name: 'Skincare & Facial Care',
+    tagline: 'Hydrating Cleansers, Toners & Moisturizers',
+    badge: 'Best Seller',
+    image: '/assets/cat_skincare.png',
+    href: '/category/skincare-facial-care',
+  },
+  {
+    id: 'proteins-fitness-supplements',
+    name: 'Proteins & Fitness Supplements',
+    tagline: 'Whey Protein, Creatine & Pre-Workouts',
+    badge: 'Top Rated',
+    image: '/assets/cat_supplements.png',
+    href: '/category/proteins-fitness-supplements',
+  },
+];
+
 export const ShopByCategory: React.FC = () => {
-  const [categories, setCategories] = useState<any[]>(STATIC_CATEGORIES);
+  const [categories, setCategories] = useState<CategoryItem[]>(ENRICHED_CATEGORIES);
   const [loading, setLoading] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
-    const container = scrollContainerRef.current;
-    const scrollLeft = container.scrollLeft;
-    const itemWidth = container.firstElementChild ? (container.firstElementChild as HTMLElement).offsetWidth : container.clientWidth;
-    const newIndex = Math.round(scrollLeft / (itemWidth || 1));
-    setActiveIndex(Math.min(Math.max(0, newIndex), categories.length - 1));
+  const checkScrollPosition = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
   };
 
   const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, clientWidth } = scrollContainerRef.current;
-      const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
-      scrollContainerRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const scrollAmount = el.clientWidth * 0.75;
+    if (direction === 'left') {
+      el.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
     }
   };
 
-  const scrollToIndex = (index: number) => {
-    if (!scrollContainerRef.current) return;
-    const container = scrollContainerRef.current;
-    const items = container.children;
-    if (items[index]) {
-      (items[index] as HTMLElement).scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'start'
-      });
-      setActiveIndex(index);
-    }
-  };
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    checkScrollPosition();
+    el.addEventListener('scroll', checkScrollPosition, { passive: true });
+    window.addEventListener('resize', checkScrollPosition);
+    return () => {
+      el.removeEventListener('scroll', checkScrollPosition);
+      window.removeEventListener('resize', checkScrollPosition);
+    };
+  }, [categories]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -51,18 +107,25 @@ export const ShopByCategory: React.FC = () => {
         const res = await categoryAPI.getCategories();
         if (res.success && res.data.categories.length > 0) {
           const mapped = res.data.categories.map((c) => {
-            const staticCat = STATIC_CATEGORIES.find((s) => s.href === `/category/${c.slug}`);
+            const enriched = ENRICHED_CATEGORIES.find((s) => s.href === `/category/${c.slug}`);
             return {
               id: c.id,
-              name: c.name,
-              image: getMediaUrl(c.image || staticCat?.image || '/assets/promo_muscle.png'),
+              name: enriched?.name || c.name,
+              tagline: enriched?.tagline || 'Explore verified premium essentials',
+              badge: enriched?.badge,
+              image: getMediaUrl(c.image || enriched?.image || '/assets/promo_muscle.png'),
               href: `/category/${c.slug}`,
             };
           });
+
+          // Only use DB categories — no supplementing with fallback
           setCategories(mapped);
+        } else {
+          setCategories(ENRICHED_CATEGORIES);
         }
       } catch (error) {
         console.error('Failed to fetch categories:', error);
+        setCategories(ENRICHED_CATEGORIES);
       } finally {
         setLoading(false);
       }
@@ -75,7 +138,7 @@ export const ShopByCategory: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section Header with Decorative Lines */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <div className="flex items-center justify-center gap-4 max-w-md mx-auto mb-2">
             <div className="h-px bg-gradient-to-r from-transparent to-gold-600/40 flex-1" />
             <div className="w-2 h-2 rotate-45 bg-gold-600" />
@@ -84,40 +147,70 @@ export const ShopByCategory: React.FC = () => {
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight uppercase">
             SHOP BY CATEGORY
           </h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5">
+            Explore our laboratory-tested wellness, fitness and luxury personal care collections
+          </p>
         </div>
 
+        {/* Controls Row */}
+        <div className="flex items-center justify-end gap-3.5 mb-6">
+            {/* Pill-Style Left & Right Chevron Controls */}
+            <div className="flex items-center gap-1.5 bg-amber-900/5 backdrop-blur-sm p-1 rounded-full border border-amber-900/10 shadow-2xs">
+              <button
+                onClick={() => scroll('left')}
+                disabled={!canScrollLeft}
+                aria-label="Previous categories"
+                className={`p-2 rounded-full transition-all flex items-center justify-center ${
+                  canScrollLeft
+                    ? 'bg-white hover:bg-gold-500 hover:text-white text-gray-800 shadow-sm cursor-pointer active:scale-95'
+                    : 'opacity-35 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                disabled={!canScrollRight}
+                aria-label="Next categories"
+                className={`p-2 rounded-full transition-all flex items-center justify-center ${
+                  canScrollRight
+                    ? 'bg-white hover:bg-gold-500 hover:text-white text-gray-800 shadow-sm cursor-pointer active:scale-95'
+                    : 'opacity-35 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <Link
+              href="/category"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-amber-800 hover:text-amber-950 transition-colors group py-1"
+            >
+              <span>Explore All</span>
+              <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform text-amber-600" />
+            </Link>
+          </div>
+
         {/* Carousel Container */}
-        <div className="relative group">
-          {/* Left Scroll Button */}
-          <button
-            onClick={() => scroll('left')}
-            className="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm shadow-md border border-cream-300 rounded-full w-12 h-12 hidden md:group-hover:flex items-center justify-center text-gray-600 hover:text-gold-600 hover:bg-cream-50 transition-all"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={24} className="mr-0.5" />
-          </button>
-
-          {/* Right Scroll Button */}
-          <button
-            onClick={() => scroll('right')}
-            className="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm shadow-md border border-cream-300 rounded-full w-12 h-12 hidden md:group-hover:flex items-center justify-center text-gray-600 hover:text-gold-600 hover:bg-cream-50 transition-all"
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={24} className="ml-0.5" />
-          </button>
-
+        <div className="relative">
           {/* Category Cards Scroll Area */}
           <div
             ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 lg:gap-8 snap-x snap-mandatory pb-4 touch-pan-x"
+            className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-5 snap-x snap-mandatory pb-4 pt-2 touch-pan-x"
           >
             {loading ? (
               // Skeleton Loader
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="min-w-full sm:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1.33rem)] shrink-0 snap-start bg-white rounded-2xl p-4 sm:p-5 border border-cream-300 shadow-luxury flex flex-col items-center">
-                  <div className="w-full h-40 sm:h-48 lg:h-56 rounded-xl bg-cream-200 animate-pulse mb-4" />
-                  <div className="w-24 h-5 bg-cream-200 animate-pulse rounded" />
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-[250px] sm:w-[260px] lg:w-[calc(20%-1rem)] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-sm animate-pulse overflow-hidden"
+                >
+                  <div className="w-full h-48 sm:h-56 bg-cream-200" />
+                  <div className="p-4">
+                    <div className="w-16 h-3 bg-gray-200 rounded-full mb-2" />
+                    <div className="w-full h-5 bg-gray-200 rounded mb-1.5" />
+                    <div className="w-3/4 h-3 bg-gray-200 rounded" />
+                  </div>
                 </div>
               ))
             ) : (
@@ -125,54 +218,52 @@ export const ShopByCategory: React.FC = () => {
                 <Link
                   key={cat.id}
                   href={cat.href}
-                  className="min-w-full sm:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1.33rem)] shrink-0 snap-start group bg-white rounded-2xl p-4 sm:p-5 border border-cream-300 shadow-luxury hover:shadow-luxury-hover transition-all duration-300 flex flex-col items-center justify-between text-center"
+                  className="group w-[250px] sm:w-[260px] lg:w-[calc(20%-1rem)] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-luxury hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden select-none cursor-pointer flex flex-col"
                 >
-                  {/* Image Container with fixed height to match Why Choose Us proportions */}
-                  <div className="relative w-full h-40 sm:h-48 lg:h-56 rounded-xl overflow-hidden mb-4 bg-cream-50 border border-cream-200">
+                  {/* Image Container */}
+                  <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-cream-50">
                     <Image
                       src={cat.image}
                       alt={cat.name}
                       fill
-                      className="object-cover group-hover:scale-108 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+                      sizes="(max-width: 640px) 250px, (max-width: 1024px) 260px, 20vw"
                     />
+                    {/* Subtle Bottom Gradient */}
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
+
                   </div>
 
-                  {/* Title & Arrow Action */}
-                  <div className="w-full flex items-center justify-between pt-1 px-1 gap-2">
-                    <span className="text-sm font-extrabold text-gray-900 tracking-wider uppercase group-hover:text-gold-700 transition-colors truncate">
-                      {cat.name}
-                    </span>
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-cream-200 group-hover:bg-gold-600 text-gray-700 group-hover:text-white flex items-center justify-center transition-colors shrink-0">
-                      <ChevronRight size={14} className="sm:w-4 sm:h-4" />
+                  {/* Content Area */}
+                  <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm sm:text-base text-gray-900 leading-snug group-hover:text-gold-700 transition-colors line-clamp-2 mb-1">
+                        {cat.name}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-gray-400 font-medium line-clamp-1">
+                        {cat.tagline}
+                      </p>
+                    </div>
+
+                    {/* Shop Now Footer */}
+                    <div className="mt-3 pt-3 border-t border-cream-200 flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-gold-600 group-hover:text-gold-700 transition-colors">
+                        Shop Now
+                      </span>
+                      <div className="w-7 h-7 rounded-full bg-cream-100 border border-cream-300 text-gray-600 group-hover:bg-gold-600 group-hover:text-white group-hover:border-gold-600 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                        <ChevronRight size={14} />
+                      </div>
                     </div>
                   </div>
                 </Link>
               ))
             )}
           </div>
-
-          {/* Pagination Dots */}
-          {!loading && categories.length > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4 sm:mt-6">
-              {categories.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => scrollToIndex(index)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    activeIndex === index 
-                      ? 'w-6 bg-gold-600' 
-                      : 'w-2 bg-cream-300 hover:bg-cream-400'
-                  }`}
-                  aria-label={`Go to category slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
       </div>
     </section>
   );
 };
+
 
