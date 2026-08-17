@@ -133,33 +133,64 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [isAuthenticated, user?.id]);
 
-  // Request notification permission and subscribe
+  // Default VAPID key fallback
+  const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BGhbVRqimzy3ooUqlfuZQUCYJVNDxfiabJ17vi4_EwOjR74mDLLzhKXEXxQEQlVVwdnwgNgv4DYdIOvhrM0RbFw';
+
+  // Request native Chrome/Browser notification permission and subscribe
   const subscribeToPush = async () => {
-    if (!swRegistration || !VAPID_PUBLIC_KEY) {
-      console.warn('Push manager or VAPID key is missing.');
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      alert('Push notifications are not supported in this browser.');
       return;
     }
 
     try {
+      // 1. Trigger Chrome / Native browser permission prompt
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        console.warn('Notification permission denied.');
+        alert('Notification permission was not granted. Please enable it from your browser site settings.');
         return;
       }
 
-      const subscription = await swRegistration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-
-      // Send subscription to backend
-      const res = await notificationApi.subscribe(subscription as any);
-      if (res.success) {
-        setIsPushSubscribed(true);
-        console.log('Successfully subscribed to Push Notifications');
+      // 2. Ensure Service Worker is registered
+      let reg = swRegistration;
+      if (!reg && 'serviceWorker' in navigator) {
+        reg = await navigator.serviceWorker.register('/sw.js');
+        setSwRegistration(reg);
       }
-    } catch (error) {
+
+      if (reg && 'PushManager' in window && VAPID_KEY) {
+        let subscription = await reg.pushManager.getSubscription();
+        if (!subscription) {
+          subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_KEY),
+          });
+        }
+
+        // Send subscription to backend
+        await notificationApi.subscribe(subscription as any).catch((err) => {
+          console.warn('Backend push subscription sync warning:', err);
+        });
+      }
+
+      setIsPushSubscribed(true);
+
+      // 3. Trigger immediate native browser push notification popup
+      if (reg && reg.showNotification) {
+        reg.showNotification('Sculpt & Shine Notifications Active! 🔔', {
+          body: 'You will receive real-time order alerts, dispatch tracking, and live store promotions.',
+          icon: '/assets/logo.png',
+          badge: '/assets/logo.png',
+        });
+      } else {
+        new Notification('Sculpt & Shine Notifications Active! 🔔', {
+          body: 'You will receive real-time order alerts, dispatch tracking, and live store promotions.',
+          icon: '/assets/logo.png',
+        });
+      }
+    } catch (error: any) {
       console.error('Failed to subscribe to push:', error);
+      alert('Could not enable push notifications: ' + (error?.message || 'Unknown error'));
     }
   };
 

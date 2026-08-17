@@ -33,6 +33,10 @@ export interface Product {
   categoryId: string;
   subcategoryId: string;
   brandId: string;
+  averageRating?: number;
+  reviewCount?: number;
+  totalSold?: number;
+  isBestSeller?: boolean;
   mainCategory?: string;
   category?: { id: string; name: string; slug: string };
   subcategory?: { id: string; name: string; slug: string };
@@ -134,6 +138,31 @@ export const productAPI = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Failed to fetch product filters');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Fetch dynamically calculated Best Sellers with real sales / rating ranking
+   */
+  async getBestSellers(limit: number = 8, categoryId?: string): Promise<{
+    success: boolean;
+    message: string;
+    data: Product[];
+  }> {
+    const url = new URL(`${API_BASE_URL}/products/best-sellers`);
+    if (limit) url.searchParams.append('limit', limit.toString());
+    if (categoryId) url.searchParams.append('categoryId', categoryId);
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to fetch best sellers');
     }
 
     return response.json();

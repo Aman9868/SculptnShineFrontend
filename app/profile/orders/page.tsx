@@ -3,17 +3,43 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { orderAPI } from '@/lib/api/order';
-import { Search, Filter, Package, Truck, CheckCircle, Clock, XCircle, FileText, ChevronDown, MapPin, RefreshCw, X } from 'lucide-react';
+import { reviewAPI } from '@/lib/api/review';
+import { apiFetch } from '@/lib/api/apiFetch';
+import { Search, Filter, Package, Truck, CheckCircle, Clock, XCircle, FileText, ChevronDown, MapPin, RefreshCw, X, Star, ChevronLeft, ChevronRight, Sparkles, Check } from 'lucide-react';
 import io from 'socket.io-client';
 import { getMediaUrl } from '@/lib/media';
 
 const ORDER_STATUS_STEPS = ['PENDING', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+const ORDERS_PER_PAGE = 4;
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All Orders');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrderTracking, setSelectedOrderTracking] = useState<any | null>(null);
+
+  // Review Modal State
+  const [selectedProductForReview, setSelectedProductForReview] = useState<{
+    productId: string;
+    productTitle: string;
+    productImage: string;
+    orderNumber: string;
+    orderId: string;
+  } | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewImages, setReviewImages] = useState<string[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEditingReview, setIsEditingReview] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewedProductIds, setReviewedProductIds] = useState<string[]>([]);
+  const reviewFileInputRef = React.useRef<HTMLInputElement>(null);
+
   const socketRef = React.useRef<any>(null);
 
   useEffect(() => {
@@ -38,7 +64,6 @@ export default function MyOrdersPage() {
       ));
     });
 
-    // We need a way to join rooms after orders are loaded, so we store the socket for this effect
     socketRef.current = socket;
 
     return () => {
@@ -59,9 +84,15 @@ export default function MyOrdersPage() {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const res = await orderAPI.getMyOrders();
+      const [res, reviewsRes] = await Promise.all([
+        orderAPI.getMyOrders(),
+        reviewAPI.getMyReviewedProductIds().catch(() => ({ success: false, data: [] }))
+      ]);
       if (res.success) {
         setOrders(res.data.orders);
+      }
+      if (reviewsRes?.success && Array.isArray(reviewsRes.data)) {
+        setReviewedProductIds(reviewsRes.data);
       }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
@@ -70,16 +101,162 @@ export default function MyOrdersPage() {
     }
   };
 
-  const tabs = ['All Orders', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
+  // Reset page to 1 when filters or tabs change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const tabs = ['All Orders', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
   const filteredOrders = orders.filter(order => {
-    if (activeTab === 'All Orders') return true;
-    if (activeTab === 'Processing' && (order.status === 'PENDING_PAYMENT' || order.status === 'PAID' || order.status === 'PROCESSING')) return true;
-    if (activeTab === 'Shipped' && (order.status === 'SHIPPED' || order.status === 'OUT_FOR_DELIVERY')) return true;
-    if (activeTab === 'Delivered' && order.status === 'DELIVERED') return true;
-    if (activeTab === 'Cancelled' && order.status === 'CANCELLED') return true;
-    return false;
+    // Status tab filter
+    let matchesTab = true;
+    if (activeTab === 'Processing') matchesTab = ['PENDING_PAYMENT', 'PAID', 'PROCESSING'].includes(order.status);
+    else if (activeTab === 'Shipped') matchesTab = ['SHIPPED', 'OUT_FOR_DELIVERY'].includes(order.status);
+    else if (activeTab === 'Delivered') matchesTab = order.status === 'DELIVERED';
+    else if (activeTab === 'Cancelled') matchesTab = order.status === 'CANCELLED';
+
+    if (!matchesTab) return false;
+
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchOrderNum = order.orderNumber?.toLowerCase().includes(q);
+      const matchItem = order.items?.some((it: any) => 
+        it.product?.title?.toLowerCase().includes(q) || 
+        it.productName?.toLowerCase().includes(q)
+      );
+      const matchShipping = order.shippingName?.toLowerCase().includes(q);
+      return matchOrderNum || matchItem || matchShipping;
+    }
+
+    return true;
   });
+
+  // Paginated Slicing
+  const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE) || 1;
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ORDERS_PER_PAGE,
+    currentPage * ORDERS_PER_PAGE
+  );
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 120, behavior: 'smooth' });
+  };
+
+  // Open Review Modal with Pre-filled existing review check
+  const handleOpenReviewModal = async (
+    productId: string,
+    productTitle: string,
+    productImage: string,
+    orderNumber: string,
+    orderId: string
+  ) => {
+    setSelectedProductForReview({
+      productId,
+      productTitle,
+      productImage,
+      orderNumber,
+      orderId,
+    });
+    setReviewSuccess(false);
+
+    try {
+      const res = await reviewAPI.getMyReview(productId);
+      if (res.success && res.data) {
+        setReviewRating(res.data.rating || 5);
+        setReviewTitle(res.data.title || '');
+        setReviewComment(res.data.comment || '');
+        setReviewImages(Array.isArray(res.data.images) ? res.data.images : []);
+        setIsEditingReview(true);
+        return;
+      }
+    } catch (err) {
+      // Ignore
+    }
+
+    // Default fresh review
+    setReviewRating(5);
+    setReviewTitle('');
+    setReviewComment('');
+    setReviewImages([]);
+    setIsEditingReview(false);
+  };
+
+  // Media / Photo upload for reviews (like Amazon) using apiFetch with auth
+  const handleUploadReviewImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (reviewImages.length + files.length > 5) {
+      alert('You can upload up to 5 photos for your review.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await apiFetch(`${API_BASE_URL}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && (data.data?.url || data.url)) {
+          setReviewImages((prev) => [...prev, data.data?.url || data.url]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to upload review image:', err);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploadingImage(false);
+      if (reviewFileInputRef.current) reviewFileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveReviewImage = (indexToRemove: number) => {
+    setReviewImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // Submit Review Handler
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProductForReview) return;
+
+    try {
+      setIsSubmittingReview(true);
+      await reviewAPI.addReview({
+        productId: selectedProductForReview.productId,
+        rating: reviewRating,
+        title: reviewTitle.trim() || undefined,
+        comment: reviewComment.trim() || undefined,
+        images: reviewImages,
+      });
+
+      setReviewedProductIds(prev => [...prev, selectedProductForReview.productId]);
+      setReviewSuccess(true);
+
+      setTimeout(() => {
+        setReviewSuccess(false);
+        setSelectedProductForReview(null);
+        setReviewTitle('');
+        setReviewComment('');
+        setReviewImages([]);
+        setReviewRating(5);
+        setIsEditingReview(false);
+      }, 1500);
+    } catch (err: any) {
+      console.error('Failed to submit review:', err);
+      alert(err.message || 'Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const getStatusStepIndex = (status?: string) => {
     if (!status) return 0;
@@ -152,380 +329,397 @@ export default function MyOrdersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-gray-900">Your Orders</h1>
-          <p className="text-sm text-gray-500 mt-1">Track, return, cancel or buy again</p>
+          <h1 className="text-2xl font-serif font-extrabold text-gray-900 tracking-tight">Your Orders</h1>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">Track packages, download invoices, write reviews, and reorder</p>
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Search by order ID, product or brand" 
-              className="pl-4 pr-10 py-2 border border-gray-200 rounded-md text-sm w-72 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-            />
-            <Search className="absolute right-3 top-2.5 text-gray-400 w-4 h-4" />
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 text-gray-700 bg-white">
-            <Filter className="w-4 h-4" />
-            Filters
-          </button>
+        <div className="relative w-full sm:w-80">
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by order #, product, or name..." 
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500 shadow-2xs transition-all"
+          />
+          <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 text-xs font-bold"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-6">
-        
-        {/* Main Orders Area */}
-        <div className="flex-1 overflow-hidden">
-          {/* Tabs */}
-          <div className="mb-6 border-b border-gray-200">
-            <div className="flex overflow-x-auto hide-scrollbar">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-3 px-5 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
-                    activeTab === tab
-                      ? 'border-[#d8ab60] text-[#d8ab60]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+      {/* Main Full-Width Orders Container */}
+      <div className="w-full space-y-6">
+        {/* Status Tabs */}
+        <div className="bg-white p-1.5 rounded-2xl border border-gray-100 shadow-2xs flex overflow-x-auto gap-1 scrollbar-none">
+          {tabs.map((tab) => {
+            let count = orders.length;
+            if (tab === 'Processing') count = inProgress;
+            else if (tab === 'Shipped') count = orders.filter(o => ['SHIPPED', 'OUT_FOR_DELIVERY'].includes(o?.status)).length;
+            else if (tab === 'Delivered') count = delivered;
+            else if (tab === 'Cancelled') count = cancelled;
+
+            const isActive = activeTab === tab;
+
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`py-2 px-4 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  isActive
+                    ? 'bg-gold-600 text-white shadow-xs'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <span>{tab}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Orders List */}
+        {isLoading ? (
+          <div className="flex flex-col justify-center items-center py-24 bg-white rounded-2xl border border-gray-100 shadow-2xs">
+            <div className="w-10 h-10 border-3 border-gold-200 border-t-gold-600 rounded-full animate-spin mb-3"></div>
+            <p className="text-xs font-bold text-gray-400">Loading your orders...</p>
           </div>
-
-          {/* Orders List */}
-          {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-2xs border border-gray-100 p-12 sm:p-16 text-center">
+            <div className="w-16 h-16 bg-cream-50 text-gold-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-cream-200 shadow-2xs">
+              <Package size={28} />
             </div>
-          ) : filteredOrders.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Package size={32} className="text-gray-300" />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">No orders found</h2>
-              <p className="text-gray-500 text-sm">You have no orders in this category.</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {filteredOrders.map((order) => {
-                const currentStepIndex = getStatusStepIndex(order?.status);
-                const isCancelled = order?.status === 'CANCELLED';
-                const isDelivered = order?.status === 'DELIVERED';
-                const orderTotal = Number(order?.totalAmount) || 0;
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-1">No orders found</h2>
+            <p className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto">
+              {searchQuery ? 'No orders matched your search query.' : 'You do not have any orders under this filter.'}
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-4 px-4 py-2 bg-cream-100 hover:bg-cream-200 text-gray-800 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Clear Search Filter
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {paginatedOrders.map((order) => {
+              const currentStepIndex = getStatusStepIndex(order?.status);
+              const isCancelled = order?.status === 'CANCELLED';
+              const isDelivered = order?.status === 'DELIVERED';
 
-                return (
-                  <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    
-                    {/* Order Header */}
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center text-xs text-gray-600">
-                      <div className="flex gap-8">
-                        <div>
-                          <span className="block mb-1 font-semibold uppercase">Order Placed</span>
-                          <span className="text-gray-900">{formatDate(order?.createdAt)}</span>
-                        </div>
-                        <div>
-                          <span className="block mb-1 font-semibold uppercase">Total</span>
-                          <span className="text-gray-900">₹{orderTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
-                        </div>
-                        <div>
-                          <span className="block mb-1 font-semibold uppercase">Ship To</span>
-                          <span className="text-gray-900">{order?.shippingName || 'Customer'}</span>
-                        </div>
+              return (
+                <div key={order?.id} className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden hover:border-gold-500/40 hover:shadow-luxury transition-all duration-300">
+                  {/* Order Top Bar */}
+                  <div className="bg-cream-50/70 p-4 sm:px-6 border-b border-cream-200/80 flex flex-wrap justify-between items-center gap-4 text-xs">
+                    <div className="flex flex-wrap gap-6 sm:gap-10">
+                      <div>
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">ORDER PLACED</span>
+                        <span className="font-extrabold text-gray-900">{formatDate(order?.createdAt)}</span>
                       </div>
-                      <div className="text-right flex flex-col items-end">
-                        <span className="block mb-1 font-semibold uppercase text-gray-900">Order # {order?.orderNumber}</span>
-                        <button 
-                          onClick={() => handleDownloadInvoice(order.id, order.orderNumber)}
-                          className="text-[#d87c1c] hover:text-[#b36310] hover:underline font-medium inline-flex items-center gap-1 mt-1 text-sm bg-transparent border-none cursor-pointer"
-                        >
-                          View Invoice
-                        </button>
+                      <div>
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">TOTAL AMOUNT</span>
+                        <span className="font-black text-gray-900">₹{(order?.totalAmount || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">SHIP TO</span>
+                        <span className="font-bold text-gray-800">{order?.shippingName || 'Customer'}</span>
                       </div>
                     </div>
 
-                    <div className="p-6">
-                      {/* Status Banner */}
-                      <h3 className={`text-lg font-bold mb-6 flex items-center gap-2 ${
-                        isCancelled ? 'text-red-600' : isDelivered ? 'text-green-600' : 'text-orange-500'
-                      }`}>
-                        {isCancelled ? <XCircle size={20} /> : isDelivered ? <CheckCircle size={20} /> : <Clock size={20} />}
-                        {isCancelled ? `Cancelled on ${formatDate(order?.updatedAt)}` 
-                          : isDelivered ? `Delivered on ${formatDate(order?.updatedAt)}` 
-                          : `Arriving soon (${(order?.status || 'PROCESSING').replace(/_/g, ' ')})`}
-                      </h3>
-                      
-                      {/* Timeline (Only show if not cancelled) */}
-                      {!isCancelled && (
-                        <div className="mb-8 px-4 sm:px-8">
-                          <div className="relative">
-                            <div className="absolute top-2.5 left-0 w-full h-1 bg-gray-200 rounded-full -z-10"></div>
-                            
-                            <div 
-                              className="absolute top-2.5 left-0 h-1 bg-green-500 rounded-full transition-all duration-500 ease-in-out -z-10"
-                              style={{ width: `${(Math.max(0, currentStepIndex) / (ORDER_STATUS_STEPS.length - 1)) * 100}%` }}
-                            ></div>
-                            
-                            <div className="flex justify-between">
-                              {ORDER_STATUS_STEPS.map((step, idx) => {
-                                const isCompleted = idx <= currentStepIndex;
-                                const isActive = idx === currentStepIndex;
-                                // Find history for this step if it exists to show exact date
-                                const historyEntry = order?.statusHistory?.find((h: any) => h?.status === step || (step === 'PENDING' && (h?.status === 'PENDING_PAYMENT' || h?.status === 'PAID')));
-                                
-                                return (
-                                  <div key={step} className="flex flex-col items-center">
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                      isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                                    }`}>
-                                      {isActive && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                                      {isCompleted && !isActive && <CheckCircle size={14} className="text-white" />}
-                                    </div>
-                                    <div className="mt-2 text-center">
-                                      <span className={`block text-xs font-medium ${
-                                        isActive ? 'text-green-700 font-bold' : isCompleted ? 'text-gray-900' : 'text-gray-400'
-                                      }`}>
-                                        {step === 'OUT_FOR_DELIVERY' ? 'Out for Delivery' : step.charAt(0) + step.slice(1).toLowerCase()}
-                                      </span>
-                                      {isCompleted && historyEntry ? (
-                                        <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(historyEntry.createdAt)}</span>
-                                      ) : idx === 0 ? (
-                                        <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order?.createdAt)}</span>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Cancelled Timeline (if cancelled) */}
-                      {isCancelled && (
-                         <div className="mb-8 px-4 sm:px-8">
-                          <div className="relative">
-                            <div className="absolute top-2.5 left-0 w-full h-1 bg-gray-200 rounded-full -z-10"></div>
-                            
-                            <div 
-                              className="absolute top-2.5 left-0 h-1 bg-red-500 rounded-full -z-10"
-                              style={{ width: '33%' }} // Example hardcoded width to show partial progress then red
-                            ></div>
-                            
-                            <div className="flex justify-between">
-                              <div className="flex flex-col items-center">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-400">
-                                  <CheckCircle size={14} className="text-white" />
-                                </div>
-                                <div className="mt-2 text-center">
-                                  <span className="block text-xs font-medium text-gray-900">Order Placed</span>
-                                  <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order?.createdAt)}</span>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white">
-                                  <XCircle size={14} />
-                                </div>
-                                <div className="mt-2 text-center">
-                                  <span className="block text-xs font-medium text-red-600 font-bold">Cancelled</span>
-                                  <span className="block text-[10px] text-gray-500 mt-0.5">{formatDate(order?.updatedAt)}</span>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-200"></div>
-                                <div className="mt-2 text-center">
-                                  <span className="block text-xs font-medium text-gray-400">Shipped</span>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-200"></div>
-                                <div className="mt-2 text-center">
-                                  <span className="block text-xs font-medium text-gray-400">Delivered</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Items */}
-                      <div className="space-y-4">
-                        {(order?.items || []).map((item: any) => {
-                          const productTitle = item.product?.title || item.productName || 'Product';
-                          const rawImage = (item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0 && item.product.images[0])
-                            ? item.product.images[0]
-                            : null;
-                          const productImage = getMediaUrl(rawImage, '/assets/product-placeholder.png');
-                          const productId = item.product?.id || item.productId;
-                          const productUrl = productId ? `/product/${productId}` : null;
-                          const quantity = item.quantity || 1;
-                          const unitPrice = Number(item.unitPrice) || 0;
-                          const discountPct = Number(item.discountPercentage) || 0;
-                          const itemTotal = unitPrice * (1 - discountPct / 100) * quantity;
-
-                          return (
-                            <div key={item.id || Math.random()} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                              <div className="flex items-center gap-4 flex-1">
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-md overflow-hidden p-2">
-                                  <img 
-                                    src={productImage} 
-                                    alt={productTitle} 
-                                    onError={(e: any) => {
-                                      e.currentTarget.onerror = null;
-                                      e.currentTarget.src = '/assets/product-placeholder.png';
-                                    }}
-                                    className="w-full h-full object-contain mix-blend-multiply" 
-                                  />
-                                </div>
-                                
-                                <div className="flex-1">
-                                  {productUrl ? (
-                                    <Link href={productUrl} className="font-semibold text-gray-900 hover:text-orange-600 line-clamp-1 mb-1">
-                                      {productTitle}
-                                    </Link>
-                                  ) : (
-                                    <span className="font-semibold text-gray-900 line-clamp-1 mb-1">
-                                      {productTitle}
-                                    </span>
-                                  )}
-                                  
-                                  {item.variantId && (
-                                    <p className="text-xs text-gray-500 mb-1">Variant selected</p>
-                                  )}
-                                  
-                                  <div className="flex items-center gap-4 mt-2">
-                                    <span className="text-xs font-medium text-gray-600">
-                                      Qty: {quantity}
-                                    </span>
-                                    <span className="text-sm font-bold text-gray-900">
-                                      ₹{itemTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="flex sm:flex-row items-center gap-3 mt-2 sm:mt-0">
-                                <button 
-                                  onClick={() => setSelectedOrderTracking(order)}
-                                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                  <MapPin size={16} className="text-gray-400" />
-                                  Track Package
-                                </button>
-                                {productUrl ? (
-                                  <Link 
-                                    href={productUrl}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                  >
-                                    <RefreshCw size={16} />
-                                    Buy it again
-                                  </Link>
-                                ) : (
-                                  <button 
-                                    disabled
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
-                                  >
-                                    <RefreshCw size={16} />
-                                    Buy it again
-                                  </button>
-                                )}
-                                <button className="hidden sm:block p-2 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
-                                  <ChevronDown size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="block text-[11px] font-extrabold text-gray-900 font-mono">#{order?.orderNumber}</span>
                       </div>
+                      <button 
+                        onClick={() => handleDownloadInvoice(order.id, order.orderNumber)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-gold-50 text-gold-800 border border-gray-200 hover:border-gold-300 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                        title="Download official GST tax invoice"
+                      >
+                        <FileText size={13} className="text-gold-600" />
+                        <span>Invoice</span>
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
-        {/* Right Sidebar */}
-        <div className="xl:w-72 flex-shrink-0 space-y-6">
-          
-          {/* Order Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100">Order Summary</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Total Orders</span>
-                <span className="font-medium text-gray-900">{totalOrders}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">In Progress</span>
-                <span className="font-medium text-gray-900">{inProgress}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Delivered</span>
-                <span className="font-medium text-gray-900">{delivered}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Cancelled</span>
-                <span className="font-medium text-gray-900">{cancelled}</span>
-              </div>
-              <div className="flex justify-between pt-3 mt-3 border-t border-gray-100">
-                <span className="font-bold text-gray-900">Total Spent</span>
-                <span className="font-bold text-gray-900">₹{totalSpent.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-            <button className="w-full mt-5 py-2 border border-orange-200 text-orange-600 rounded-md text-sm font-medium hover:bg-orange-50 transition-colors">
-              View All Orders
-            </button>
+                  {/* Order Content */}
+                  <div className="p-5 sm:p-6">
+                    {/* Status Header Badge */}
+                    <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        {isCancelled ? (
+                          <div className="p-1.5 bg-red-100 text-red-600 rounded-lg">
+                            <XCircle size={18} />
+                          </div>
+                        ) : isDelivered ? (
+                          <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg">
+                            <CheckCircle size={18} />
+                          </div>
+                        ) : (
+                          <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg">
+                            <Truck size={18} />
+                          </div>
+                        )}
+                        <div>
+                          <h3 className={`text-sm sm:text-base font-extrabold ${
+                            isCancelled ? 'text-red-700' : isDelivered ? 'text-emerald-700' : 'text-amber-800'
+                          }`}>
+                            {isCancelled 
+                              ? `Cancelled on ${formatDate(order?.updatedAt)}` 
+                              : isDelivered 
+                              ? `Delivered on ${formatDate(order?.updatedAt || order?.createdAt)}` 
+                              : `Arriving Soon (${(order?.status || 'PROCESSING').replace(/_/g, ' ')})`}
+                          </h3>
+                          <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+                            {isDelivered 
+                              ? 'Package was handed directly to the recipient.' 
+                              : isCancelled 
+                              ? 'This order was cancelled.' 
+                              : 'Your items are being processed and prepared for shipping.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => setSelectedOrderTracking(order)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold border border-gray-200 transition-colors cursor-pointer shrink-0"
+                      >
+                        <MapPin size={14} className="text-gray-400" />
+                        <span>Track Order</span>
+                      </button>
+                    </div>
+                    
+                    {/* Sleek Milestone Timeline (For non-cancelled orders) */}
+                    {!isCancelled && (
+                      <div className="mb-6 px-2 sm:px-6">
+                        <div className="relative">
+                          {/* Background Track */}
+                          <div className="absolute top-3 left-0 w-full h-1 bg-gray-100 rounded-full -z-10"></div>
+                          {/* Active Filled Track */}
+                          <div 
+                            className="absolute top-3 left-0 h-1 bg-emerald-500 rounded-full transition-all duration-500 ease-in-out -z-10"
+                            style={{ width: `${(Math.max(0, currentStepIndex) / (ORDER_STATUS_STEPS.length - 1)) * 100}%` }}
+                          ></div>
+                          
+                          <div className="flex justify-between">
+                            {ORDER_STATUS_STEPS.map((step, idx) => {
+                              const isCompleted = idx <= currentStepIndex;
+                              const isActive = idx === currentStepIndex;
+                              const historyEntry = order?.statusHistory?.find((h: any) => h?.status === step || (step === 'PENDING' && (h?.status === 'PENDING_PAYMENT' || h?.status === 'PAID')));
+                              
+                              return (
+                                <div key={step} className="flex flex-col items-center">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ring-4 ring-white transition-all ${
+                                    isActive 
+                                      ? 'bg-emerald-600 text-white scale-110 shadow-xs' 
+                                      : isCompleted 
+                                      ? 'bg-emerald-500 text-white' 
+                                      : 'bg-gray-200 text-gray-400'
+                                  }`}>
+                                    {isActive ? (
+                                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                                    ) : isCompleted ? (
+                                      <Check size={12} className="stroke-[3]" />
+                                    ) : null}
+                                  </div>
+                                  <div className="mt-2 text-center">
+                                    <span className={`block text-[11px] font-bold ${
+                                      isActive ? 'text-emerald-700 font-extrabold' : isCompleted ? 'text-gray-800' : 'text-gray-400'
+                                    }`}>
+                                      {step === 'OUT_FOR_DELIVERY' ? 'Out for Delivery' : step.charAt(0) + step.slice(1).toLowerCase()}
+                                    </span>
+                                    {isCompleted && historyEntry ? (
+                                      <span className="block text-[10px] text-gray-400 mt-0.5">{formatDate(historyEntry.createdAt)}</span>
+                                    ) : idx === 0 ? (
+                                      <span className="block text-[10px] text-gray-400 mt-0.5">{formatDate(order?.createdAt)}</span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Products List in this Order */}
+                    <div className="space-y-4 pt-2">
+                      {(order?.items || []).map((item: any) => {
+                        const productTitle = item.product?.title || item.productName || 'Product';
+                        const rawImage = (item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0 && item.product.images[0])
+                          ? item.product.images[0]
+                          : null;
+                        const productImage = getMediaUrl(rawImage, '/assets/product-placeholder.png');
+                        const productId = item.product?.id || item.productId;
+                        const productSlug = item.product?.slug || productId;
+                        const productUrl = productSlug ? `/product/${productSlug}` : null;
+                        const quantity = item.quantity || 1;
+                        const unitPrice = Number(item.unitPrice) || 0;
+                        const discountPct = Number(item.discountPercentage) || 0;
+                        const itemTotal = unitPrice * (1 - discountPct / 100) * quantity;
+                        const isReviewed = productId && reviewedProductIds.includes(productId);
+
+                        return (
+                          <div key={item.id || Math.random()} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3.5 bg-cream-50/40 rounded-xl border border-cream-200/60 hover:border-cream-300 transition-colors">
+                            {/* Product Info Left */}
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-white border border-gray-200/80 rounded-xl overflow-hidden p-1.5 flex items-center justify-center shadow-2xs">
+                                <img 
+                                  src={productImage} 
+                                  alt={productTitle} 
+                                  onError={(e: any) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = '/assets/product-placeholder.png';
+                                  }}
+                                  className="w-full h-full object-contain mix-blend-multiply" 
+                                />
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                {productUrl ? (
+                                  <Link href={productUrl} className="font-bold text-xs sm:text-sm text-gray-900 hover:text-gold-700 line-clamp-1 transition-colors block">
+                                    {productTitle}
+                                  </Link>
+                                ) : (
+                                  <span className="font-bold text-xs sm:text-sm text-gray-900 line-clamp-1 block">
+                                    {productTitle}
+                                  </span>
+                                )}
+                                
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  {item.variantId && (
+                                    <span className="text-[10px] font-bold text-gold-800 bg-gold-50 px-2 py-0.5 rounded-md border border-gold-200">
+                                      Variant Selected
+                                    </span>
+                                  )}
+                                  <span className="text-xs text-gray-500 font-medium">
+                                    Qty: <strong className="text-gray-900 font-bold">{quantity}</strong>
+                                  </span>
+                                  <span className="text-xs text-gray-400">•</span>
+                                  <span className="text-xs font-black text-gray-900">
+                                    ₹{itemTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Action Buttons Right */}
+                            <div className="flex flex-wrap items-center gap-2 self-start md:self-auto shrink-0">
+                              {/* Delivered-Only Review Button (Supports Write & Edit) */}
+                              {isDelivered && productId && (
+                                <button
+                                  onClick={() => handleOpenReviewModal(
+                                    productId,
+                                    productTitle,
+                                    productImage,
+                                    order.orderNumber,
+                                    order.id
+                                  )}
+                                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs active:scale-95 cursor-pointer ${
+                                    isReviewed
+                                      ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'
+                                      : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white'
+                                  }`}
+                                >
+                                  <Star size={14} className={isReviewed ? "fill-amber-500 text-amber-500" : "fill-white text-white"} />
+                                  <span>{isReviewed ? 'Update Review' : 'Write Review'}</span>
+                                </button>
+                              )}
+
+                              {productUrl ? (
+                                <Link 
+                                  href={productUrl}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 hover:border-gray-300 rounded-xl text-xs font-bold transition-colors shadow-2xs"
+                                >
+                                  <RefreshCw size={13} />
+                                  <span>Buy Again</span>
+                                </Link>
+                              ) : (
+                                <button 
+                                  disabled
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-50 text-gray-400 border border-gray-200 rounded-xl text-xs font-bold cursor-not-allowed"
+                                >
+                                  <RefreshCw size={13} />
+                                  <span>Buy Again</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        )}
 
-          {/* Subscribe & Save Promo */}
-          <div className="bg-orange-50 rounded-xl shadow-sm border border-orange-100 p-5 relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 text-orange-500 mb-2">
-                <span className="text-xl">☀️</span>
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2 text-lg">Subscribe & <br/>Save More</h3>
-              <p className="text-xs text-gray-600 mb-4 pr-12">Subscribe to your favorite supplements and get up to 20% OFF</p>
-              <button className="bg-yellow-400 text-gray-900 font-bold text-xs px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors shadow-sm">
-                Explore Subscription
+        {/* Pagination Toolbar */}
+        {!isLoading && filteredOrders.length > ORDERS_PER_PAGE && (
+          <div className="mt-8 pt-4 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-gray-500 font-medium">
+              Showing <span className="font-bold text-gray-900">{(currentPage - 1) * ORDERS_PER_PAGE + 1}</span> to{' '}
+              <span className="font-bold text-gray-900">
+                {Math.min(currentPage * ORDERS_PER_PAGE, filteredOrders.length)}
+              </span>{' '}
+              of <span className="font-bold text-gray-900">{filteredOrders.length}</span> orders
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                  currentPage === 1
+                    ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gold-50 hover:border-gold-400 cursor-pointer shadow-2xs'
+                }`}
+              >
+                <ChevronLeft size={14} />
+                Previous
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center ${
+                    currentPage === pageNum
+                      ? 'bg-gold-600 text-white shadow-xs'
+                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                  currentPage === totalPages
+                    ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gold-50 hover:border-gold-400 cursor-pointer shadow-2xs'
+                }`}
+              >
+                Next
+                <ChevronRight size={14} />
               </button>
             </div>
-            {/* Promo Image Placeholder */}
-            <div className="absolute -right-4 -bottom-4 w-28 h-28 opacity-50 pointer-events-none mix-blend-multiply">
-              <div className="w-full h-full bg-orange-200 rounded-full filter blur-xl"></div>
-            </div>
           </div>
-
-          {/* Common Actions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-900 mb-4">Common Actions</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <button className="flex items-center gap-3 text-gray-600 hover:text-orange-600 transition-colors w-full text-left">
-                  <RefreshCw size={16} /> Return / Replace Items
-                </button>
-              </li>
-              <li>
-                <button className="flex items-center gap-3 text-gray-600 hover:text-orange-600 transition-colors w-full text-left">
-                  <FileText size={16} /> Download Invoices
-                </button>
-              </li>
-              <li>
-                <button className="flex items-center gap-3 text-gray-600 hover:text-orange-600 transition-colors w-full text-left">
-                  <Package size={16} /> Manage Subscriptions
-                </button>
-              </li>
-              <li>
-                <button className="flex items-center gap-3 text-gray-600 hover:text-orange-600 transition-colors w-full text-left">
-                  <XCircle size={16} /> Need Help with Order?
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Track Package Modal */}
@@ -606,6 +800,206 @@ export default function MyOrdersPage() {
 
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Write / Update Product Review Modal (Delivered Only) */}
+      {selectedProductForReview && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-amber-50 to-cream-50 border-b border-amber-200/80 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-amber-500/10 text-amber-700 rounded-lg">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-gray-900 text-base">
+                    {isEditingReview ? 'Update Product Review' : 'Write Product Review'}
+                  </h3>
+                  <p className="text-[11px] text-gray-500 font-medium">Order #{selectedProductForReview.orderNumber}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedProductForReview(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-white/80 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Product Preview */}
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="flex items-center gap-3.5 pb-4 mb-5 border-b border-gray-100 bg-cream-50/50 p-3 rounded-xl">
+                <div className="w-14 h-14 rounded-lg bg-white border border-gray-200 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={selectedProductForReview.productImage}
+                    alt={selectedProductForReview.productTitle}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-900 truncate">
+                    {selectedProductForReview.productTitle}
+                  </p>
+                  <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    <Check size={10} /> Verified Delivered Purchase
+                  </span>
+                </div>
+              </div>
+
+              {reviewSuccess ? (
+                <div className="py-8 text-center space-y-2">
+                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 animate-in zoom-in">
+                    <Check size={24} />
+                  </div>
+                  <h4 className="font-bold text-gray-900 text-base">
+                    {isEditingReview ? 'Review Updated Successfully!' : 'Thank you for your review!'}
+                  </h4>
+                  <p className="text-xs text-gray-500">Your feedback helps fellow athletes make the right choice.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitReview} className="space-y-4">
+                  {/* Star Rating */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                      Overall Rating *
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onMouseEnter={() => setReviewHoverRating(star)}
+                            onMouseLeave={() => setReviewHoverRating(0)}
+                            onClick={() => setReviewRating(star)}
+                            className="p-1 text-gray-300 hover:text-amber-400 transition-transform active:scale-110 cursor-pointer"
+                          >
+                            <Star
+                              size={26}
+                              className={
+                                star <= (reviewHoverRating || reviewRating)
+                                  ? 'text-amber-500 fill-amber-400'
+                                  : 'text-gray-300'
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-xs font-extrabold text-amber-800 ml-2">
+                        {reviewRating === 5 && '5 - Excellent ⭐'}
+                        {reviewRating === 4 && '4 - Very Good'}
+                        {reviewRating === 3 && '3 - Good'}
+                        {reviewRating === 2 && '2 - Fair'}
+                        {reviewRating === 1 && '1 - Poor'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Review Title */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Headline / Title (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={reviewTitle}
+                      onChange={(e) => setReviewTitle(e.target.value)}
+                      placeholder="e.g. Delicious flavor & smooth mixability!"
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gold-500/30"
+                    />
+                  </div>
+
+                  {/* Detailed Comment */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Your Detailed Review *
+                    </label>
+                    <textarea
+                      rows={4}
+                      required
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="What did you like or dislike? How was the effectiveness, quality, and results?"
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gold-500/30 resize-none"
+                    />
+                  </div>
+
+                  {/* Amazon-Style Media / Photo Upload */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center justify-between">
+                      <span>Add Photos / Media (Optional)</span>
+                      <span className="text-[11px] text-gray-400 font-normal">{reviewImages.length}/5 photos</span>
+                    </label>
+                    
+                    <input 
+                      type="file"
+                      ref={reviewFileInputRef}
+                      onChange={handleUploadReviewImage}
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                    />
+
+                    {/* Image Thumbnails & Add Button */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {reviewImages.map((imgUrl, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 group">
+                          <img src={getMediaUrl(imgUrl, '/assets/product-placeholder.png')} alt={`Review photo ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveReviewImage(idx)}
+                            className="absolute top-1 right-1 w-5 h-5 bg-black/70 hover:bg-black text-white rounded-full flex items-center justify-center text-[10px] transition-colors cursor-pointer"
+                            title="Remove photo"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+
+                      {reviewImages.length < 5 && (
+                        <button
+                          type="button"
+                          onClick={() => reviewFileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                          className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 hover:border-gold-500 bg-gray-50 hover:bg-gold-50/50 flex flex-col items-center justify-center text-gray-500 hover:text-gold-700 transition-all cursor-pointer"
+                          title="Upload product photo"
+                        >
+                          {isUploadingImage ? (
+                            <div className="w-4 h-4 border-2 border-gold-300 border-t-gold-600 rounded-full animate-spin"></div>
+                          ) : (
+                            <>
+                              <span className="text-lg leading-none">+</span>
+                              <span className="text-[9px] font-bold mt-0.5">Photo</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProductForReview(null)}
+                      className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReview || !reviewComment.trim()}
+                      className="px-5 py-2 bg-gold-600 hover:bg-gold-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isSubmittingReview ? 'Saving...' : isEditingReview ? 'Update Review' : 'Submit Verified Review'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>
