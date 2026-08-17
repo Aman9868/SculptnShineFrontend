@@ -52,7 +52,7 @@ export const HomeScreenBanner: React.FC = () => {
     if (b.link) return b.link;
     if (b.targetType === 'CATEGORY' && b.category?.slug) return `/category/${b.category.slug}`;
     if (b.targetType === 'BRAND' && b.brand?.slug) return `/brand/${b.brand.slug}`;
-    return '/category/supplements';
+    return '/category/proteins-fitness-supplements';
   };
 
   const slides: SlideData[] = dynamicSlides.map(b => ({

@@ -8,7 +8,7 @@ import { getMediaUrl } from '@/lib/media';
 const FALLBACK_TESTIMONIALS = [
   {
     id: 'mock-1',
-    userProfile: { 
+    userProfile: {
       user: { firstName: 'Rahul', lastName: 'Verma' },
       profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
     },
@@ -20,7 +20,7 @@ const FALLBACK_TESTIMONIALS = [
   },
   {
     id: 'mock-2',
-    userProfile: { 
+    userProfile: {
       user: { firstName: 'Priya', lastName: 'Mehta' },
       profileImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
     },
@@ -32,7 +32,7 @@ const FALLBACK_TESTIMONIALS = [
   },
   {
     id: 'mock-3',
-    userProfile: { 
+    userProfile: {
       user: { firstName: 'Amit', lastName: 'Singh' },
       profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
     },
@@ -116,7 +116,7 @@ export default function Testimonials() {
   return (
     <section className="py-14 sm:py-18 bg-white border-y border-cream-300 relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header row with Title and Pill Controls */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
           <div>
@@ -135,26 +135,24 @@ export default function Testimonials() {
           {/* Pill-Style Navigation Controls */}
           {reviews.length > 1 && (
             <div className="flex items-center gap-1.5 bg-cream-100 p-1 rounded-full border border-cream-300 shadow-2xs self-start sm:self-auto shrink-0">
-              <button 
+              <button
                 onClick={() => scroll('left')}
                 disabled={!canScrollLeft}
-                className={`p-2 rounded-full transition-all flex items-center justify-center ${
-                  canScrollLeft
+                className={`p-2 rounded-full transition-all flex items-center justify-center ${canScrollLeft
                     ? 'bg-white hover:bg-gold-500 hover:text-white text-gray-800 shadow-sm cursor-pointer active:scale-95'
                     : 'opacity-35 text-gray-400 cursor-not-allowed'
-                }`}
+                  }`}
                 aria-label="Previous customer review"
               >
                 <ChevronLeft size={16} />
               </button>
-              <button 
+              <button
                 onClick={() => scroll('right')}
                 disabled={!canScrollRight}
-                className={`p-2 rounded-full transition-all flex items-center justify-center ${
-                  canScrollRight
+                className={`p-2 rounded-full transition-all flex items-center justify-center ${canScrollRight
                     ? 'bg-white hover:bg-gold-500 hover:text-white text-gray-800 shadow-sm cursor-pointer active:scale-95'
                     : 'opacity-35 text-gray-400 cursor-not-allowed'
-                }`}
+                  }`}
                 aria-label="Next customer review"
               >
                 <ChevronRight size={16} />
@@ -166,15 +164,15 @@ export default function Testimonials() {
         {/* Carousel Container */}
         <div className="relative">
           {/* Scrollable Reviews List */}
-          <div 
+          <div
             ref={scrollRef}
             className="flex overflow-x-auto hide-scrollbar gap-5 sm:gap-6 snap-x snap-mandatory pb-4 pt-1 touch-pan-x"
           >
             {reviews.map((review, idx) => {
-              const fullName = review.userProfile?.user 
-                ? `${review.userProfile.user.firstName || ''} ${review.userProfile.user.lastName || ''}`.trim() 
+              const fullName = review.userProfile?.user
+                ? `${review.userProfile.user.firstName || ''} ${review.userProfile.user.lastName || ''}`.trim()
                 : (review.userProfile?.name || 'Verified Customer');
-              
+
               const rawImg = review.userProfile?.profileImage || review.userProfile?.avatarUrl;
               const profileImg = rawImg ? getMediaUrl(rawImg) : null;
 
@@ -188,20 +186,20 @@ export default function Testimonials() {
               const reviewPhotos = Array.isArray(review.images) ? review.images.filter(Boolean) : [];
 
               return (
-                <div 
-                  key={review.id || idx} 
+                <div
+                  key={review.id || idx}
                   className="w-[300px] sm:w-[360px] lg:w-[calc(33.333%-1rem)] shrink-0 snap-start"
                 >
                   <div className="h-full rounded-3xl border border-cream-200/90 bg-gradient-to-b from-white to-cream-50/40 p-6 sm:p-7 shadow-luxury transition-all duration-300 hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden group">
-                    
+
                     <div>
                       {/* Rating Stars & Verified Buyer Badge Header */}
                       <div className="flex items-center justify-between gap-2 mb-4">
                         <div className="flex gap-0.5 text-gold-400">
                           {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`h-4 w-4 ${i < (review.rating || 5) ? 'fill-gold-400 text-gold-400' : 'text-gray-200'}`} 
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < (review.rating || 5) ? 'fill-gold-400 text-gold-400' : 'text-gray-200'}`}
                             />
                           ))}
                         </div>
@@ -232,8 +230,8 @@ export default function Testimonials() {
                       {/* Avatar with Gold Ring Accent */}
                       <div className="h-11 w-11 rounded-full overflow-hidden bg-amber-100 text-amber-900 border-2 border-amber-200/80 shadow-2xs flex items-center justify-center relative shrink-0">
                         {profileImg ? (
-                          <img 
-                            src={profileImg} 
+                          <img
+                            src={profileImg}
                             alt={fullName}
                             onError={(e: any) => {
                               e.currentTarget.style.display = 'none';

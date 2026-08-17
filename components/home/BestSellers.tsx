@@ -158,7 +158,7 @@ export const BestSellers: React.FC = () => {
             </div>
 
             <Link
-              href="/category/supplements"
+              href="/search?sort=popular"
               className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-gold-700 hover:text-gold-800 transition-colors group py-1"
             >
               <span>Explore All</span>

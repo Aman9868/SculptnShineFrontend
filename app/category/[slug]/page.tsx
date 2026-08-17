@@ -33,6 +33,21 @@ export async function generateMetadata({
   };
 }
 
+const SLUG_ALIASES: Record<string, string> = {
+  'supplements': 'proteins-fitness-supplements',
+  'protein': 'proteins-fitness-supplements',
+  'fitness': 'proteins-fitness-supplements',
+  'skin-care': 'skincare-facial-care',
+  'skincare': 'skincare-facial-care',
+  'hair-care': 'salon-haircare-excellence',
+  'haircare': 'salon-haircare-excellence',
+  'salon': 'salon-haircare-excellence',
+  'wellness': 'wellness-daily-health',
+  'health': 'wellness-daily-health',
+  'beauty': 'beauty-luxury-cosmetics',
+  'cosmetics': 'beauty-luxury-cosmetics',
+};
+
 export default async function CategoryPage({
   params,
   searchParams,
@@ -40,8 +55,9 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const slug = (await params).slug;
-  const slugLower = slug.toLowerCase();
+  const rawSlug = (await params).slug;
+  const rawLower = rawSlug.toLowerCase();
+  const slugLower = SLUG_ALIASES[rawLower] || rawLower;
   
   // Await searchParams in Next.js 15+
   const resolvedSearchParams = await searchParams;

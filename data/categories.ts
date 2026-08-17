@@ -54,12 +54,11 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
 import { Category, ValueProp, PromoBanner } from '@/types';
 
 export const CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Supplements', image: '/assets/cat_supplements.png', href: '/category/supplements', iconName: 'Activity' },
-  { id: 'cat-2', name: 'Skin Care', image: '/assets/cat_skincare.png', href: '/category/skin-care', iconName: 'Sparkles' },
-  { id: 'cat-3', name: 'Hair Care', image: '/assets/cat_haircare.png', href: '/category/hair-care', iconName: 'Droplet' },
-  { id: 'cat-4', name: 'Wellness', image: '/assets/cat_wellness.png', href: '/category/wellness', iconName: 'Heart' },
-  { id: 'cat-5', name: 'Salon', image: '/assets/cat_salon.png', href: '/category/salon', iconName: 'Scissors' },
-  { id: 'cat-6', name: 'Beauty Tools', image: '/assets/cat_beauty.png', href: '/category/beauty-tools', iconName: 'Zap' },
+  { id: 'cat-1', name: 'Proteins & Supplements', image: '/assets/cat_supplements.png', href: '/category/proteins-fitness-supplements', iconName: 'Activity' },
+  { id: 'cat-2', name: 'Skincare & Facial Care', image: '/assets/cat_skincare.png', href: '/category/skincare-facial-care', iconName: 'Sparkles' },
+  { id: 'cat-3', name: 'Salon & Haircare Excellence', image: '/assets/cat_haircare.png', href: '/category/salon-haircare-excellence', iconName: 'Droplet' },
+  { id: 'cat-4', name: 'Wellness & Daily Health', image: '/assets/cat_wellness.png', href: '/category/wellness-daily-health', iconName: 'Heart' },
+  { id: 'cat-5', name: 'Beauty & Luxury Cosmetics', image: '/assets/cat_beauty.png', href: '/category/beauty-luxury-cosmetics', iconName: 'Sparkles' },
 ];
 
 export const VALUE_PROPOSITIONS: ValueProp[] = [
@@ -69,7 +68,7 @@ export const VALUE_PROPOSITIONS: ValueProp[] = [
 ];
 
 export const PROMO_BANNERS: PromoBanner[] = [
-  { id: 'pb-1', title: 'Build Muscle', subtitle: 'Premium Whey Proteins', actionText: 'Shop Now', image: '/assets/promo_muscle.png', link: '/category/supplements' },
-  { id: 'pb-2', title: 'Fuel Your Workout', subtitle: 'Explosive Pre-Workouts', actionText: 'Explore', image: '/assets/promo_workout.png', link: '/category/supplements' },
-  { id: 'pb-3', title: 'Track Progress', subtitle: 'Smart Fitness Gear', actionText: 'Discover', image: '/assets/promo_track.png', link: '/category/wellness' },
+  { id: 'pb-1', title: 'Build Muscle', subtitle: 'Premium Whey Proteins', actionText: 'Shop Now', image: '/assets/promo_muscle.png', link: '/category/proteins-fitness-supplements' },
+  { id: 'pb-2', title: 'Fuel Your Workout', subtitle: 'Explosive Pre-Workouts', actionText: 'Explore', image: '/assets/promo_workout.png', link: '/category/proteins-fitness-supplements' },
+  { id: 'pb-3', title: 'Daily Health', subtitle: 'Vitamins & Wellness', actionText: 'Discover', image: '/assets/promo_track.png', link: '/category/wellness-daily-health' },
 ];
