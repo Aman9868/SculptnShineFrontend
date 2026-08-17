@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/media';
 
 interface Subcategory {
   name: string;
@@ -24,6 +25,8 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
   subcategories,
   activeSubcategorySlug = ''
 }) => {
+  const resolvedImage = getMediaUrl(imageSrc, '/assets/cat_supplements.png');
+
   return (
     <div className="mb-6 sm:mb-10 max-w-full">
       {/* Breadcrumbs */}
@@ -56,7 +59,7 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
         {/* Hero Image */}
         <div className="w-full md:w-2/3 h-40 sm:h-52 md:h-64 relative rounded-2xl overflow-hidden shadow-luxury bg-cream-200 shrink-0">
           <Image
-            src={imageSrc || '/assets/promo_muscle.png'}
+            src={resolvedImage}
             alt={title}
             fill
             className="object-cover object-center"
@@ -73,16 +76,15 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
         <div className="flex overflow-x-auto hide-scrollbar gap-2 sm:gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0 touch-pan-x">
           {subcategories.map((sub, idx) => {
             const isActive = activeSubcategorySlug === sub.slug;
-            
+
             return (
               <Link
                 key={idx}
                 href={`?subcategorySlug=${sub.slug}`}
-                className={`whitespace-nowrap px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-300 flex-shrink-0 ${
-                  isActive
+                className={`whitespace-nowrap px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-300 flex-shrink-0 ${isActive
                     ? 'bg-gold-500 text-white border-gold-500 shadow-md'
                     : 'bg-white text-gray-700 border-cream-300 hover:border-gold-300 hover:text-gold-600'
-                }`}
+                  }`}
                 scroll={false}
               >
                 {sub.name}

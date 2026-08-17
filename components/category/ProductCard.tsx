@@ -24,10 +24,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
     '/assets/product-placeholder.png'
   );
     
+  const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
+  const originalPrice = (product.unitPrice && product.unitPrice > 0)
+    ? product.unitPrice
+    : (defaultVariant?.unitPrice || 0);
+
   // Calculate discount percentage
-  const discountPercent = product.discountPercentage || 0;
+  const discountPercent = product.discountPercentage || defaultVariant?.discountPercentage || 0;
     
-  const originalPrice = product.unitPrice || 0;
   const currentPrice = discountPercent > 0 
     ? originalPrice * (1 - discountPercent / 100) 
     : originalPrice;
