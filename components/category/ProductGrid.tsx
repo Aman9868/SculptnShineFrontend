@@ -46,8 +46,14 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination, 
   };
 
   const currentSort = searchParams.get('sort') || 'popular';
-  
-  const total = pagination?.total || products.length;
+
+  const validProducts = products.filter((prod) => {
+    const hasBasePrice = prod.unitPrice && prod.unitPrice > 0;
+    const hasVariantPrice = prod.variants && prod.variants.some((v) => v.unitPrice > 0);
+    return hasBasePrice || hasVariantPrice;
+  });
+
+  const total = pagination?.total || validProducts.length;
   const currentPage = pagination?.page || 1;
   const totalPages = pagination?.totalPages || 1;
   const limit = pagination?.limit || 12;
@@ -160,7 +166,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination, 
       </div>
 
       {/* Grid */}
-      {products.length === 0 ? (
+      {validProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50/50 rounded-xl border border-gray-100">
           <div className="w-16 h-16 mb-4 text-gray-300">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,7 +185,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination, 
               ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
               : 'grid-cols-1'
           }`}>
-            {products.map((product) => (
+            {validProducts.map((product) => (
               <ProductCard 
                 key={product.id} 
                 product={product} 
