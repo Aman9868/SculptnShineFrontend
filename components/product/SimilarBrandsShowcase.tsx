@@ -198,15 +198,25 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
                     <h3 className="text-xs sm:text-sm font-bold text-gray-900 group-hover/prod:text-gold-600 transition-colors line-clamp-2 leading-snug">
                       {product.title}
                     </h3>
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="flex items-center text-amber-500">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                      </div>
-                      <span className="text-xs font-extrabold text-gray-800">4.8</span>
-                      <span className="text-[11px] text-gray-500">
-                        ({(product as any).reviewCount || 120})
-                      </span>
-                    </div>
+                    {(() => {
+                      const itemRating = Number((product as any).averageRating || 0);
+                      const itemCount = Number((product as any).reviewCount || 0);
+                      return (
+                        <div className="flex items-center gap-1 mt-1">
+                          <div className="flex items-center">
+                            <Star className={`w-3.5 h-3.5 ${itemRating > 0 ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-300'}`} />
+                          </div>
+                          <span className="text-xs font-extrabold text-gray-800">
+                            {itemRating > 0 ? itemRating.toFixed(1) : 'New'}
+                          </span>
+                          {itemCount > 0 && (
+                            <span className="text-[11px] text-gray-500">
+                              ({itemCount})
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Link>
 

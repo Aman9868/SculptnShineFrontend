@@ -241,19 +241,13 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
       {(() => {
         const rating = Number((product as any).averageRating || 0);
         const count = Number((product as any).reviewCount || 0);
+        if (count <= 0) return null;
         return (
           <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-            {count > 0 ? (
-              <div className="flex items-center bg-gold-50 px-3 py-1 rounded-full border border-gold-200">
-                <Star className="w-4 h-4 text-gold-500 fill-gold-500" />
-                <span className="text-sm font-bold ml-1.5 text-gold-800">{rating.toFixed(1)}</span>
-              </div>
-            ) : (
-              <div className="flex items-center bg-gray-50 px-2.5 py-0.5 rounded-full border border-gray-200">
-                <Star className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-xs font-semibold ml-1 text-gray-500">New Product</span>
-              </div>
-            )}
+            <div className="flex items-center bg-gold-50 px-3 py-1 rounded-full border border-gold-200">
+              <Star className="w-4 h-4 text-gold-500 fill-gold-500" />
+              <span className="text-sm font-bold ml-1.5 text-gold-800">{rating.toFixed(1)}</span>
+            </div>
             <button 
               onClick={() => {
                 const el = document.getElementById('product-tabs-section');
@@ -261,13 +255,8 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
               }}
               className="text-sm text-gray-500 underline hover:text-gold-600 transition-colors"
             >
-              {count > 0 ? `(${count.toLocaleString()} ${count === 1 ? 'review' : 'reviews'})` : 'Be the first to review'}
+              ({count.toLocaleString()} {count === 1 ? 'review' : 'reviews'})
             </button>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm text-gray-500 flex items-center gap-1 cursor-pointer hover:text-brandDark transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-              Verified Authentic
-            </span>
           </div>
         );
       })()}
@@ -275,12 +264,13 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
       {/* Short Summary Snippet */}
       {(() => {
         const raw = product.description || '';
-        // Extract the description block text before ingredients/nutrition
-        const descMatch = raw.match(/(?:<h[1-6][^>]*>(?:DESCRIPTION|OVERVIEW|ABOUT)[\s\S]*?<\/h[1-6]>)?([\s\S]*?)(?=<h[1-6]|$)/i);
-        const targetBlock = descMatch && descMatch[1] ? descMatch[1] : raw;
+        // Extract only the description block before ingredients, nutrition, usage
+        const descBlock = raw.split(/(?:<h[1-6][^>]*>|<(?:p|div|strong|b|span)[^>]*>|(?:\r?\n|<br\s*\/?>)\s*(?:<strong[^>]*>|<b[^>]*>)?)?\s*\b(?:INGREDIENTS?|ACTIVE\s*INGREDIENTS?|NUTRITION|HOW\s*TO\s*USE|FAQS?)\b/i)[0];
+        const targetBlock = descBlock || raw;
         
         const cleanText = targetBlock
           .replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, '')
+          .replace(/(?:<p[^>]*>|<div[^>]*>)?\s*(?:<strong[^>]*>|<b[^>]*>)?\s*\b(?:DESCRIPTION|PRODUCT\s*OVERVIEW|OVERVIEW|ABOUT(?:\s*THIS\s*PRODUCT)?)\b\s*:?\s*(?:<\/strong>|<\/b>)?\s*(?:<\/p>|<\/div>)?/gi, '')
           .replace(/<[^>]+>/g, ' ')
           .replace(/&nbsp;/gi, ' ')
           .replace(/&amp;/gi, '&')

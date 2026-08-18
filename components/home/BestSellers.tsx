@@ -221,8 +221,8 @@ export const BestSellers: React.FC = () => {
                 const rawImage = prod.images?.[0] || defaultVariant?.images?.[0] || '';
                 const imageUrl = getMediaUrl(rawImage, '/assets/og-image.png');
 
-                const ratingValue = prod.averageRating && prod.averageRating > 0 ? prod.averageRating : 4.8;
-                const reviewCountValue = prod.reviewCount && prod.reviewCount > 0 ? prod.reviewCount : 124;
+                const ratingValue = Number(prod.averageRating || 0);
+                const reviewCountValue = Number(prod.reviewCount || 0);
 
                 return (
                   <div
@@ -303,7 +303,7 @@ export const BestSellers: React.FC = () => {
 
                         {/* Star Ratings */}
                         <div className="mt-1">
-                          <Rating value={ratingValue} count={reviewCountValue} />
+                          <Rating value={ratingValue} count={reviewCountValue > 0 ? reviewCountValue : undefined} showNumeric={ratingValue > 0} />
                         </div>
                       </div>
 

@@ -65,10 +65,46 @@ function parseProductTabs(rawHtml: string): ParsedSections {
     };
   }
 
-  // Split only by major section heading tags H2 and H3
-  const delimiterRegex = /(<h[23][^>]*>[\s\S]*?<\/h[23]>)/gi;
-  const tokens = rawHtml.split(delimiterRegex);
+  // Pre-process: insert standard markers before known section titles
+  // Matches <h1-h6>, <p>, <div>, <strong>, <b>, <span> or plain text headings
+  const SECTION_PATTERNS: { type: string; regex: RegExp }[] = [
+    { type: 'ingredients', regex: /(?:<h[1-6][^>]*>|<(?:p|div|strong|b|span)[^>]*>|(?:\r?\n|<br\s*\/?>)\s*(?:<strong[^>]*>|<b[^>]*>)?)?\s*\b(INGREDIENTS?|ACTIVE\s*INGREDIENTS?|COMPOSITION|FORMULATION)\b\s*:?\s*(?:<\/(?:strong|b|span|h[1-6]|p|div)>)?/gi },
+    { type: 'nutrition', regex: /(?:<h[1-6][^>]*>|<(?:p|div|strong|b|span)[^>]*>|(?:\r?\n|<br\s*\/?>)\s*(?:<strong[^>]*>|<b[^>]*>)?)?\s*\b(NUTRITION\s*FACTS?|SUPPLEMENT\s*FACTS?|NUTRITIONAL\s*(?:BREAKDOWN|INFORMATION|FACTS?))\b\s*:?\s*(?:<\/(?:strong|b|span|h[1-6]|p|div)>)?/gi },
+    { type: 'howToUse', regex: /(?:<h[1-6][^>]*>|<(?:p|div|strong|b|span)[^>]*>|(?:\r?\n|<br\s*\/?>)\s*(?:<strong[^>]*>|<b[^>]*>)?)?\s*\b(HOW\s*TO\s*USE|DIRECTIONS?(?:\s*FOR\s*USE)?|USAGE(?:\s*GUIDELINES)?|SUGGESTED\s*USE|HOW\s*TO\s*CONSUME|DOSAGE)\b\s*:?\s*(?:<\/(?:strong|b|span|h[1-6]|p|div)>)?/gi },
+    { type: 'faqs', regex: /(?:<h[1-6][^>]*>|<(?:p|div|strong|b|span)[^>]*>|(?:\r?\n|<br\s*\/?>)\s*(?:<strong[^>]*>|<b[^>]*>)?)?\s*\b(FAQS?|FREQUENTLY\s*ASKED\s*QUESTIONS?)\b\s*:?\s*(?:<\/(?:strong|b|span|h[1-6]|p|div)>)?/gi },
+    { type: 'description', regex: /(?:<h[1-6][^>]*>|<(?:p|div|strong|b|span)[^>]*>|(?:\r?\n|<br\s*\/?>)\s*(?:<strong[^>]*>|<b[^>]*>)?)?\s*\b(DESCRIPTION|PRODUCT\s*OVERVIEW|ABOUT\s*(?:THIS\s*PRODUCT)?|PRODUCT\s*STORY)\b\s*:?\s*(?:<\/(?:strong|b|span|h[1-6]|p|div)>)?/gi }
+  ];
 
+  // We place custom delimiters: <!--SECTION:type-->
+  let markedHtml = rawHtml;
+  for (const { type, regex } of SECTION_PATTERNS) {
+    markedHtml = markedHtml.replace(regex, `<!--SECTION:${type}-->`);
+  }
+
+  // Auto-detect ANY custom section headings added by the admin (e.g. <h3>BENEFITS</h3>, <p><strong>STORAGE</strong></p>)
+  const customHeadingRegex = /(?:<h[1-6][^>]*>|<(?:p|div)[^>]*>\s*(?:<strong[^>]*>|<b[^>]*>))\s*([^<>\n\r]{2,40}?)\s*(?:<\/(?:strong|b)>)?\s*(?:<\/(?:h[1-6]|p|div)>)/gi;
+  markedHtml = markedHtml.replace(customHeadingRegex, (match, headingText) => {
+    const clean = headingText.replace(/<[^>]+>/g, '').trim();
+    if (!clean || clean.length < 2 || clean.length > 40) return match;
+    const customId = clean.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+    return `<!--SECTION:CUSTOM_${customId}:::${clean.toUpperCase()}-->`;
+  });
+
+  // If no sections were detected, fallback to description
+  if (!markedHtml.includes('<!--SECTION:')) {
+    return {
+      description: formatTabContent(rawHtml),
+      ingredients: null,
+      nutrition: null,
+      howToUse: null,
+      faqs: null,
+      customSections: [],
+    };
+  }
+
+  // Split by <!--SECTION:type-->
+  const parts = markedHtml.split(/<!--SECTION:([^>]+)-->/);
+  
   const buckets: Record<string, string[]> = {
     description: [],
     ingredients: [],
@@ -78,48 +114,46 @@ function parseProductTabs(rawHtml: string): ParsedSections {
   };
 
   const customSectionsMap: Record<string, { label: string; content: string[] }> = {};
-  let currentTarget = 'description';
 
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-    if (!token || !token.trim()) continue;
+  // The first part before any marker belongs to description (if non-empty)
+  if (parts[0] && parts[0].trim()) {
+    buckets.description.push(parts[0]);
+  }
 
-    const headingMatch = token.match(/<h[23][^>]*>([\s\S]*?)<\/h[23]>/i);
+  // Loop through matched section pairs: (type, content)
+  for (let i = 1; i < parts.length; i += 2) {
+    const sectionKey = parts[i];
+    const sectionContent = parts[i + 1] || '';
 
-    if (headingMatch) {
-      const cleanHeading = headingMatch[1].replace(/<[^>]+>/g, '').replace(/[:\-–—]+$/, '').trim().toLowerCase();
-
-      if (cleanHeading.includes('ingredient') || cleanHeading.includes('composition') || cleanHeading.includes('formulation')) {
-        currentTarget = 'ingredients';
-      } else if (cleanHeading.includes('nutrition') || cleanHeading.includes('supplement fact') || cleanHeading.includes('nutritional')) {
-        currentTarget = 'nutrition';
-      } else if (cleanHeading.includes('how to use') || cleanHeading.includes('usage') || cleanHeading.includes('direction') || cleanHeading.includes('suggested use') || cleanHeading.includes('how to consume') || cleanHeading.includes('dosage')) {
-        currentTarget = 'howToUse';
-      } else if (cleanHeading.includes('faq') || cleanHeading.includes('frequently asked') || cleanHeading.includes('questions')) {
-        currentTarget = 'faqs';
-      } else if (cleanHeading.includes('description') || cleanHeading.includes('overview') || cleanHeading.includes('about') || cleanHeading.includes('product story')) {
-        currentTarget = 'description';
-      } else {
-        // Custom additional section (e.g. Benefits, Certifications)
-        const customId = cleanHeading.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
-        currentTarget = customId;
-        if (!customSectionsMap[customId]) {
-          customSectionsMap[customId] = {
-            label: headingMatch[1].replace(/<[^>]+>/g, '').trim().toUpperCase(),
-            content: [],
-          };
-        }
+    if (sectionKey.startsWith('CUSTOM_')) {
+      const [rawId, customLabel] = sectionKey.replace('CUSTOM_', '').split(':::');
+      const customId = rawId || 'CUSTOM_SECTION';
+      if (!customSectionsMap[customId]) {
+        customSectionsMap[customId] = {
+          label: customLabel || customId,
+          content: [],
+        };
       }
+      customSectionsMap[customId].content.push(sectionContent);
+    } else if (buckets[sectionKey]) {
+      buckets[sectionKey].push(sectionContent);
     } else {
-      if (buckets[currentTarget]) {
-        buckets[currentTarget].push(token);
-      } else if (customSectionsMap[currentTarget]) {
-        customSectionsMap[currentTarget].content.push(token);
-      } else {
-        buckets.description.push(token);
-      }
+      buckets.description.push(sectionContent);
     }
   }
+
+  const cleanContent = (htmlArr: string[]) => {
+    const joined = htmlArr.join('').trim();
+    if (!joined) return null;
+    const formatted = formatTabContent(joined);
+    return formatted.length > 0 ? formatted : null;
+  };
+
+  const parsedDesc = cleanContent(buckets.description);
+  const parsedIngredients = cleanContent(buckets.ingredients);
+  const parsedNutrition = cleanContent(buckets.nutrition);
+  const parsedHowToUse = cleanContent(buckets.howToUse);
+  const parsedFaqs = cleanContent(buckets.faqs);
 
   const customSections = Object.entries(customSectionsMap).map(([id, sec]) => ({
     id,
@@ -128,11 +162,11 @@ function parseProductTabs(rawHtml: string): ParsedSections {
   })).filter(s => s.content.length > 0);
 
   return {
-    description: formatTabContent(buckets.description.join('').trim() || rawHtml),
-    ingredients: buckets.ingredients.length > 0 ? formatTabContent(buckets.ingredients.join('').trim()) : null,
-    nutrition: buckets.nutrition.length > 0 ? formatTabContent(buckets.nutrition.join('').trim()) : null,
-    howToUse: buckets.howToUse.length > 0 ? formatTabContent(buckets.howToUse.join('').trim()) : null,
-    faqs: buckets.faqs.length > 0 ? formatTabContent(buckets.faqs.join('').trim()) : null,
+    description: parsedDesc || formatTabContent(rawHtml),
+    ingredients: parsedIngredients,
+    nutrition: parsedNutrition,
+    howToUse: parsedHowToUse,
+    faqs: parsedFaqs,
     customSections,
   };
 }
