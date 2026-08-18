@@ -37,6 +37,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
     : originalPrice;
 
   const hasVariants = product.variants && product.variants.length > 0;
+  const ratingValue = Number(product.averageRating || 0);
+  const reviewCountValue = Number(product.reviewCount || 0);
 
   const handleCartClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -101,9 +103,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
                 </div>
                 
                 <div className="flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 text-gold-400 fill-gold-400" />
-                  <span className="text-xs font-medium text-gray-700">4.8</span>
-                  <span className="text-xs text-gray-400">(120)</span>
+                  <Star className={`w-3.5 h-3.5 ${ratingValue > 0 ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'}`} />
+                  <span className="text-xs font-medium text-gray-700">
+                    {ratingValue > 0 ? ratingValue.toFixed(1) : 'New'}
+                  </span>
+                  {reviewCountValue > 0 && (
+                    <span className="text-xs text-gray-400">({reviewCountValue})</span>
+                  )}
                 </div>
               </div>
               
