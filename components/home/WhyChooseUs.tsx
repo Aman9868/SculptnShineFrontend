@@ -1,93 +1,104 @@
 import React from 'react';
-import { FlaskConical, Award, Users, ShieldCheck } from 'lucide-react';
+import { FlaskConical, Award, Users, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const features = [
   {
+    step: '01',
     icon: FlaskConical,
-    title: 'Science Backed',
-    description: 'Formulas designed for real results.',
-    stat: '100+',
-    statLabel: 'Lab Tested',
+    title: 'Science Backed Formulas',
+    description: 'Thoroughly lab-tested, clinically validated formulas designed for optimal bioavailability & safety.',
+    badge: 'Lab Tested',
   },
   {
+    step: '02',
     icon: Award,
-    title: 'Premium Ingredients',
-    description: 'Sourced from the best in the world.',
-    stat: 'A+',
-    statLabel: 'Grade Quality',
+    title: 'Premium Grade Quality',
+    description: 'Only pure, clinically dosed ingredients sourced from world-class certified manufacturing facilities.',
+    badge: '100% Pure',
   },
   {
-    icon: Users,
-    title: 'Result Driven',
-    description: 'Trusted by thousands of fitness lovers.',
-    stat: '50K+',
-    statLabel: 'Happy Customers',
-  },
-  {
+    step: '03',
     icon: ShieldCheck,
-    title: 'Made for You',
-    description: 'Products for every goal, every lifestyle.',
-    stat: '100%',
-    statLabel: 'Authentic',
+    title: '100% Authentic Guarantee',
+    description: 'Direct partnerships with official brand importers with tamper-proof security seals & verification codes.',
+    badge: 'Certified Genuine',
+  },
+  {
+    step: '04',
+    icon: Users,
+    title: 'Results-Driven Nutrition',
+    description: 'Trusted by over 50,000+ athletes & fitness enthusiasts across India for proven body transformations.',
+    badge: '50K+ Athletes',
   },
 ];
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-12 lg:py-16 bg-cream-100">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Section Header with Decorative Lines */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-4 max-w-md mx-auto mb-2">
-            <div className="h-px bg-gradient-to-r from-transparent to-gold-600/40 flex-1" />
-            <div className="w-2 h-2 rotate-45 bg-gold-600" />
-            <div className="h-px bg-gradient-to-l from-transparent to-gold-600/40 flex-1" />
+    <section className="py-12 lg:py-16 bg-white border-y border-cream-200 overflow-hidden relative">
+      {/* Ambient background gold glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gold-400/5 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <div className="h-px bg-gradient-to-r from-transparent via-gold-600/50 to-transparent w-16" />
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-[0.25em] text-gold-700 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-gold-600" />
+              The Sculpt N Shine Promise
+            </span>
+            <div className="h-px bg-gradient-to-l from-transparent via-gold-600/50 to-transparent w-16" />
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight uppercase">
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold text-brandDark tracking-tight uppercase">
             WHY CHOOSE SCULPT N SHINE?
           </h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-2">
+            India&apos;s trusted destination for authentic sports nutrition, clean wellness, and high-performance beauty care
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        {/* 4-Column Feature Grid (Full Width, No cramped image) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {features.map((feature, idx) => (
             <div
               key={idx}
-              className="relative bg-white rounded-3xl border border-cream-200 p-6 sm:p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(184,134,11,0.15)] hover:border-gold-300/60 transition-all duration-500 group flex flex-col items-center text-center overflow-hidden hover:-translate-y-1"
+              className="group relative bg-gradient-to-b from-cream-50 via-cream-50/70 to-cream-100/80 rounded-3xl border border-cream-200/90 p-6 sm:p-7 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_28px_-6px_rgba(184,134,11,0.15)] hover:border-gold-400 hover:bg-white transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 overflow-hidden"
             >
-              {/* Subtle top glow on hover */}
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
-              {/* Icon Container */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-gold-200 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
-                <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-cream-50 to-cream-100 border border-cream-200 text-gold-600 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
-                  <feature.icon className="h-8 w-8 sm:h-10 sm:w-10 stroke-[1.5]" />
-                </div>
-              </div>
+              {/* Subtle Step Number Watermark */}
+              <span className="absolute top-4 right-5 text-4xl font-serif font-black text-cream-300/60 group-hover:text-gold-200/60 transition-colors select-none pointer-events-none">
+                {feature.step}
+              </span>
 
-              {/* Title */}
-              <h3 className="mb-2.5 text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight group-hover:text-gold-700 transition-colors">
-                {feature.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed flex-1">
-                {feature.description}
-              </p>
-
-              {/* Divider & Stat Container */}
-              <div className="w-full pt-5 border-t border-cream-200/80 relative">
-                 <div className="absolute -top-px inset-x-12 h-px bg-gradient-to-r from-transparent via-gold-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                 
-                <div className="flex flex-col items-center justify-center gap-1">
-                  <span className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-600 to-amber-700 tracking-tight">
-                    {feature.stat}
+              {/* Top: Icon + Badge */}
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-2xl bg-white border border-cream-300 text-gold-600 shadow-2xs group-hover:scale-110 group-hover:bg-gold-50 group-hover:border-gold-400 transition-all duration-300">
+                    <feature.icon className="h-6 w-6 stroke-[1.6]" />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-white/80 border border-cream-200 px-2.5 py-1 rounded-full text-gray-600 group-hover:border-gold-300 group-hover:text-gold-800 transition-colors">
+                    {feature.badge}
                   </span>
-                  <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                    {feature.statLabel}
-                  </p>
                 </div>
+
+                {/* Title */}
+                <h3 className="text-base sm:text-lg font-bold text-brandDark tracking-tight mb-2 group-hover:text-gold-700 transition-colors">
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
+
+              {/* Bottom Subtle Indicator */}
+              <div className="pt-5 mt-4 border-t border-cream-200/60 flex items-center gap-1.5 text-[11px] font-bold text-gold-700 opacity-80 group-hover:opacity-100 transition-opacity">
+                <CheckCircle2 size={13} className="text-gold-600" />
+                <span>Verified Standard</span>
+              </div>
+
+              {/* Hover Accent Glow Top Border */}
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-gold-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           ))}
         </div>
@@ -95,4 +106,3 @@ export default function WhyChooseUs() {
     </section>
   );
 }
-

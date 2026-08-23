@@ -114,7 +114,7 @@ export default function Testimonials() {
   if (isLoading && reviews.length === 0) return null;
 
   return (
-    <section className="py-14 sm:py-18 bg-white border-y border-cream-300 relative overflow-hidden">
+    <section className="py-12 lg:py-16 bg-cream-100 border-b border-cream-300 relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Header row with Title and Pill Controls */}

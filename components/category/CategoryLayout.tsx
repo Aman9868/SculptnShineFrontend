@@ -12,7 +12,9 @@ interface FilterItem {
 
 interface CategoryLayoutProps {
   products: Product[];
-  categories: any[];
+  categories?: any[];
+  subcategories?: any[];
+  categoryName?: string;
   dynamicFilters?: {
     brands: FilterItem[];
     flavors: FilterItem[];
@@ -28,7 +30,14 @@ interface CategoryLayoutProps {
   };
 }
 
-export const CategoryLayout: React.FC<CategoryLayoutProps> = ({ products, categories, dynamicFilters, pagination }) => {
+export const CategoryLayout: React.FC<CategoryLayoutProps> = ({ 
+  products, 
+  categories = [], 
+  subcategories = [],
+  categoryName = 'Products',
+  dynamicFilters, 
+  pagination 
+}) => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   return (
@@ -36,6 +45,9 @@ export const CategoryLayout: React.FC<CategoryLayoutProps> = ({ products, catego
       {/* Sidebar (Desktop sticky & Mobile drawer) */}
       <FilterSidebar 
         categories={categories} 
+        subcategories={subcategories}
+        categoryName={categoryName}
+        totalProducts={pagination?.total || products.length}
         dynamicFilters={dynamicFilters}
         isMobileOpen={isMobileFilterOpen}
         onMobileClose={() => setIsMobileFilterOpen(false)}

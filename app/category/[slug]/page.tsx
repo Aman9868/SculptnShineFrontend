@@ -114,7 +114,7 @@ export default async function CategoryPage({
   ];
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 overflow-hidden">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 overflow-hidden">
       <CategoryHeader 
         title={category.name}
         description={category.description || `Explore our premium ${category.name} collection.`}
@@ -123,13 +123,13 @@ export default async function CategoryPage({
           { label: 'Home', href: '/' },
           { label: category.name }
         ]}
-        subcategories={subcatPills as any}
-        activeSubcategorySlug={subcategorySlug || ''}
       />
       
       <CategoryLayout 
         products={categoryProducts as any} 
         categories={subcategories as any} 
+        subcategories={subcategories as any}
+        categoryName={category.name}
         dynamicFilters={dynamicFilters}
         pagination={pagination}
       />

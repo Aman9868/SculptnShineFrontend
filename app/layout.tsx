@@ -11,6 +11,7 @@ import { CategoryNav } from '@/components/layout/CategoryNav';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { Footer } from '@/components/layout/Footer';
+import { ChatWidget } from '@/components/ai/ChatWidget';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -120,6 +121,7 @@ export default function RootLayout({
                   <main>{children}</main>
                 </div>
                 <Footer />
+                <ChatWidget />
               </StoreProvider>
             </NotificationProvider>
           </AuthProvider>

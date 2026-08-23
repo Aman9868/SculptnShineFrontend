@@ -180,9 +180,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, pagination, 
         </div>
       ) : (
         <>
-          <div className={`grid gap-4 md:gap-6 mb-10 ${
+          <div className={`grid gap-4 md:gap-5 mb-10 ${
             viewMode === 'grid' 
-              ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
+              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
               : 'grid-cols-1'
           }`}>
             {validProducts.map((product) => (

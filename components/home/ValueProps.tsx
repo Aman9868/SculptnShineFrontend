@@ -34,7 +34,7 @@ export const ValueProps = async () => {
   };
 
   return (
-    <section className="bg-white border-b border-cream-300 py-4 sm:py-6">
+    <section className="bg-cream-100 border-t border-cream-300 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-cream-300">
           {valueProps.map((prop) => (

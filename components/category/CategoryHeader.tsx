@@ -3,17 +3,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getMediaUrl } from '@/lib/media';
 
-interface Subcategory {
-  name: string;
-  slug: string;
-}
-
 interface CategoryHeaderProps {
   title: string;
   description: string;
   imageSrc: string;
   breadcrumbs: { label: string; href?: string }[];
-  subcategories: Subcategory[];
+  subcategories?: any[];
   activeSubcategorySlug?: string;
 }
 
@@ -22,77 +17,57 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
   description,
   imageSrc,
   breadcrumbs,
-  subcategories,
-  activeSubcategorySlug = ''
 }) => {
   const resolvedImage = getMediaUrl(imageSrc, '/assets/cat_supplements.png');
 
   return (
-    <div className="mb-6 sm:mb-10 max-w-full">
+    <div className="mb-6 sm:mb-8 max-w-full">
       {/* Breadcrumbs */}
-      <nav className="flex items-center flex-wrap gap-y-1 text-xs text-gray-500 mb-4 sm:mb-6">
+      <nav className="flex items-center flex-wrap gap-y-1 text-xs text-gray-500 mb-4 sm:mb-5">
         {breadcrumbs.map((crumb, idx) => (
           <React.Fragment key={idx}>
-            {idx > 0 && <span className="mx-1.5 text-gray-400 shrink-0">&gt;</span>}
+            {idx > 0 && <span className="mx-2 text-gray-400 shrink-0">/</span>}
             {crumb.href ? (
-              <Link href={crumb.href} className="hover:text-gold-600 transition-colors shrink-0 whitespace-nowrap">
+              <Link href={crumb.href} className="hover:text-gold-600 font-medium transition-colors shrink-0 whitespace-nowrap">
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-gray-900 font-medium shrink-0 whitespace-nowrap truncate max-w-[200px]">{crumb.label}</span>
+              <span className="text-gray-900 font-semibold shrink-0 whitespace-nowrap truncate max-w-[220px]">
+                {crumb.label}
+              </span>
             )}
           </React.Fragment>
         ))}
       </nav>
 
-      <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-6 sm:mb-8 items-start md:items-center">
-        {/* Title Section */}
-        <div className="w-full md:w-1/3 z-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-extrabold text-brandDark mb-2 sm:mb-3 uppercase tracking-wide break-words">
-            {title}
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-            {description}
-          </p>
-        </div>
-
-        {/* Hero Image */}
-        <div className="w-full md:w-2/3 h-40 sm:h-52 md:h-64 relative rounded-2xl overflow-hidden shadow-luxury bg-cream-200 shrink-0">
+      {/* Hero Banner with Title & Description */}
+      <div className="relative rounded-2xl overflow-hidden shadow-sm border border-cream-300 bg-gradient-to-r from-[#18181B] to-[#27272A] min-h-[140px] sm:min-h-[180px] md:min-h-[220px] flex items-center">
+        {/* Background Image with Dark Overlay */}
+        <div className="absolute inset-0 z-0">
           <Image
             src={resolvedImage}
             alt={title}
             fill
-            className="object-cover object-center"
+            className="object-cover object-center opacity-40 mix-blend-luminosity"
             priority
-            sizes="(max-width: 768px) 100vw, 66vw"
+            sizes="100vw"
           />
-          {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brandDark/30 via-transparent to-transparent mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#18181B] via-[#18181B]/80 to-transparent" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 px-6 sm:px-10 py-6 sm:py-8 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/20 border border-gold-400/30 text-gold-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
+            Official Store Collection
+          </div>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-extrabold text-white tracking-tight uppercase leading-tight">
+            {title}
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-300 font-medium mt-2 leading-relaxed line-clamp-2 sm:line-clamp-none max-w-xl">
+            {description}
+          </p>
         </div>
       </div>
-
-      {/* Subcategory Pills */}
-      {subcategories && subcategories.length > 0 && (
-        <div className="flex overflow-x-auto hide-scrollbar gap-2 sm:gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0 touch-pan-x">
-          {subcategories.map((sub, idx) => {
-            const isActive = activeSubcategorySlug === sub.slug;
-
-            return (
-              <Link
-                key={idx}
-                href={`?subcategorySlug=${sub.slug}`}
-                className={`whitespace-nowrap px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-300 flex-shrink-0 ${isActive
-                    ? 'bg-gold-500 text-white border-gold-500 shadow-md'
-                    : 'bg-white text-gray-700 border-cream-300 hover:border-gold-300 hover:text-gold-600'
-                  }`}
-                scroll={false}
-              >
-                {sub.name}
-              </Link>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 };
