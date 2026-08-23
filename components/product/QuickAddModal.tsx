@@ -10,9 +10,10 @@ interface QuickAddModalProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
+  onAddSuccess?: () => void;
 }
 
-export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, onClose }) => {
+export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, onClose, onAddSuccess }) => {
   const { addToCart } = useStore();
   const [selectedFlavor, setSelectedFlavor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -93,6 +94,9 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ product, isOpen, o
       const res = await addToCart(product.id, currentVariant?.id, quantity);
       if (res.success) {
         setAdded(true);
+        if (onAddSuccess) {
+          onAddSuccess();
+        }
         setTimeout(() => {
           onClose();
         }, 800);

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, X, SlidersHorizontal, RotateCcw, Search } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronRight, X, SlidersHorizontal, RotateCcw, Search, Plus, Minus, Star } from 'lucide-react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 interface FilterItem {
   name: string;
@@ -12,8 +15,18 @@ interface RatingItem {
   count: number;
 }
 
+interface SubcategoryItem {
+  id?: string;
+  name: string;
+  slug: string;
+  count?: number;
+}
+
 interface FilterSidebarProps {
-  categories: any[];
+  categories?: any[];
+  subcategories?: SubcategoryItem[];
+  categoryName?: string;
+  totalProducts?: number;
   dynamicFilters?: {
     brands: FilterItem[];
     flavors: FilterItem[];
@@ -26,7 +39,10 @@ interface FilterSidebarProps {
 }
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({ 
-  categories, 
+  categories = [], 
+  subcategories = [],
+  categoryName = 'Products',
+  totalProducts = 0,
   dynamicFilters,
   isMobileOpen,
   onMobileClose
@@ -41,11 +57,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     return val ? val.split(',') : [];
   };
 
+  const activeSubcategory = searchParams.get('subcategorySlug') || '';
+
   // Local State for Filters
   const [localBrands, setLocalBrands] = useState<string[]>(parseList('brand'));
   const [localWeights, setLocalWeights] = useState<string[]>(parseList('weights'));
   const [localFlavors, setLocalFlavors] = useState<string[]>(parseList('flavors'));
   const [localPreferences, setLocalPreferences] = useState<string[]>(parseList('preferences'));
+  const [localAvailability, setLocalAvailability] = useState<string[]>(parseList('availability'));
   const [localRating, setLocalRating] = useState<number | null>(
     searchParams.get('rating') ? Number(searchParams.get('rating')) : null
   );
@@ -63,6 +82,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     setLocalWeights(parseList('weights'));
     setLocalFlavors(parseList('flavors'));
     setLocalPreferences(parseList('preferences'));
+    setLocalAvailability(parseList('availability'));
     setLocalRating(searchParams.get('rating') ? Number(searchParams.get('rating')) : null);
     setMinPrice(Number(searchParams.get('minPrice')) || MIN);
     setMaxPrice(Number(searchParams.get('maxPrice')) || MAX);
@@ -80,74 +100,247 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     };
   }, [isMobileOpen]);
 
-  // Helper to toggle local state lists
-  const toggleLocalList = (setter: React.Dispatch<React.SetStateAction<string[]>>, list: string[], value: string) => {
-    if (list.includes(value)) {
-      setter(list.filter((v) => v !== value));
+  // Helper to toggle local state lists and apply immediately for checkboxes
+  const toggleCheckbox = (key: string, list: string[], value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    const updated = list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+    setter(updated);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (updated.length > 0) {
+      params.set(key, updated.join(','));
     } else {
-      setter([...list, value]);
+      params.delete(key);
     }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Apply Filters Button Click Handler
-  const handleApplyFilters = () => {
+  // Handle Subcategory Click
+  const handleSubcategoryClick = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    
-    const updateParam = (key: string, list: string[]) => {
-      if (list.length > 0) params.set(key, list.join(','));
-      else params.delete(key);
-    };
-    
-    updateParam('brand', localBrands);
-    updateParam('weights', localWeights);
-    updateParam('flavors', localFlavors);
-    updateParam('preferences', localPreferences);
-    
-    if (localRating) params.set('rating', localRating.toString());
-    else params.delete('rating');
+    if (slug) {
+      params.set('subcategorySlug', slug);
+    } else {
+      params.delete('subcategorySlug');
+    }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    if (onMobileClose) onMobileClose();
+  };
 
+  // Apply Price Filters
+  const handleApplyPrice = () => {
+    const params = new URLSearchParams(searchParams.toString());
     if (minPrice > MIN) params.set('minPrice', minPrice.toString());
     else params.delete('minPrice');
-    
+
     if (maxPrice < MAX) params.set('maxPrice', maxPrice.toString());
     else params.delete('maxPrice');
-    
-    params.delete('page');
+
+    params.set('page', '1');
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    onMobileClose?.();
+    if (onMobileClose) onMobileClose();
   };
 
-  const handleClearAll = () => {
+  // Handle Rating Click
+  const handleRatingClick = (stars: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (localRating === stars) {
+      setLocalRating(null);
+      params.delete('rating');
+    } else {
+      setLocalRating(stars);
+      params.set('rating', stars.toString());
+    }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  // Clear All Filters
+  const handleResetFilters = () => {
     setLocalBrands([]);
     setLocalWeights([]);
     setLocalFlavors([]);
     setLocalPreferences([]);
+    setLocalAvailability([]);
     setLocalRating(null);
     setMinPrice(MIN);
     setMaxPrice(MAX);
-    router.push(pathname, { scroll: false });
-    onMobileClose?.();
+    setBrandSearch('');
+    
+    // Preserve only sort and category
+    const params = new URLSearchParams();
+    const sort = searchParams.get('sort');
+    if (sort) params.set('sort', sort);
+    
+    router.push(`${pathname}${params.toString() ? '?' + params.toString() : ''}`, { scroll: false });
+    if (onMobileClose) onMobileClose();
   };
 
-  const filteredBrands = dynamicFilters?.brands?.filter(b => 
-    b.name.toLowerCase().includes(brandSearch.toLowerCase())
-  ) || [];
+  // Filter brands based on search input
+  const filteredBrands = useMemo(() => {
+    if (!dynamicFilters?.brands) return [];
+    if (!brandSearch.trim()) return dynamicFilters.brands;
+    return dynamicFilters.brands.filter(b => 
+      b.name.toLowerCase().includes(brandSearch.toLowerCase().trim())
+    );
+  }, [dynamicFilters?.brands, brandSearch]);
 
-  const renderFilterContent = () => (
-    <>
-      {/* Price Filter */}
-      <div className="mb-8 border-b border-gray-100 pb-6">
-        <h4 className="text-sm font-bold tracking-wider mb-6 uppercase text-gray-900">Price Range</h4>
-        <div className="px-2 mb-2 relative h-12">
-          <div className="absolute top-4 left-0 w-full h-1 bg-gray-200 rounded-full"></div>
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (activeSubcategory) count++;
+    if (localBrands.length > 0) count += localBrands.length;
+    if (localWeights.length > 0) count += localWeights.length;
+    if (localFlavors.length > 0) count += localFlavors.length;
+    if (localPreferences.length > 0) count += localPreferences.length;
+    if (localAvailability.length > 0) count += localAvailability.length;
+    if (localRating) count++;
+    if (minPrice > MIN || maxPrice < MAX) count++;
+    return count;
+  }, [activeSubcategory, localBrands, localWeights, localFlavors, localPreferences, localAvailability, localRating, minPrice, maxPrice]);
+
+  // Combine subcategories from props and categories
+  const resolvedSubcategories = useMemo(() => {
+    if (subcategories && subcategories.length > 0) return subcategories;
+    if (categories && categories.length > 0) {
+      return categories.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        count: c._count?.products || c.count,
+      }));
+    }
+    return [];
+  }, [subcategories, categories]);
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full">
+      {/* Sidebar Header */}
+      <div className="flex items-center justify-between pb-4 mb-5 border-b border-cream-300">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal size={17} className="text-gold-600" />
+          <h3 className="font-serif font-extrabold text-base uppercase tracking-wider text-brandDark">
+            Filter Products
+          </h3>
+          {activeFiltersCount > 0 && (
+            <span className="bg-gold-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              {activeFiltersCount}
+            </span>
+          )}
+        </div>
+        {activeFiltersCount > 0 && (
+          <button 
+            onClick={handleResetFilters}
+            className="flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer"
+          >
+            <RotateCcw size={12} />
+            <span>Reset</span>
+          </button>
+        )}
+      </div>
+
+      {/* 1. AMAZON STYLE: Product Categories / Subcategories Tree */}
+      {resolvedSubcategories.length > 0 && (
+        <div className="mb-7 pb-6 border-b border-cream-200">
+          <div className="flex items-center justify-between mb-3.5">
+            <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark border-b-2 border-gold-500 pb-1 inline-block">
+              Product Categories
+            </h4>
+          </div>
+          <ul className="space-y-1.5 text-xs sm:text-sm">
+            {/* All Products in Category */}
+            <li>
+              <button
+                onClick={() => handleSubcategoryClick('')}
+                className={`w-full text-left flex items-center justify-between py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                  !activeSubcategory
+                    ? 'font-extrabold text-gold-700 bg-gold-50/80 border-l-3 border-gold-500'
+                    : 'text-gray-700 hover:text-gold-600 hover:bg-cream-50'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="text-gold-600 font-bold">•</span>
+                  <span>All {categoryName}</span>
+                </span>
+                {totalProducts > 0 && (
+                  <span className="text-[11px] text-gray-400 font-medium">({totalProducts})</span>
+                )}
+              </button>
+            </li>
+
+            {/* Subcategories List */}
+            {resolvedSubcategories.map((sub, idx) => {
+              const isActive = activeSubcategory === sub.slug;
+              return (
+                <li key={sub.slug || idx}>
+                  <button
+                    onClick={() => handleSubcategoryClick(sub.slug)}
+                    className={`w-full text-left flex items-center justify-between py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                      isActive
+                        ? 'font-extrabold text-gold-700 bg-gold-50/80 border-l-3 border-gold-500'
+                        : 'text-gray-700 hover:text-gold-600 hover:bg-cream-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5 truncate pr-2">
+                      <span className={`text-[11px] font-bold ${isActive ? 'text-gold-600' : 'text-gray-400'}`}>+</span>
+                      <span className="truncate">{sub.name}</span>
+                    </span>
+                    {sub.count !== undefined && sub.count > 0 && (
+                      <span className="text-[11px] text-gray-400 font-medium shrink-0">({sub.count})</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* 2. Availability Filter (In Stock / Out of Stock) */}
+      <div className="mb-7 pb-6 border-b border-cream-200">
+        <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark mb-3.5 border-b-2 border-gold-500 pb-1 inline-block">
+          Availability
+        </h4>
+        <ul className="space-y-2.5 text-xs sm:text-sm">
+          <li className="flex items-center justify-between group">
+            <label className="flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={localAvailability.includes('in-stock')}
+                onChange={() => toggleCheckbox('availability', localAvailability, 'in-stock', setLocalAvailability)}
+                className="w-4 h-4 rounded border-gray-300 text-gold-600 focus:ring-gold-500 accent-gold-600 cursor-pointer"
+              />
+              <span className="ml-2.5 text-gray-700 group-hover:text-brandDark font-medium">In Stock</span>
+            </label>
+          </li>
+          <li className="flex items-center justify-between group">
+            <label className="flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={localAvailability.includes('out-of-stock')}
+                onChange={() => toggleCheckbox('availability', localAvailability, 'out-of-stock', setLocalAvailability)}
+                className="w-4 h-4 rounded border-gray-300 text-gold-600 focus:ring-gold-500 accent-gold-600 cursor-pointer"
+              />
+              <span className="ml-2.5 text-gray-700 group-hover:text-brandDark font-medium">Out of Stock</span>
+            </label>
+          </li>
+        </ul>
+      </div>
+
+      {/* 3. Price Range Slider */}
+      <div className="mb-7 pb-6 border-b border-cream-200">
+        <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark mb-4 border-b-2 border-gold-500 pb-1 inline-block">
+          Price Range
+        </h4>
+        <div className="px-1 mb-3 relative h-10">
+          <div className="absolute top-3 left-0 w-full h-1.5 bg-cream-200 rounded-full" />
           <div 
-            className="absolute top-4 h-1 bg-gold-500 rounded-full transition-all duration-75"
+            className="absolute top-3 h-1.5 bg-gold-500 rounded-full transition-all duration-75"
             style={{ 
               left: `${((minPrice - MIN) / (MAX - MIN)) * 100}%`,
               right: `${100 - ((maxPrice - MIN) / (MAX - MIN)) * 100}%` 
             }}
-          ></div>
-          
+          />
           <input
             type="range"
             min={MIN}
@@ -158,7 +351,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               const val = Math.min(Number(e.target.value), maxPrice - 50);
               setMinPrice(val);
             }}
-            className="absolute top-3 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-gold-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow"
+            className="absolute top-2 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-gold-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
           />
           <input
             type="range"
@@ -170,23 +363,30 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               const val = Math.max(Number(e.target.value), minPrice + 50);
               setMaxPrice(val);
             }}
-            className="absolute top-3 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-gold-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow"
+            className="absolute top-2 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-gold-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
           />
         </div>
-        <div className="flex justify-between text-xs text-gray-600 font-medium px-1">
-          <span>₹{minPrice}</span>
-          <span>₹{maxPrice}{maxPrice === MAX ? '+' : ''}</span>
+        <div className="flex items-center justify-between text-xs text-gray-700 font-bold mb-3">
+          <span className="px-2.5 py-1 bg-cream-100 rounded-md border border-cream-300">₹{minPrice}</span>
+          <span className="text-gray-400">—</span>
+          <span className="px-2.5 py-1 bg-cream-100 rounded-md border border-cream-300">₹{maxPrice}{maxPrice === MAX ? '+' : ''}</span>
         </div>
+        <button
+          onClick={handleApplyPrice}
+          className="w-full py-1.5 bg-brandDark hover:bg-gold-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-2xs cursor-pointer"
+        >
+          Apply Price
+        </button>
       </div>
 
-      {/* Brands */}
+      {/* 4. Brand Filter with Instant Search */}
       {dynamicFilters && dynamicFilters.brands && dynamicFilters.brands.length > 0 && (
-        <div className="mb-8 border-b border-gray-100 pb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-bold tracking-wider uppercase text-gray-900">Brand</h4>
-            {filteredBrands.length > 5 && (
-              <span className="text-xs text-gray-400 font-medium">{filteredBrands.length} brands</span>
-            )}
+        <div className="mb-7 pb-6 border-b border-cream-200">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark border-b-2 border-gold-500 pb-1 inline-block">
+              Brand
+            </h4>
+            <span className="text-[11px] text-gray-400 font-medium">{filteredBrands.length} brands</span>
           </div>
           <div className="relative mb-3">
             <input 
@@ -194,227 +394,153 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               placeholder="Search brand..." 
               value={brandSearch}
               onChange={(e) => setBrandSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs sm:text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gold-500 placeholder-gray-400"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-cream-50/80 border border-cream-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gold-500 placeholder-gray-400"
             />
-            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
+            <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" />
           </div>
-          <ul className="space-y-2.5 max-h-52 overflow-y-auto no-scrollbar pr-1">
+          <ul className="space-y-2 max-h-52 overflow-y-auto hide-scrollbar pr-1">
             {filteredBrands.map((brand, idx) => (
               <li key={idx} className="flex items-center justify-between group">
-                <div className="flex items-center">
+                <label className="flex items-center cursor-pointer select-none truncate pr-2">
                   <input
                     type="checkbox"
-                    id={`brand-${idx}`}
                     checked={localBrands.includes(brand.name)}
-                    onChange={() => toggleLocalList(setLocalBrands, localBrands, brand.name)}
-                    className="w-4 h-4 rounded border-gray-300 text-gold-500 focus:ring-gold-500 cursor-pointer accent-gold-600"
+                    onChange={() => toggleCheckbox('brand', localBrands, brand.name, setLocalBrands)}
+                    className="w-4 h-4 rounded border-gray-300 text-gold-600 focus:ring-gold-500 accent-gold-600 cursor-pointer shrink-0"
                   />
-                  <label htmlFor={`brand-${idx}`} className="ml-2.5 text-xs sm:text-sm text-gray-700 cursor-pointer group-hover:text-gray-950">
+                  <span className="ml-2.5 text-xs text-gray-700 group-hover:text-brandDark font-medium truncate">
                     {brand.name}
-                  </label>
-                </div>
-                <span className="text-xs text-gray-400 font-medium">({brand.count})</span>
+                  </span>
+                </label>
+                <span className="text-[11px] text-gray-400 font-medium shrink-0">({brand.count})</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Weights */}
+      {/* 5. Weight / Volume Filter */}
       {dynamicFilters && dynamicFilters.weights && dynamicFilters.weights.length > 0 && (
-        <div className="mb-8 border-b border-gray-100 pb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-bold tracking-wider uppercase text-gray-900">Weight / Volume</h4>
-          </div>
-          <ul className="space-y-2.5 max-h-48 overflow-y-auto no-scrollbar pr-1">
+        <div className="mb-7 pb-6 border-b border-cream-200">
+          <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark mb-3.5 border-b-2 border-gold-500 pb-1 inline-block">
+            Weight / Volume
+          </h4>
+          <ul className="space-y-2 max-h-48 overflow-y-auto hide-scrollbar pr-1">
             {dynamicFilters.weights.map((weight, idx) => (
               <li key={idx} className="flex items-center justify-between group">
-                <div className="flex items-center">
+                <label className="flex items-center cursor-pointer select-none truncate pr-2">
                   <input
                     type="checkbox"
-                    id={`weight-${idx}`}
                     checked={localWeights.includes(weight.name)}
-                    onChange={() => toggleLocalList(setLocalWeights, localWeights, weight.name)}
-                    className="w-4 h-4 rounded border-gray-300 text-gold-500 focus:ring-gold-500 cursor-pointer accent-gold-600"
+                    onChange={() => toggleCheckbox('weights', localWeights, weight.name, setLocalWeights)}
+                    className="w-4 h-4 rounded border-gray-300 text-gold-600 focus:ring-gold-500 accent-gold-600 cursor-pointer shrink-0"
                   />
-                  <label htmlFor={`weight-${idx}`} className="ml-2.5 text-xs sm:text-sm text-gray-700 cursor-pointer group-hover:text-gray-950">
+                  <span className="ml-2.5 text-xs text-gray-700 group-hover:text-brandDark font-medium truncate">
                     {weight.name}
-                  </label>
-                </div>
-                <span className="text-xs text-gray-400 font-medium">({weight.count})</span>
+                  </span>
+                </label>
+                <span className="text-[11px] text-gray-400 font-medium shrink-0">({weight.count})</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Flavors */}
+      {/* 6. Flavor Filter */}
       {dynamicFilters && dynamicFilters.flavors && dynamicFilters.flavors.length > 0 && (
-        <div className="mb-8 border-b border-gray-100 pb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-bold tracking-wider uppercase text-gray-900">Flavor</h4>
-          </div>
-          <ul className="space-y-2.5 max-h-48 overflow-y-auto no-scrollbar pr-1">
+        <div className="mb-7 pb-6 border-b border-cream-200">
+          <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark mb-3.5 border-b-2 border-gold-500 pb-1 inline-block">
+            Flavor
+          </h4>
+          <ul className="space-y-2 max-h-48 overflow-y-auto hide-scrollbar pr-1">
             {dynamicFilters.flavors.map((flavor, idx) => (
               <li key={idx} className="flex items-center justify-between group">
-                <div className="flex items-center">
+                <label className="flex items-center cursor-pointer select-none truncate pr-2">
                   <input
                     type="checkbox"
-                    id={`flavor-${idx}`}
                     checked={localFlavors.includes(flavor.name)}
-                    onChange={() => toggleLocalList(setLocalFlavors, localFlavors, flavor.name)}
-                    className="w-4 h-4 rounded border-gray-300 text-gold-500 focus:ring-gold-500 cursor-pointer accent-gold-600"
+                    onChange={() => toggleCheckbox('flavors', localFlavors, flavor.name, setLocalFlavors)}
+                    className="w-4 h-4 rounded border-gray-300 text-gold-600 focus:ring-gold-500 accent-gold-600 cursor-pointer shrink-0"
                   />
-                  <label htmlFor={`flavor-${idx}`} className="ml-2.5 text-xs sm:text-sm text-gray-700 cursor-pointer group-hover:text-gray-950">
+                  <span className="ml-2.5 text-xs text-gray-700 group-hover:text-brandDark font-medium truncate">
                     {flavor.name}
-                  </label>
-                </div>
-                <span className="text-xs text-gray-400 font-medium">({flavor.count})</span>
+                  </span>
+                </label>
+                <span className="text-[11px] text-gray-400 font-medium shrink-0">({flavor.count})</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Preferences */}
-      {dynamicFilters && dynamicFilters.preferences && dynamicFilters.preferences.length > 0 && (
-        <div className="mb-8 border-b border-gray-100 pb-6">
-          <h4 className="text-sm font-bold tracking-wider mb-4 uppercase text-gray-900">Dietary Preference</h4>
-          <ul className="space-y-2.5">
-            {dynamicFilters.preferences.map((pref, idx) => (
-              <li key={idx} className="flex items-center justify-between group">
+      {/* 7. Customer Review Ratings */}
+      <div className="mb-4">
+        <h4 className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-brandDark mb-3 border-b-2 border-gold-500 pb-1 inline-block">
+          Customer Reviews
+        </h4>
+        <ul className="space-y-2">
+          {[4, 3, 2, 1].map((stars) => (
+            <li key={stars}>
+              <button
+                onClick={() => handleRatingClick(stars)}
+                className={`flex items-center gap-1.5 text-xs w-full py-1 px-2 rounded-lg transition-colors cursor-pointer ${
+                  localRating === stars
+                    ? 'bg-gold-50 text-gold-800 font-bold'
+                    : 'text-gray-700 hover:text-gold-600 hover:bg-cream-50'
+                }`}
+              >
                 <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`pref-${idx}`}
-                    checked={localPreferences.includes(pref.name)}
-                    onChange={() => toggleLocalList(setLocalPreferences, localPreferences, pref.name)}
-                    className="w-4 h-4 rounded border-gray-300 text-gold-500 focus:ring-gold-500 cursor-pointer accent-gold-600"
-                  />
-                  <label htmlFor={`pref-${idx}`} className="ml-2.5 text-xs sm:text-sm text-gray-700 cursor-pointer group-hover:text-gray-950 capitalize">
-                    {pref.name.replace('_', ' ').toLowerCase()}
-                  </label>
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      size={14}
+                      className={i < stars ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'}
+                    />
+                  ))}
                 </div>
-                <span className="text-xs text-gray-400 font-medium">({pref.count})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Ratings */}
-      {dynamicFilters && dynamicFilters.ratings && dynamicFilters.ratings.length > 0 && (
-        <div className="mb-8 border-b border-gray-100 pb-6">
-          <h4 className="text-sm font-bold tracking-wider mb-4 uppercase text-gray-900">Rating</h4>
-          <ul className="space-y-2.5">
-            {dynamicFilters.ratings.map((item) => (
-              <li key={item.stars} className="flex items-center justify-between group">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`rating-${item.stars}`}
-                    checked={localRating === item.stars}
-                    onChange={() => setLocalRating(localRating === item.stars ? null : item.stars)}
-                    className="w-4 h-4 rounded border-gray-300 text-gold-500 focus:ring-gold-500 cursor-pointer accent-gold-600"
-                  />
-                  <label htmlFor={`rating-${item.stars}`} className="ml-2.5 text-xs sm:text-sm text-gray-700 cursor-pointer flex items-center gap-1 group-hover:text-gray-950">
-                    <div className="flex text-gold-500">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <svg key={s} className={`w-3.5 h-3.5 ${s <= item.stars ? 'fill-current' : 'text-gray-200 fill-current'}`} viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="ml-1 text-xs font-medium text-gray-500">& up</span>
-                  </label>
-                </div>
-                <span className="text-xs text-gray-400 font-medium">({item.count})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
+                <span>& Up</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 
   return (
     <>
-      {/* Desktop Sticky Sidebar */}
-      <aside className="w-72 flex-shrink-0 pr-6 hidden md:flex flex-col sticky top-24 h-[calc(100vh-6rem)]">
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-6 pr-4">
-          {renderFilterContent()}
-        </div>
-        
-        {/* Apply / Clear Buttons for Desktop */}
-        <div className="shrink-0 pt-4 pb-4 bg-[#fcf9f2] border-t border-cream-200">
-          <button
-            onClick={handleApplyFilters}
-            className="w-full bg-[#D99A2B] text-white py-2.5 rounded-md font-bold text-sm tracking-wide uppercase hover:bg-gold-600 transition-colors shadow mb-2"
-          >
-            Apply Filters
-          </button>
-          <button
-            onClick={handleClearAll}
-            className="w-full flex items-center justify-center gap-1.5 text-gold-700 hover:text-gold-800 text-xs font-semibold transition-colors"
-          >
-            <RotateCcw size={13} />
-            Clear All
-          </button>
+      {/* Desktop Sticky Left Sidebar (Width 280px) */}
+      <aside className="hidden md:block w-64 lg:w-72 shrink-0 pr-6 border-r border-cream-300">
+        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto hide-scrollbar pr-2 pb-8">
+          {sidebarContent}
         </div>
       </aside>
 
-      {/* Mobile Filter Drawer */}
+      {/* Mobile Drawer */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           {/* Backdrop */}
           <div 
-            onClick={onMobileClose} 
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={onMobileClose}
           />
-
-          {/* Slide-over Panel */}
-          <div className="relative ml-auto w-full max-w-xs sm:max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300">
-            
-            {/* Header */}
-            <div className="p-4 border-b border-cream-300 bg-[#fcf9f2] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-gold-600" />
-                <h3 className="font-serif font-bold text-base text-gray-900">Filter Products</h3>
-              </div>
+          {/* Drawer Body */}
+          <div className="relative ml-auto w-[85%] max-w-sm bg-white h-full shadow-2xl p-6 overflow-y-auto flex flex-col z-10 animate-in slide-in-from-right duration-300">
+            <div className="flex justify-end mb-2">
               <button 
                 onClick={onMobileClose}
-                className="p-1.5 text-gray-500 hover:text-gray-800 rounded-full hover:bg-cream-200 transition-colors"
+                className="p-2 text-gray-500 hover:text-brandDark rounded-full bg-cream-100 hover:bg-cream-200 transition-colors"
                 aria-label="Close filters"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
-
-            {/* Scrollable Filters */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {renderFilterContent()}
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="p-4 bg-[#fcf9f2] border-t border-cream-300 space-y-2">
-              <button
-                onClick={handleApplyFilters}
-                className="w-full bg-gold-600 text-white py-3 rounded-xl font-bold text-sm tracking-wide uppercase hover:bg-gold-700 shadow-luxury transition-all active:scale-98"
-              >
-                Apply Filters
-              </button>
-              <button
-                onClick={handleClearAll}
-                className="w-full py-2 text-gray-600 hover:text-gold-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-              >
-                <RotateCcw size={13} />
-                Reset All Filters
-              </button>
-            </div>
-
+            {sidebarContent}
           </div>
         </div>
       )}
     </>
   );
 };
+
+export default FilterSidebar;

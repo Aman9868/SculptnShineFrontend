@@ -74,7 +74,7 @@ export default function GuidesSection() {
   if (isLoading) return null;
 
   return (
-    <section className="py-12 lg:py-16 bg-cream-100">
+    <section className="py-12 lg:py-16 bg-white border-b border-cream-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Section Header with Decorative Lines */}

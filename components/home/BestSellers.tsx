@@ -107,7 +107,7 @@ export const BestSellers: React.FC = () => {
 
   return (
     <section 
-      className="py-10 sm:py-14 lg:py-16 bg-white border-y border-cream-300 relative overflow-hidden group/section"
+      className="py-12 lg:py-16 bg-white border-y border-cream-300 relative overflow-hidden group/section"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

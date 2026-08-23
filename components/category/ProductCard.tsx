@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Star, ShoppingCart, Loader2 } from 'lucide-react';
+import { Star, ShoppingBag, Loader2 } from 'lucide-react';
 import { Product } from '@/lib/api/product';
 import { useStore } from '@/context/StoreContext';
 import { QuickAddModal } from '@/components/product/QuickAddModal';
@@ -18,7 +18,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
-  // Use first image if available, else brand logo placeholder
+  // Use first image if available, else placeholder
   const imageUrl = getMediaUrl(
     product.images && product.images.length > 0 && product.images[0] ? product.images[0] : null,
     '/assets/product-placeholder.png'
@@ -30,7 +30,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
     : (defaultVariant?.unitPrice || 0);
 
   // Calculate discount percentage
-  const discountPercent = product.discountPercentage || defaultVariant?.discountPercentage || 0;
+  const discountPercent = Math.round(product.discountPercentage || defaultVariant?.discountPercentage || 0);
     
   const currentPrice = discountPercent > 0 
     ? originalPrice * (1 - discountPercent / 100) 
@@ -59,19 +59,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
 
   return (
     <>
-      <div className={`group relative bg-white border border-gray-100 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-luxury-hover hover:border-gold-200 ${viewMode === 'list' ? 'flex flex-row min-h-[130px] sm:h-48' : 'flex flex-col h-full'}`}>
+      <div className={`group relative bg-white border border-cream-200/90 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-luxury hover:border-gold-400 hover:-translate-y-1 ${viewMode === 'list' ? 'flex flex-row min-h-[140px] sm:h-52' : 'flex flex-col h-full'}`}>
         <Link href={`/product/${product.id}`} className={`cursor-pointer ${viewMode === 'list' ? 'flex flex-row w-full' : 'flex flex-col flex-grow'}`}>
+          
           {/* Badges */}
-          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-10 flex flex-col gap-1 items-start">
+          <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 items-start">
             {discountPercent > 0 && (
-              <span className="bg-orange-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 uppercase rounded-sm tracking-wide shadow-sm">
+              <span className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2 py-0.5 uppercase rounded-md tracking-wider shadow-2xs">
                 {discountPercent}% OFF
               </span>
             )}
           </div>
 
           {/* Image Container */}
-          <div className={`relative bg-gray-50/60 p-2 sm:p-4 flex items-center justify-center overflow-hidden ${viewMode === 'list' ? 'w-28 sm:w-48 h-auto aspect-square shrink-0 border-r border-gray-100' : 'aspect-[4/5] w-full min-h-[180px] sm:min-h-[220px]'}`}>
+          <div className={`relative bg-gradient-to-b from-cream-50/50 to-white p-3 sm:p-4 flex items-center justify-center overflow-hidden ${viewMode === 'list' ? 'w-32 sm:w-52 h-auto aspect-square shrink-0 border-r border-cream-200' : 'aspect-square w-full min-h-[190px] sm:min-h-[220px]'}`}>
             <img
               src={imageUrl}
               alt={product.title}
@@ -80,41 +81,51 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = '/assets/product-placeholder.png';
               }}
-              className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform duration-500"
+              className="object-contain max-h-full max-w-full group-hover:scale-106 transition-transform duration-500 filter drop-shadow-sm"
             />
           </div>
 
-          {/* Content */}
-          <div className={`p-3 sm:p-4 flex flex-col flex-grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
-            <p className="text-[10px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1 line-clamp-1 uppercase tracking-wider">
-              {product.brand?.name || 'Sculpt N Shine'}
+          {/* Content Details */}
+          <div className={`p-3.5 sm:p-4 flex flex-col flex-grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
+            {/* Brand Name */}
+            <p className="text-[10px] sm:text-[11px] text-gold-700 font-extrabold uppercase tracking-widest mb-1 truncate">
+              {product.brand?.name || 'SCULPT N SHINE'}
             </p>
-            <h3 className={`text-xs sm:text-sm font-semibold text-brandDark mb-1 sm:mb-2 transition-colors group-hover:text-gold-600 ${viewMode === 'list' ? 'line-clamp-2 text-xs sm:text-base mb-1.5 sm:mb-4' : 'line-clamp-2 min-h-[36px] sm:min-h-[40px] leading-snug'}`}>
+            
+            {/* Title */}
+            <h3 className={`text-xs sm:text-sm font-bold text-brandDark mb-2 transition-colors group-hover:text-gold-700 ${viewMode === 'list' ? 'line-clamp-2 text-sm sm:text-base mb-2' : 'line-clamp-2 min-h-[34px] sm:min-h-[38px] leading-snug'}`}>
               {product.title}
             </h3>
             
-            <div className="mt-auto pt-2 flex items-end justify-between">
+            {/* Price & Rating Row */}
+            <div className="mt-auto pt-2 flex items-end justify-between gap-2 border-t border-cream-100">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base font-bold text-brandDark">₹{currentPrice.toLocaleString()}</span>
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <span className="text-sm sm:text-base font-extrabold text-brandDark">
+                    ₹{Math.round(currentPrice).toLocaleString('en-IN')}
+                  </span>
                   {discountPercent > 0 && (
-                    <span className="text-xs text-gray-400 line-through">₹{originalPrice.toLocaleString()}</span>
+                    <span className="text-[11px] text-gray-400 line-through font-medium">
+                      ₹{Math.round(originalPrice).toLocaleString('en-IN')}
+                    </span>
                   )}
                 </div>
                 
+                {/* Rating */}
                 <div className="flex items-center gap-1">
                   <Star className={`w-3.5 h-3.5 ${ratingValue > 0 ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'}`} />
-                  <span className="text-xs font-medium text-gray-700">
+                  <span className="text-[11px] font-bold text-gray-700">
                     {ratingValue > 0 ? ratingValue.toFixed(1) : 'New'}
                   </span>
                   {reviewCountValue > 0 && (
-                    <span className="text-xs text-gray-400">({reviewCountValue})</span>
+                    <span className="text-[10px] text-gray-400 font-medium">({reviewCountValue})</span>
                   )}
                 </div>
               </div>
               
+              {/* Quick Add Button */}
               <button 
-                className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-gold-500 hover:bg-gold-50 hover:text-gold-600 transition-colors shadow-sm active:scale-95 disabled:opacity-50"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cream-100 hover:bg-gold-600 hover:text-white text-brandDark border border-cream-300 flex items-center justify-center transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
                 onClick={handleCartClick}
                 disabled={isAdding}
                 aria-label="Add to cart"
@@ -123,7 +134,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
                 {isAdding ? (
                   <Loader2 size={16} className="animate-spin text-gold-600" />
                 ) : (
-                  <ShoppingCart size={16} />
+                  <ShoppingBag size={16} className="transition-transform group-hover:scale-110" />
                 )}
               </button>
             </div>
@@ -131,7 +142,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
         </Link>
       </div>
 
-      {/* Quick Add / Variant Selection Modal */}
+      {/* Quick Add Modal */}
       {hasVariants && (
         <QuickAddModal 
           product={product} 
@@ -143,3 +154,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
   );
 };
 
+export default ProductCard;
