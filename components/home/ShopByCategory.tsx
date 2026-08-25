@@ -203,9 +203,9 @@ export const ShopByCategory: React.FC = () => {
               Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-[250px] sm:w-[260px] lg:w-[calc(20%-1rem)] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-sm animate-pulse overflow-hidden"
+                  className="flex-1 min-w-[250px] sm:min-w-[260px] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-sm animate-pulse overflow-hidden"
                 >
-                  <div className="w-full h-48 sm:h-56 bg-cream-200" />
+                  <div className="w-full aspect-[4/3] bg-cream-200" />
                   <div className="p-4">
                     <div className="w-16 h-3 bg-gray-200 rounded-full mb-2" />
                     <div className="w-full h-5 bg-gray-200 rounded mb-1.5" />
@@ -218,10 +218,10 @@ export const ShopByCategory: React.FC = () => {
                 <Link
                   key={cat.id}
                   href={cat.href}
-                  className="group w-[250px] sm:w-[260px] lg:w-[calc(20%-1rem)] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-luxury hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden select-none cursor-pointer flex flex-col"
+                  className="group flex-1 min-w-[250px] sm:min-w-[260px] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-luxury hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden select-none cursor-pointer flex flex-col"
                 >
                   {/* Image Container */}
-                  <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-cream-50">
+                  <div className="relative w-full aspect-[4/3] overflow-hidden bg-cream-50">
                     <Image
                       src={cat.image}
                       alt={cat.name}

@@ -42,7 +42,7 @@ export default async function GuideDetailPage({ params }: GuideProps) {
         title: 'How Much Protein Do You Really Need Every Day?',
         category: 'NUTRITION',
         image: 'https://images.unsplash.com/photo-1579722820308-d74e571900a9?q=80&w=600',
-        content: '<h2>The Protein Debate: How Much is Enough?</h2><p>Protein is the building block of your muscles, but there is a lot of confusion around how much you actually need to consume daily. The answer depends heavily on your lifestyle, activity level, and goals.</p><img src="https://images.unsplash.com/photo-1579722820308-d74e571900a9?q=80&w=1200" alt="Protein Shake" /><br/><h3>General Guidelines</h3><ul><li><strong>Sedentary Adults:</strong> 0.8g per kg of body weight.</li><li><strong>Endurance Athletes:</strong> 1.2g to 1.4g per kg of body weight.</li><li><strong>Strength Trainers:</strong> 1.6g to 2.2g per kg of body weight.</li></ul><p>If you\'re trying to build muscle, aiming for the higher end of the spectrum is crucial. Supplements like whey protein can help you hit these targets conveniently.</p>',
+        content: '<h2>The Protein Debate: How Much is Enough?</h2><p>Protein is the building block of your muscles, but there is a lot of confusion around how much you actually need to consume daily. The answer depends heavily on your lifestyle, activity level, and goals.</p><h3>General Guidelines</h3><ul><li><strong>Sedentary Adults:</strong> 0.8g per kg of body weight.</li><li><strong>Endurance Athletes:</strong> 1.2g to 1.4g per kg of body weight.</li><li><strong>Strength Trainers:</strong> 1.6g to 2.2g per kg of body weight.</li></ul><p>If you\'re trying to build muscle, aiming for the higher end of the spectrum is crucial. Supplements like whey protein can help you hit these targets conveniently.</p>',
         createdAt: new Date().toISOString(),
       },
       {
@@ -180,11 +180,12 @@ function renderGuide(guide: any) {
 
         {/* Featured Image */}
         {guide.image && (
-          <div className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden shadow-lg mb-12">
+          <div className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden shadow-2xl mb-12 border border-gold-200 group">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
             <img 
               src={guide.image} 
               alt={guide.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
             />
           </div>
         )}
@@ -207,7 +208,7 @@ function renderGuide(guide: any) {
         {/* Article Content */}
         <article className="prose prose-lg max-w-none mb-16">
           <div 
-            dangerouslySetInnerHTML={{ __html: guide.content || '<p>No content available.</p>' }} 
+            dangerouslySetInnerHTML={{ __html: (guide.content || '<p>No content available.</p>').replace(/<img[^>]*>/g, '') }} 
             className="guide-content"
           />
         </article>
