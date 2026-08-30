@@ -48,14 +48,14 @@ export const ProductSpotlightBanners: React.FC<ProductSpotlightBannersProps> = (
           <button 
             onClick={() => scroll('left')} 
             disabled={!showLeftScroll}
-            className={`p-2 rounded-full border transition-all ${showLeftScroll ? 'border-cream-300 text-brandDark hover:bg-cream-100 cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
+            className={`w-10 h-10 flex items-center justify-center shrink-0 rounded-full border transition-all ${showLeftScroll ? 'bg-white border-cream-300 text-brandDark hover:bg-cream-100 shadow-sm cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
           >
             <ChevronLeft size={20} />
           </button>
           <button 
             onClick={() => scroll('right')} 
             disabled={!showRightScroll}
-            className={`p-2 rounded-full border transition-all ${showRightScroll ? 'border-cream-300 text-brandDark hover:bg-cream-100 cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
+            className={`w-10 h-10 flex items-center justify-center shrink-0 rounded-full border transition-all ${showRightScroll ? 'bg-white border-cream-300 text-brandDark hover:bg-cream-100 shadow-sm cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
           >
             <ChevronRight size={20} />
           </button>
