@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { LockKeyhole, Mail, MapPin } from 'lucide-react';
+import { LockKeyhole, Mail, MapPin, Phone } from 'lucide-react';
 import { businessConfigApi, BusinessConfig } from '@/lib/api/businessConfig';
 import { categoryAPI, Category } from '@/lib/api/category';
 
@@ -83,6 +83,14 @@ export const Footer: React.FC = () => {
             >
               <Mail className="w-4 h-4 text-gold-500 shrink-0" />
               <span>{supportEmail}</span>
+            </a>
+
+            <a
+              href="tel:9008990052"
+              className="flex items-center gap-2 text-gray-400 hover:text-gold-400 transition-colors max-w-sm"
+            >
+              <Phone className="w-4 h-4 text-gold-500 shrink-0" />
+              <span>+91 90089 90052</span>
             </a>
 
             <div className="flex items-center gap-3 pt-2">

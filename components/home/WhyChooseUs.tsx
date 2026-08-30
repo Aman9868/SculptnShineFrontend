@@ -34,7 +34,7 @@ const features = [
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-12 lg:py-16 bg-white border-y border-cream-200 overflow-hidden relative">
+    <section className="py-12 lg:py-16 bg-cream-100 border-y border-cream-200 overflow-hidden relative">
       {/* Ambient background gold glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gold-400/5 rounded-full blur-[140px] pointer-events-none" />
 

@@ -48,6 +48,7 @@ export interface UserData {
   emailNotifications?: boolean;
   smsNotifications?: boolean;
   whatsappNotifications?: boolean;
+  integrations?: { provider: string }[];
 }
 
 export interface UpdateProfileData {

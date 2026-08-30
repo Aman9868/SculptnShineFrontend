@@ -90,6 +90,7 @@ export default async function BestSellersPage({
       />
 
       <CategoryLayout
+        categorySlug="best-sellers"
         products={products as any}
         categories={[]}
         dynamicFilters={dynamicFilters}

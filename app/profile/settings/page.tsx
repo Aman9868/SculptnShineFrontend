@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { withAuth } from '@/lib/withAuth';
 import { authAPI } from '@/lib/api/auth';
-import { User, Phone, Trash2, AlertTriangle } from 'lucide-react';
+import { User, Phone, Trash2, AlertTriangle, Activity, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { apiFetch } from '@/lib/api/apiFetch';
 
 function ProfileSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, updateUser, deleteAccount } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +28,26 @@ function ProfileSettingsPage() {
     bio: user?.bio || '',
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isConnectingFit, setIsConnectingFit] = useState(false);
+
+  React.useEffect(() => {
+    // Handle OAuth callbacks
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+
+    if (success === 'google_fit_connected') {
+      toast.success('Successfully connected to Google Fit!');
+      router.replace('/profile/settings'); // Clear query params
+    }
+    
+    if (error === 'google_fit_declined') {
+      toast.error('Google Fit connection was declined.');
+      router.replace('/profile/settings');
+    } else if (error === 'google_fit_failed') {
+      toast.error('Failed to connect to Google Fit. Please try again.');
+      router.replace('/profile/settings');
+    }
+  }, [searchParams, router]);
 
   React.useEffect(() => {
     if (user && !isEditing) {
@@ -106,6 +128,25 @@ function ProfileSettingsPage() {
       console.error('Failed to delete account:', err);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleConnectGoogleFit = async () => {
+    setIsConnectingFit(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const res = await apiFetch(`${API_URL}/integrations/google-fit/auth`);
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error('Failed to get connection URL');
+      }
+    } catch (error) {
+      console.error('Error connecting Google Fit:', error);
+      toast.error('Failed to connect Google Fit. Please try again later.');
+    } finally {
+      setIsConnectingFit(false);
     }
   };
 
@@ -260,6 +301,62 @@ function ProfileSettingsPage() {
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* External Integrations */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Activity className="text-[#d87c1c]" size={24} />
+          <h2 className="text-2xl font-serif font-bold text-gray-900">
+            External Integrations
+          </h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-6">
+          Connect external health tracking services to power our AI Predictive Replenishment Engine.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="flex gap-4 items-center">
+            <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
+              <svg viewBox="0 0 48 48" className="w-8 h-8">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold text-sm text-gray-900">Google Fit</p>
+              <p className="text-xs text-gray-500 max-w-sm">
+                Allows Sculpt & Shine to automatically pull your workout frequency to predict precisely when your supplements will run out.
+              </p>
+            </div>
+          </div>
+          
+          {user?.integrations?.some((i: any) => i.provider === 'GOOGLE_FIT') ? (
+            <div className="px-5 py-2.5 bg-green-50 border border-green-200 text-green-700 font-bold text-xs rounded-lg flex items-center gap-2 shrink-0">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              Active
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectGoogleFit}
+              disabled={isConnectingFit}
+              className="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-xs rounded-lg transition-colors shadow-xs cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-50"
+            >
+              {isConnectingFit ? (
+                <span className="animate-pulse">Connecting...</span>
+              ) : (
+                <>
+                  <LinkIcon size={14} />
+                  Connect Account
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>

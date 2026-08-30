@@ -15,6 +15,7 @@ interface CategoryLayoutProps {
   categories?: any[];
   subcategories?: any[];
   categoryName?: string;
+  categorySlug: string;
   dynamicFilters?: {
     brands: FilterItem[];
     flavors: FilterItem[];
@@ -35,18 +36,20 @@ export const CategoryLayout: React.FC<CategoryLayoutProps> = ({
   categories = [], 
   subcategories = [],
   categoryName = 'Products',
-  dynamicFilters, 
+  categorySlug,
+  dynamicFilters,
   pagination 
 }) => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   return (
-    <div className="flex relative">
+    <div className="flex flex-col md:flex-row gap-6 relative">
       {/* Sidebar (Desktop sticky & Mobile drawer) */}
       <FilterSidebar 
         categories={categories} 
         subcategories={subcategories}
         categoryName={categoryName}
+        categorySlug={categorySlug}
         totalProducts={pagination?.total || products.length}
         dynamicFilters={dynamicFilters}
         isMobileOpen={isMobileFilterOpen}

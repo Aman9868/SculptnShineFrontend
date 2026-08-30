@@ -106,7 +106,12 @@ const BRAND_VECTOR_LOGOS: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function TopSellingBrands() {
+export interface TopSellingBrandsProps {
+  categorySlug?: string;
+  bgClass?: string;
+}
+
+export default function TopSellingBrands({ categorySlug, bgClass = 'bg-white' }: TopSellingBrandsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [brands, setBrands] = useState<TopBrand[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -119,7 +124,10 @@ export default function TopSellingBrands() {
     const fetchTopBrands = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.sculptshine.shop/api';
-        const res = await fetch(`${apiUrl}/brands/top-selling?limit=10`);
+        const url = categorySlug 
+          ? `${apiUrl}/brands/top-selling?limit=10&categorySlug=${categorySlug}`
+          : `${apiUrl}/brands/top-selling?limit=10`;
+        const res = await fetch(url);
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && isMounted) {
@@ -134,7 +142,7 @@ export default function TopSellingBrands() {
     };
     fetchTopBrands();
     return () => { isMounted = false; };
-  }, []);
+  }, [categorySlug]);
 
   const checkScroll = () => {
     if (scrollRef.current) {
@@ -159,7 +167,7 @@ export default function TopSellingBrands() {
   if (!isLoading && brands.length === 0) return null;
 
   return (
-    <section className="py-12 lg:py-16 bg-[#FAF7F2] border-y border-cream-300 relative overflow-hidden">
+    <section className={`py-12 lg:py-16 ${bgClass} border-y border-cream-200 relative overflow-hidden`}>
       {/* Ambient gold glow background accents */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-gold-400/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-gold-500/5 rounded-full blur-[100px] pointer-events-none" />

@@ -1,10 +1,16 @@
 import React from 'react';
-import { CategoryHeader } from '@/components/category/CategoryHeader';
+import { CategoryBanners } from '@/components/category/CategoryBanners';
+import { TopSubcategories } from '@/components/category/TopSubcategories';
+import { CategorySuperSavings } from '@/components/category/CategorySuperSavings';
 import { CategoryLayout } from '@/components/category/CategoryLayout';
+import { CategoryPromoCards } from '@/components/category/CategoryPromoCards';
+import { ProductSpotlightBanners } from '@/components/category/ProductSpotlightBanners';
+import TopSellingBrands from '@/components/home/TopSellingBrands';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { categoryAPI } from '@/lib/api/category';
 import { productAPI } from '@/lib/api/product';
+import { bannerApi } from '@/lib/api/banner';
 
 export async function generateMetadata({
   params,
@@ -76,7 +82,7 @@ export default async function CategoryPage({
   const limit = parseInt((resolvedSearchParams.limit as string) || '12', 10);
 
   // Fetch real data from backend
-  const [catRes, prodRes, filtersRes] = await Promise.all([
+  const [catRes, prodRes, filtersRes, banners, superSavingsRes, promoBanners, productSpotlightBanners] = await Promise.all([
     categoryAPI.getCategoryById(slugLower).catch(() => null),
     productAPI.getProducts({ 
       categorySlug: slugLower,
@@ -92,7 +98,15 @@ export default async function CategoryPage({
       page,
       limit
     }).catch(() => null),
-    categoryAPI.getCategoryFilters(slugLower).catch(() => null)
+    categoryAPI.getCategoryFilters(slugLower).catch(() => null),
+    bannerApi.getPublicBanners('CATEGORY_HEADER', slugLower).catch(() => []),
+    productAPI.getProducts({
+      categorySlug: slugLower,
+      limit: 10,
+      sort: 'discount_desc'
+    }).catch(() => null),
+    bannerApi.getPublicBanners('PROMO', slugLower).catch(() => []),
+    bannerApi.getPublicBanners('HOME_PRODUCT', slugLower).catch(() => []),
   ]);
 
   if (!catRes || !catRes.success || !catRes.data) {
@@ -103,6 +117,7 @@ export default async function CategoryPage({
   const categoryProducts = prodRes && prodRes.success ? prodRes.data.products : [];
   const pagination = prodRes && prodRes.success ? prodRes.data.pagination : { total: 0, page: 1, limit: 12, totalPages: 1 };
   const dynamicFilters = filtersRes && filtersRes.success ? filtersRes.data : { brands: [], flavors: [], weights: [], preferences: [] };
+  const superSavingsProducts = superSavingsRes && superSavingsRes.success ? superSavingsRes.data.products : [];
   
   const subcategories = (category as any).subcategories || [];
   const bannerImage = category.image || '/assets/promo_muscle.png';
@@ -112,27 +127,79 @@ export default async function CategoryPage({
     { name: 'All ' + category.name, slug: '' },
     ...subcategories.map((s: any) => ({ name: s.name, slug: s.slug }))
   ];
+  // Determine which sections will render and dynamically assign alternating backgrounds
+  const sectionsToRender = [
+    {
+      id: 'top-subcategories',
+      condition: subcategories && subcategories.length > 0,
+      render: (bgClass: string) => (
+        <section key="top-subcategories" className={`${bgClass} py-10 w-full`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <TopSubcategories subcategories={subcategories} categorySlug={category.slug} />
+          </div>
+        </section>
+      )
+    },
+    {
+      id: 'promo-banners',
+      condition: promoBanners && promoBanners.length > 0,
+      render: (bgClass: string) => (
+        <section key="promo-banners" className={`${bgClass} py-10 w-full border-t border-cream-200`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <CategoryPromoCards banners={promoBanners} />
+          </div>
+        </section>
+      )
+    },
+    {
+      id: 'super-savings',
+      condition: superSavingsProducts && (superSavingsProducts as any).length > 0,
+      render: (bgClass: string) => (
+        <section key="super-savings" className={`${bgClass} py-10 w-full border-t border-cream-200`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <CategorySuperSavings products={superSavingsProducts as any} categorySlug={category.slug} />
+          </div>
+        </section>
+      )
+    },
+    {
+      id: 'product-spotlight',
+      condition: productSpotlightBanners && productSpotlightBanners.length > 0,
+      render: (bgClass: string) => (
+        <section key="product-spotlight" className={`${bgClass} py-10 w-full border-t border-cream-200`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight mb-8">Featured Products</h2>
+            <ProductSpotlightBanners banners={productSpotlightBanners} />
+          </div>
+        </section>
+      )
+    },
+    {
+      id: 'top-selling-brands',
+      condition: true, // Internal state handles empty
+      render: (bgClass: string) => (
+        <TopSellingBrands key="top-selling-brands" categorySlug={category.slug} bgClass={bgClass} />
+      )
+    }
+  ];
+
+  const renderedSections = sectionsToRender
+    .filter(section => section.condition)
+    .map((section, index) => {
+      // Strictly alternate between cream and white for all rendered sections
+      const bgClass = index % 2 === 0 ? 'bg-cream-100' : 'bg-white';
+      return section.render(bgClass);
+    });
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 overflow-hidden">
-      <CategoryHeader 
-        title={category.name}
-        description={category.description || `Explore our premium ${category.name} collection.`}
-        imageSrc={bannerImage}
-        breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: category.name }
-        ]}
+    <div className="flex flex-col">
+      <CategoryBanners 
+        banners={banners || []} 
+        categoryName={category.name} 
+        fallbackImage={bannerImage} 
       />
-      
-      <CategoryLayout 
-        products={categoryProducts as any} 
-        categories={subcategories as any} 
-        subcategories={subcategories as any}
-        categoryName={category.name}
-        dynamicFilters={dynamicFilters}
-        pagination={pagination}
-      />
+
+      {renderedSections}
     </div>
   );
 }
