@@ -179,26 +179,6 @@ export default async function CategoryPage({
       render: (bgClass: string) => (
         <TopSellingBrands key="top-selling-brands" categorySlug={category.slug} bgClass={bgClass} />
       )
-    },
-    {
-      id: 'all-products',
-      condition: true,
-      render: (bgClass: string) => (
-        <section key="all-products" id="all-products" className={`${bgClass} py-14 w-full border-t border-cream-200`}>
-          <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-hidden">
-            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight mb-8">All Products</h2>
-            <CategoryLayout 
-              products={categoryProducts as any} 
-              categories={subcategories as any} 
-              subcategories={subcategories as any}
-              categoryName={category.name}
-              categorySlug={category.slug}
-              dynamicFilters={dynamicFilters}
-              pagination={pagination}
-            />
-          </div>
-        </section>
-      )
     }
   ];
 

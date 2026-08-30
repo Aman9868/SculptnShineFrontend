@@ -50,7 +50,7 @@ export const categoryAPI = {
     return response.json();
   },
 
-  async getCategoryFilters(idOrSlug: string): Promise<{ 
+  async getCategoryFilters(idOrSlug: string, subcategorySlug?: string): Promise<{ 
     success: boolean; 
     message: string; 
     data: { 
@@ -61,7 +61,12 @@ export const categoryAPI = {
       ratings?: { stars: number, count: number }[]
     } 
   }> {
-    const response = await fetch(`${API_BASE_URL}/categories/${idOrSlug}/filters`, {
+    const url = new URL(`${API_BASE_URL}/categories/${idOrSlug}/filters`);
+    if (subcategorySlug) {
+      url.searchParams.append('subcategorySlug', subcategorySlug);
+    }
+    
+    const response = await fetch(url.toString(), {
       method: 'GET',
     });
 
