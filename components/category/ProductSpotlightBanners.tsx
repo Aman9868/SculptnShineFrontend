@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Banner } from '@/lib/api/banner';
 import { getMediaUrl } from '@/lib/media';
 
@@ -15,11 +16,56 @@ export const ProductSpotlightBanners: React.FC<ProductSpotlightBannersProps> = (
     return null;
   }
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftScroll, setShowLeftScroll] = useState(false);
+  const [showRightScroll, setShowRightScroll] = useState(true);
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+    setShowLeftScroll(scrollLeft > 0);
+    setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 5);
+  };
+
+  useEffect(() => {
+    handleScroll();
+    window.addEventListener('resize', handleScroll);
+    return () => window.removeEventListener('resize', handleScroll);
+  }, [banners]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="w-full">
-      {/* Horizontal scrolling container for mobile, grid for desktop */}
+    <div className="w-full relative">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Featured Products</h2>
+        <div className="hidden sm:flex items-center gap-2">
+          <button 
+            onClick={() => scroll('left')} 
+            disabled={!showLeftScroll}
+            className={`p-2 rounded-full border transition-all ${showLeftScroll ? 'border-cream-300 text-brandDark hover:bg-cream-100 cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button 
+            onClick={() => scroll('right')} 
+            disabled={!showRightScroll}
+            className={`p-2 rounded-full border transition-all ${showRightScroll ? 'border-cream-300 text-brandDark hover:bg-cream-100 cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+
       <div 
-        className="flex lg:grid lg:grid-cols-4 overflow-x-auto gap-4 sm:gap-6 pb-6 pt-2 snap-x snap-mandatory scrollbar-hide" 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 pt-2 snap-x snap-mandatory scrollbar-hide scroll-smooth" 
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         <style dangerouslySetInnerHTML={{__html: `
@@ -37,7 +83,7 @@ export const ProductSpotlightBanners: React.FC<ProductSpotlightBannersProps> = (
             <Link
               key={banner.id}
               href={link}
-              className="group flex-shrink-0 snap-start block w-[260px] sm:w-[280px] lg:w-auto relative aspect-[3/4] rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
+              className="group flex-shrink-0 snap-start block w-[260px] sm:w-[280px] lg:w-[320px] relative aspect-[3/4] rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
             >
               <Image
                 src={getMediaUrl(banner.image)}
