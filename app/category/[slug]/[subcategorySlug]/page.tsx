@@ -139,14 +139,14 @@ export default async function SubcategoryPage({
 
       {promoBanners && promoBanners.length > 0 && (
         <section className="bg-white py-10 w-full border-b border-cream-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
             <CategoryPromoCards banners={promoBanners} />
           </div>
         </section>
       )}
 
       <section className="bg-cream-50 py-10 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-hidden">
           <CategoryLayout 
             products={categoryProducts as any} 
             categories={subcategories as any} 

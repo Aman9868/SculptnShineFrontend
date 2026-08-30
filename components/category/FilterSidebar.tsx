@@ -221,32 +221,33 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     return [];
   }, [subcategories, categories]);
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full">
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between pb-4 mb-5 border-b border-cream-300">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal size={17} className="text-gold-600" />
-          <h3 className="font-serif font-extrabold text-base uppercase tracking-wider text-brandDark">
-            Filter Products
-          </h3>
-          {activeFiltersCount > 0 && (
-            <span className="bg-gold-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-              {activeFiltersCount}
-            </span>
-          )}
-        </div>
+  const sidebarHeader = (
+    <div className="flex items-center justify-between pb-4 mb-5 border-b border-cream-300 shrink-0">
+      <div className="flex items-center gap-2">
+        <SlidersHorizontal size={17} className="text-gold-600" />
+        <h3 className="font-serif font-extrabold text-base uppercase tracking-wider text-brandDark">
+          Filter Products
+        </h3>
         {activeFiltersCount > 0 && (
-          <button 
-            onClick={handleResetFilters}
-            className="flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer"
-          >
-            <RotateCcw size={12} />
-            <span>Reset</span>
-          </button>
+          <span className="bg-gold-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {activeFiltersCount}
+          </span>
         )}
       </div>
+      {activeFiltersCount > 0 && (
+        <button 
+          onClick={handleResetFilters}
+          className="flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer"
+        >
+          <RotateCcw size={12} />
+          <span>Reset</span>
+        </button>
+      )}
+    </div>
+  );
 
+  const sidebarFilters = (
+    <div className="flex flex-col pb-8">
       {/* 1. AMAZON STYLE: Product Categories / Subcategories Tree */}
       {resolvedSubcategories.length > 0 && (
         <div className="mb-7 pb-6 border-b border-cream-200">
@@ -260,14 +261,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             <li>
               <button
                 onClick={() => handleSubcategoryClick('')}
-                className={`w-full text-left flex items-center justify-between py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                className={`w-full text-left flex items-start justify-between py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
                   !activeSubcategory
-                    ? 'font-extrabold text-gold-700 bg-gold-50/80 border-l-3 border-gold-500'
+                    ? 'font-extrabold text-gold-700 bg-gold-50/80'
                     : 'text-gray-700 hover:text-gold-600 hover:bg-cream-50'
                 }`}
               >
-                <span className="flex items-center gap-1.5">
-                  <span className="text-gold-600 font-bold">•</span>
+                <span className="flex items-start gap-1.5">
+                  <span className="w-3 text-left text-gold-600 font-bold">•</span>
                   <span>All {categoryName}</span>
                 </span>
                 {totalProducts > 0 && (
@@ -283,15 +284,17 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <li key={sub.slug || idx}>
                   <button
                     onClick={() => handleSubcategoryClick(sub.slug)}
-                    className={`w-full text-left flex items-center justify-between py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                    className={`w-full text-left flex items-start justify-between py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
                       isActive
-                        ? 'font-extrabold text-gold-700 bg-gold-50/80 border-l-3 border-gold-500'
+                        ? 'font-extrabold text-gold-700 bg-gold-50/80'
                         : 'text-gray-700 hover:text-gold-600 hover:bg-cream-50'
                     }`}
                   >
-                    <span className="flex items-center gap-1.5 truncate pr-2">
-                      <span className={`text-[11px] font-bold ${isActive ? 'text-gold-600' : 'text-gray-400'}`}>+</span>
-                      <span className="truncate">{sub.name}</span>
+                    <span className="flex items-start gap-1.5 pr-2">
+                      <span className={`w-3 text-left text-[14px] leading-tight font-bold pt-[1px] ${isActive ? 'text-gold-600' : 'text-gray-400'}`}>
+                        {isActive ? '•' : '+'}
+                      </span>
+                      <span className="whitespace-normal leading-snug text-left">{sub.name}</span>
                     </span>
                     {sub.count !== undefined && sub.count > 0 && (
                       <span className="text-[11px] text-gray-400 font-medium shrink-0">({sub.count})</span>
@@ -519,8 +522,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     <>
       {/* Desktop Sticky Left Sidebar (Width 280px) */}
       <aside className="hidden md:block w-64 lg:w-72 shrink-0 pr-6 border-r border-cream-300">
-        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto hide-scrollbar pr-2 pb-8">
-          {sidebarContent}
+        <div className="sticky top-24 flex flex-col max-h-[calc(100vh-7rem)]">
+          {sidebarHeader}
+          <div className="flex-1 overflow-y-auto hide-scrollbar pr-2">
+            {sidebarFilters}
+          </div>
         </div>
       </aside>
 
@@ -533,8 +539,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             onClick={onMobileClose}
           />
           {/* Drawer Body */}
-          <div className="relative ml-auto w-[85%] max-w-sm bg-white h-full shadow-2xl p-6 overflow-y-auto flex flex-col z-10 animate-in slide-in-from-right duration-300">
-            <div className="flex justify-end mb-2">
+          <div className="relative ml-auto w-[85%] max-w-sm bg-white h-full shadow-2xl p-6 flex flex-col z-10 animate-in slide-in-from-right duration-300">
+            <div className="flex justify-end mb-2 shrink-0">
               <button 
                 onClick={onMobileClose}
                 className="p-2 text-gray-500 hover:text-brandDark rounded-full bg-cream-100 hover:bg-cream-200 transition-colors"
@@ -543,7 +549,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <X size={18} />
               </button>
             </div>
-            {sidebarContent}
+            {sidebarHeader}
+            <div className="flex-1 overflow-y-auto hide-scrollbar mt-2">
+              {sidebarFilters}
+            </div>
           </div>
         </div>
       )}

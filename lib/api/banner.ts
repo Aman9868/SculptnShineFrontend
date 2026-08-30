@@ -42,7 +42,7 @@ export const bannerApi = {
     if (subcategoryId) params.append('subcategoryId', subcategoryId);
     if (onlySubcategories) params.append('onlySubcategories', 'true');
     
-    const response = await apiFetch(`${API_BASE_URL}/banners/public?${params.toString()}`);
+    const response = await apiFetch(`${API_BASE_URL}/banners/public?${params.toString()}`, { cache: 'no-store' });
     const data = await response.json();
     return data.data; // The backend returns { success: true, data: [...] }
   }
