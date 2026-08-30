@@ -122,6 +122,7 @@ export default async function SearchPage({
         </div>
       ) : (
         <CategoryLayout 
+          categorySlug="search"
           products={products} 
           categories={[]} // no subcategories for search page
           dynamicFilters={dynamicFilters}

@@ -26,16 +26,10 @@ export const HomeScreenBanner: React.FC = () => {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const [productBanners, generalBanners, promoBanners] = await Promise.all([
-          bannerApi.getPublicBanners('HOME_PRODUCT').catch(() => []),
-          bannerApi.getPublicBanners('HOME_GENERAL').catch(() => []),
-          bannerApi.getPublicBanners('PROMO').catch(() => [])
-        ]);
+        const generalBanners = await bannerApi.getPublicBanners('HOME_GENERAL').catch(() => []);
 
-        const allBanners = [...(productBanners || []), ...(generalBanners || []), ...(promoBanners || [])];
-
-        if (allBanners.length > 0) {
-          const sortedBanners = allBanners.sort((a, b) => a.sortOrder - b.sortOrder);
+        if (generalBanners && generalBanners.length > 0) {
+          const sortedBanners = generalBanners.sort((a, b) => a.sortOrder - b.sortOrder);
           setDynamicSlides(sortedBanners);
         }
       } catch (error) {

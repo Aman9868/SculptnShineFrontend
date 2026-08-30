@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Bot, Loader2, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Loader2, Sparkles, Download, Menu } from 'lucide-react';
 import { ChatLogin } from './ChatLogin';
 import ChatAddress from './ChatAddress';
 import { useRouter } from 'next/navigation';
 import { QuickAddModal } from '../product/QuickAddModal';
 import { Product } from '@/lib/api/product';
 import { ChatCheckout } from './ChatCheckout';
+import { ChatSidebar } from './ChatSidebar';
+import { getMediaUrl } from '@/lib/media';
 
 type Message = {
   id: string;
@@ -30,7 +32,14 @@ const formatMarkdown = (text: string) => {
   return { __html: formatted };
 };
 
-const renderMessageContent = (content: string, onAction?: (text: string) => void, onProductClick?: (sku: string) => void) => {
+const renderMessageContent = (content: any, onAction?: (text: string) => void, onProductClick?: (sku: string) => void) => {
+  if (typeof content !== 'string') {
+    if (Array.isArray(content)) {
+      content = content.map((c: any) => c.text || JSON.stringify(c)).join(' ');
+    } else {
+      content = typeof content === 'object' && content !== null ? JSON.stringify(content) : String(content || '');
+    }
+  }
   // Strip out the ACTION tags from visible text (with or without brackets)
   let displayContent = content.replace(/\[?ACTION:LOGIN\]?/g, '').replace(/\[?ACTION:ADD_ADDRESS\]?/g, '').replace(/\[?ACTION:CHECKOUT\]?/g, '');
   
@@ -45,36 +54,64 @@ const renderMessageContent = (content: string, onAction?: (text: string) => void
     }
   }
 
-  if (!displayContent.includes('[PRODUCT:')) {
-    return <div dangerouslySetInnerHTML={formatMarkdown(displayContent)} className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white leading-relaxed" />;
+  if (!displayContent.includes('[PRODUCT:') && !displayContent.includes('[QUOTATION_FILE:')) {
+    return (
+      <div className="flex flex-col gap-2">
+        <div dangerouslySetInnerHTML={formatMarkdown(displayContent)} className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white leading-relaxed" />
+        {displayContent.trim().endsWith('WhatsApp?') && (
+          <div className="flex gap-3 mt-2">
+            <button onClick={() => onAction && onAction('Yes')} className="px-6 py-2 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-gold-400">Yes</button>
+            <button onClick={() => onAction && onAction('No')} className="px-6 py-2 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-neutral-700 hover:border-neutral-600">No</button>
+          </div>
+        )}
+      </div>
+    );
   }
 
-  // Split content by the PRODUCT tag regex
-  const parts = displayContent.split(/(\[PRODUCT:[^\]]+\])/g);
+  // Split content by the PRODUCT tag and QUOTATION_FILE tag regex
+  const parts = displayContent.split(/(\[PRODUCT:[^\]]+\]|\[QUOTATION_FILE:[^\]]+\])/g);
   
   const products: any[] = [];
   const textParts: any[] = [];
+  let quotationUrl: string | null = null;
 
-  parts.forEach((part, index) => {
+  parts.forEach((part: string, index: number) => {
     if (part.startsWith('[PRODUCT:') && part.endsWith(']')) {
       const data = part.slice(9, -1).split('|');
       if (data.length === 4) {
         products.push({ sku: data[0], title: data[1], price: data[2], image: data[3] });
       }
+    } else if (part.startsWith('[QUOTATION_FILE:') && part.endsWith(']')) {
+      quotationUrl = part.slice(16, -1);
     } else if (part.trim()) {
       textParts.push(<div key={`text-${index}`} dangerouslySetInnerHTML={formatMarkdown(part)} className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white mb-4 leading-relaxed" />);
     }
   });
 
+  const defaultPlaceholder = 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80';
+
   return (
     <div className="flex flex-col gap-4 w-full">
       {textParts}
+      {quotationUrl && (
+        <a href={quotationUrl} download="quotation.xlsx" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full max-w-md mt-2 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95">
+          <Download size={20} />
+          Download Excel Quotation
+        </a>
+      )}
       {products.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
           {products.map((p, i) => (
             <div key={i} className="group relative bg-neutral-900/40 backdrop-blur-md border border-neutral-800 rounded-2xl overflow-hidden hover:border-gold-500/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] flex flex-col cursor-pointer" onClick={() => onProductClick && onProductClick(p.sku)}>
-              <div className="aspect-[4/3] bg-neutral-800 w-full relative overflow-hidden">
-                <img src={p.image.startsWith('http') || p.image.startsWith('/') ? p.image : `https://via.placeholder.com/300?text=Product`} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300?text=No+Image' }} />
+              <div className="aspect-[4/3] bg-neutral-950 w-full relative overflow-hidden flex items-center justify-center">
+                <img 
+                  src={getMediaUrl(p.image, defaultPlaceholder)} 
+                  alt={p.title} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  onError={(e) => { 
+                    e.currentTarget.src = defaultPlaceholder; 
+                  }} 
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <div className="p-4 flex flex-col gap-3 flex-1 justify-between">
@@ -91,6 +128,12 @@ const renderMessageContent = (content: string, onAction?: (text: string) => void
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {displayContent.trim().endsWith('WhatsApp?') && (
+        <div className="flex gap-3 mt-2">
+          <button onClick={() => onAction && onAction('Yes')} className="px-6 py-2 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-gold-400">Yes</button>
+          <button onClick={() => onAction && onAction('No')} className="px-6 py-2 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-neutral-700 hover:border-neutral-600">No</button>
         </div>
       )}
     </div>
@@ -121,8 +164,44 @@ export const ChatWidget = () => {
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const initMessage = {
+    id: 'init',
+    role: 'assistant' as const,
+    content: 'Welcome to SculptnShine AI! I am your personal fitness and commerce assistant. I can help you discover the perfect supplements, track your orders, or request bulk quotations. How can I fuel your journey today?',
+  };
+
+  const handleNewChat = () => {
+    setSessionId(crypto.randomUUID());
+    setMessages([initMessage]);
+  };
+
+  const handleSelectSession = async (sid: string) => {
+    setSessionId(sid);
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    
+    setIsLoading(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8086/api/v1';
+      const res = await fetch(`${baseUrl}/chat/session/${sid}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setMessages([initMessage, ...data.data]);
+      } else {
+        setMessages([initMessage]);
+      }
+    } catch (e) {
+      console.error("Failed to fetch session messages", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!sessionId) {
@@ -176,10 +255,8 @@ export const ChatWidget = () => {
 
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: text };
     
-    // Only display user message if it's not a system/background task
-    if (!isSystem) {
-      setMessages(prev => [...prev, userMessage]);
-    }
+    // Display all messages (even system-triggered ones like login success) so the user knows they were sent
+    setMessages(prev => [...prev, userMessage]);
     
     setIsLoading(true);
 
@@ -198,27 +275,61 @@ export const ChatWidget = () => {
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8086/api/v1'}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body: JSON.stringify(payload),
       });
       
-      const data = await res.json();
+      if (!res.body) throw new Error("ReadableStream not supported");
       
-      // Update logic based on server response structure
-      let aiContent = data.reply || data.data || 'Sorry, I could not process your request.';
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let aiContent = "";
       
-      // INTERCEPT AUTH_TOKEN
+      const messageId = (Date.now() + 1).toString();
+      setMessages(prev => [...prev, { id: messageId, role: 'assistant', content: '' }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            if (dataStr === '[DONE]') break;
+            if (!dataStr) continue;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.session_id && data.session_id !== sessionId) {
+                setSessionId(data.session_id);
+              }
+              if (data.content) {
+                aiContent += data.content;
+                
+                // Intercept token for display purposes
+                let displayContent = aiContent.replace(/\[AUTH_TOKEN:[^\]]+\]/g, '').trim();
+                
+                setMessages(prev => prev.map(msg => 
+                  msg.id === messageId ? { ...msg, content: displayContent } : msg
+                ));
+              }
+            } catch (e) {
+              console.error("Error parsing SSE JSON:", e, dataStr);
+            }
+          }
+        }
+      }
+      
+      // INTERCEPT AUTH_TOKEN (after streaming finishes)
       const tokenMatch = aiContent.match(/\[AUTH_TOKEN:([^\]]+)\]/);
       if (tokenMatch && tokenMatch[1]) {
         const token = tokenMatch[1];
         localStorage.setItem('accessToken', token);
         window.dispatchEvent(new Event('authChange'));
-        // Strip the token from visible text
-        aiContent = aiContent.replace(/\[AUTH_TOKEN:[^\]]+\]/g, '').trim();
       }
-
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: aiContent }]);
-      if (data.session_id && data.session_id !== sessionId) setSessionId(data.session_id);
 
     } catch (error) {
       console.error('Chat error:', error);
@@ -246,6 +357,12 @@ export const ChatWidget = () => {
         {/* Header */}
         <div className="p-4 bg-[#0f0f0f]/80 backdrop-blur-md border-b border-neutral-800 flex justify-between items-center z-10 absolute top-0 w-full">
           <div className="flex items-center gap-3 pl-2">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors mr-1"
+            >
+              <Menu size={20} />
+            </button>
             <div className="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-700 rounded-xl flex items-center justify-center text-black shadow-lg shadow-gold-500/20">
               <Bot size={20} />
             </div>
@@ -259,10 +376,18 @@ export const ChatWidget = () => {
           </button>
         </div>
 
+        <ChatSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+          onSelectSession={handleSelectSession}
+          onNewChat={handleNewChat}
+          currentSessionId={sessionId}
+        />
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 md:px-12 pt-24 pb-32 bg-[#0a0a0a] scrollbar-thin scrollbar-thumb-neutral-800">
           <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full">
-            {messages.map((msg) => (
+            {messages.map((msg, index) => (
               <div key={msg.id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 text-black flex items-center justify-center flex-shrink-0 mr-5 shadow-lg shadow-gold-500/20 mt-1">
@@ -280,7 +405,13 @@ export const ChatWidget = () => {
                         <div className="mt-6"><ChatAddress onSuccess={() => handleSendMessage("I have successfully added my address. Please continue with checkout.", true)} /></div>
                       )}
                       {msg.content.includes('ACTION:CHECKOUT') && (
-                        <div className="mt-6"><ChatCheckout onSuccess={(orderId) => handleSendMessage(`I have successfully paid for the order! The Order ID is ${orderId}.`, true)} onCancel={() => handleSendMessage("I cancelled the checkout process.", true)} /></div>
+                        <div className="mt-6">
+                            <ChatCheckout 
+                                onSuccess={(orderId) => handleSendMessage(`I have successfully completed checkout and just paid for the order! My new Order ID is ${orderId}.`, true)} 
+                                onCancel={() => handleSendMessage("I cancelled the checkout process.", true)} 
+                                isHistoricallyPaid={messages.slice(index + 1).some(m => m.content && m.content.includes("I have successfully completed checkout"))}
+                            />
+                        </div>
                       )}
                     </div>
                   )}
@@ -289,7 +420,7 @@ export const ChatWidget = () => {
             ))}
             
             {/* Loading Indicator with Logo */}
-            {isLoading && (
+            {isLoading && (!messages[messages.length - 1] || messages[messages.length - 1].role !== 'assistant' || !messages[messages.length - 1].content) && (
               <div className="flex justify-start w-full items-start mb-2">
                 <div className="w-10 h-10 rounded-xl border border-gold-500/20 bg-neutral-900 flex items-center justify-center flex-shrink-0 mr-5 mt-1 shadow-[0_0_15px_rgba(212,175,55,0.15)] overflow-hidden">
                    <img src="/apple-touch-icon.png" alt="SculptnShine Loading" className="w-6 h-6 object-contain animate-spin" onError={(e) => { e.currentTarget.style.display = 'none'; }} />

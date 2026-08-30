@@ -7,7 +7,6 @@ import { HealthProvider } from '@/context/HealthContext';
 import MaintenanceScreen from '@/components/common/MaintenanceScreen';
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Header } from '@/components/layout/Header';
-import { CategoryNav } from '@/components/layout/CategoryNav';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { Footer } from '@/components/layout/Footer';
@@ -114,7 +113,6 @@ export default function RootLayout({
                 <div>
                   <AnnouncementBar />
                   <Header />
-                  <CategoryNav />
                   <MobileMenu />
                   <CartDrawer />
                   <ToastContainer />

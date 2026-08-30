@@ -26,6 +26,7 @@ interface FilterSidebarProps {
   categories?: any[];
   subcategories?: SubcategoryItem[];
   categoryName?: string;
+  categorySlug?: string;
   totalProducts?: number;
   dynamicFilters?: {
     brands: FilterItem[];
@@ -42,6 +43,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   categories = [], 
   subcategories = [],
   categoryName = 'Products',
+  categorySlug,
   totalProducts = 0,
   dynamicFilters,
   isMobileOpen,
@@ -51,13 +53,17 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Extract category and subcategory from path
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const isCategoryRoute = pathSegments[0] === 'category';
+  const activeSubcategory = isCategoryRoute && pathSegments.length > 2 ? pathSegments[2] : '';
+  const activeCategorySlug = categorySlug || (isCategoryRoute ? pathSegments[1] : '');
+
   // Helper to parse comma-separated URL params into arrays
   const parseList = (key: string) => {
     const val = searchParams.get(key);
     return val ? val.split(',') : [];
   };
-
-  const activeSubcategory = searchParams.get('subcategorySlug') || '';
 
   // Local State for Filters
   const [localBrands, setLocalBrands] = useState<string[]>(parseList('brand'));
@@ -118,13 +124,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   // Handle Subcategory Click
   const handleSubcategoryClick = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (slug) {
-      params.set('subcategorySlug', slug);
-    } else {
-      params.delete('subcategorySlug');
-    }
+    params.delete('subcategorySlug'); // clean up old query param if present
     params.set('page', '1');
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    
+    if (slug) {
+      router.push(`/category/${activeCategorySlug}/${slug}?${params.toString()}`);
+    } else {
+      router.push(`/category/${activeCategorySlug}?${params.toString()}`);
+    }
+    
     if (onMobileClose) onMobileClose();
   };
 

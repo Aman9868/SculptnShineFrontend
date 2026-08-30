@@ -10,10 +10,11 @@ import ChatAddress from './ChatAddress';
 interface ChatCheckoutProps {
   onSuccess: (orderId: string) => void;
   onCancel: () => void;
+  isHistoricallyPaid?: boolean;
 }
 
-export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel }) => {
-  const { cart, cartTotalCount } = useStore();
+export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel, isHistoricallyPaid }) => {
+  const { cart, cartTotalCount, fetchCart } = useStore();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
   const [userProfile, setUserProfile] = useState<any | null>(null);
@@ -24,6 +25,7 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel 
 
   useEffect(() => {
     fetchAddresses();
+    fetchCart();
   }, []);
 
   const fetchAddresses = async () => {
@@ -80,7 +82,9 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel 
       const paymentRes = await checkoutAPI.initiatePayment(orderId);
       if (paymentRes.success && paymentRes.data.paymentUrl) {
         if (paymentRes.data.isTestMode) {
+           // Backend handles the simulated webhook internally, so we just wait and succeed
            setTimeout(() => {
+              fetchCart();
               setIsPaid(true);
               setIsLoading(false);
               onSuccess(orderId);
@@ -154,7 +158,7 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel 
 
   const finalTotal = (originalTotal - discountTotal) + gstTotal;
 
-  if (isPaid) {
+  if (isPaid || isHistoricallyPaid) {
     return (
         <div className="bg-neutral-900 border border-gold-600 rounded-xl p-4 w-full flex flex-col items-center justify-center space-y-3 mt-2">
            <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center">
@@ -162,6 +166,15 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel 
            </div>
            <h3 className="text-white font-bold text-lg">Payment Successful!</h3>
            <p className="text-neutral-400 text-xs text-center">Your order is confirmed.</p>
+        </div>
+    );
+  }
+
+  if (cart.length === 0) {
+    return (
+        <div className="bg-[#151515] border border-white/10 rounded-xl p-4 w-full flex flex-col items-center justify-center space-y-2 mt-2">
+           <h3 className="text-white font-medium text-sm">Checkout Session Ended</h3>
+           <p className="text-neutral-500 text-xs text-center">Your cart is empty.</p>
         </div>
     );
   }
@@ -214,7 +227,7 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel 
             >
               {addresses.map(a => (
                 <option key={a.id} value={a.id}>
-                  {a.userName} - {a.flatHouse}, {a.townCity}
+                  {a.userName} - {a.flatHouse}, {a.townCity}, {a.state}
                 </option>
               ))}
             </select>
