@@ -88,7 +88,8 @@ export default async function SubcategoryPage({
 
   const category = catRes.data;
   const subcategories = (category as any).subcategories || [];
-  const currentSubcategory = subcategories.find((s: any) => s.slug === subcategorySlug);
+  const isAll = subcategorySlug === 'all';
+  const currentSubcategory = isAll ? { name: category.name, slug: '' } : subcategories.find((s: any) => s.slug === subcategorySlug);
   
   if (!currentSubcategory) {
     notFound(); // Trigger 404 if subcategory is invalid
@@ -98,7 +99,7 @@ export default async function SubcategoryPage({
   const [prodRes, filtersRes, headerBanners, promoBanners, superSavingsRes] = await Promise.all([
     productAPI.getProducts({ 
       categorySlug: slugLower,
-      subcategorySlug,
+      subcategorySlug: isAll ? undefined : subcategorySlug,
       flavors,
       weights,
       preference: preferences,
@@ -110,9 +111,9 @@ export default async function SubcategoryPage({
       page,
       limit
     }).catch(() => null),
-    categoryAPI.getCategoryFilters(slugLower).catch(() => null),
-    bannerApi.getPublicBanners('CATEGORY_HEADER', slugLower, currentSubcategory.slug).catch(() => []),
-    bannerApi.getPublicBanners('PROMO', slugLower, currentSubcategory.slug).catch(() => []),
+    categoryAPI.getCategoryFilters(slugLower, isAll ? undefined : subcategorySlug).catch(() => null),
+    bannerApi.getPublicBanners('CATEGORY_HEADER', slugLower, isAll ? undefined : currentSubcategory.slug).catch(() => []),
+    bannerApi.getPublicBanners('PROMO', slugLower, isAll ? undefined : currentSubcategory.slug).catch(() => []),
     productAPI.getProducts({
       categorySlug: slugLower,
       limit: 10,

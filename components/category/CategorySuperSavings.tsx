@@ -24,7 +24,7 @@ export const CategorySuperSavings: React.FC<CategorySuperSavingsProps> = ({ prod
           <span className="text-sm font-medium text-red-600 ml-2 tracking-wide">(Up to 64% Off)</span>
         </h2>
         <Link 
-          href={`/category/${categorySlug}?sort=discount_desc#all-products`} 
+          href={`/category/${categorySlug}/all?sort=discount_desc`} 
           className="text-xs sm:text-sm font-medium text-gold-600 hover:text-gold-700 flex items-center gap-1 transition-colors group"
         >
           View All <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
