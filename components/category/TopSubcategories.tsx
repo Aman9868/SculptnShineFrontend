@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMediaUrl } from '@/lib/media';
 
 interface Subcategory {
@@ -21,6 +22,10 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftScroll, setShowLeftScroll] = useState(false);
+  const [showRightScroll, setShowRightScroll] = useState(true);
+
   const pathSegments = pathname.split('/').filter(Boolean);
   const isCategoryRoute = pathSegments[0] === 'category';
   const activeSubcategory = isCategoryRoute && pathSegments.length > 2 ? pathSegments[2] : '';
@@ -41,14 +46,55 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
     }
   };
 
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+    setShowLeftScroll(scrollLeft > 0);
+    setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 5);
+  };
+
+  useEffect(() => {
+    handleScroll();
+    window.addEventListener('resize', handleScroll);
+    return () => window.removeEventListener('resize', handleScroll);
+  }, [subcategories]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="mb-10 mt-2">
+    <div className="mb-10 mt-2 relative">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Explore Categories</h2>
+        <div className="hidden sm:flex items-center gap-2">
+          <button 
+            onClick={() => scroll('left')} 
+            disabled={!showLeftScroll}
+            className={`p-2 rounded-full border transition-all ${showLeftScroll ? 'border-cream-300 text-brandDark hover:bg-cream-100 cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button 
+            onClick={() => scroll('right')} 
+            disabled={!showRightScroll}
+            className={`p-2 rounded-full border transition-all ${showRightScroll ? 'border-cream-300 text-brandDark hover:bg-cream-100 cursor-pointer' : 'border-cream-100 text-cream-300 cursor-not-allowed bg-cream-50/50'}`}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
       </div>
       
       {/* Hide scrollbar with custom css class */}
-      <div className="flex overflow-x-auto gap-4 sm:gap-6 pt-2 pb-6 px-1 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex overflow-x-auto gap-4 sm:gap-6 pt-2 pb-6 px-1 snap-x snap-mandatory scrollbar-hide scroll-smooth" 
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         <style dangerouslySetInnerHTML={{__html: `
           .scrollbar-hide::-webkit-scrollbar { display: none; }
         `}} />
