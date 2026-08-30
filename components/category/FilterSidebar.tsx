@@ -196,7 +196,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (activeSubcategory) count++;
     if (localBrands.length > 0) count += localBrands.length;
     if (localWeights.length > 0) count += localWeights.length;
     if (localFlavors.length > 0) count += localFlavors.length;
@@ -205,7 +204,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     if (localRating) count++;
     if (minPrice > MIN || maxPrice < MAX) count++;
     return count;
-  }, [activeSubcategory, localBrands, localWeights, localFlavors, localPreferences, localAvailability, localRating, minPrice, maxPrice]);
+  }, [localBrands, localWeights, localFlavors, localPreferences, localAvailability, localRating, minPrice, maxPrice]);
 
   // Combine subcategories from props and categories
   const resolvedSubcategories = useMemo(() => {
