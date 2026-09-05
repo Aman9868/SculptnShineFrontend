@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI, UserData } from '@/lib/api/auth';
+import { apiFetch } from '@/lib/api/apiFetch';
 import { toast } from 'react-toastify';
 
 interface AuthContextType {
@@ -40,7 +41,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Fetch fresh profile in background
           try {
-            const profileRes = await authAPI.getProfile();
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const profileResponse = await apiFetch(`${apiUrl}/users/me`, { method: 'GET' });
+            if (!profileResponse.ok) {
+              throw new Error('Failed to fetch profile');
+            }
+            const profileRes: { data?: UserData } = await profileResponse.json();
             if (profileRes.data) {
               setUser(profileRes.data);
               localStorage.setItem('user', JSON.stringify(profileRes.data));

@@ -17,11 +17,11 @@ export const CategorySuperSavings: React.FC<CategorySuperSavingsProps> = ({ prod
   }
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4 border-b border-cream-200 pb-2">
-        <h2 className="text-xl sm:text-2xl font-serif font-bold text-gray-900">
+    <div className="mb-6 sm:mb-8">
+      <div className="flex items-center justify-between mb-3 sm:mb-4 border-b border-cream-200 pb-2">
+        <h2 className="text-lg sm:text-2xl font-serif font-bold text-gray-900">
           Super Savings
-          <span className="text-sm font-medium text-red-600 ml-2 tracking-wide">(Up to 64% Off)</span>
+          <span className="text-xs sm:text-sm font-medium text-red-600 ml-1.5 sm:ml-2 tracking-wide">(Up to 64% Off)</span>
         </h2>
         <Link 
           href={`/category/${categorySlug}/all?sort=discount_desc`} 
@@ -32,13 +32,13 @@ export const CategorySuperSavings: React.FC<CategorySuperSavingsProps> = ({ prod
       </div>
       
       {/* Horizontal scrolling container */}
-      <div className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 pt-2 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div className="flex overflow-x-auto gap-3 sm:gap-6 pb-4 sm:pb-6 pt-1 sm:pt-2 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <style dangerouslySetInnerHTML={{__html: `
           .scrollbar-hide::-webkit-scrollbar { display: none; }
         `}} />
         
         {products.map((product) => (
-          <div key={product.id} className="w-[180px] sm:w-[220px] md:w-[240px] flex-shrink-0 snap-start">
+          <div key={product.id} className="w-[145px] sm:w-[200px] md:w-[240px] flex-shrink-0 snap-start">
             <ProductCard product={product} />
           </div>
         ))}

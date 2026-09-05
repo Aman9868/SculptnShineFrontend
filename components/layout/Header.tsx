@@ -224,16 +224,18 @@ export const Header: React.FC = () => {
                     Logout
                   </button>
 
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      setShowDeleteModal(true);
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
-                  >
-                    <Trash2 size={16} />
-                    Delete Profile
-                  </button>
+                  {user?.role !== 'ADMIN' && (
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setShowDeleteModal(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+                    >
+                      <Trash2 size={16} />
+                      Delete Profile
+                    </button>
+                  )}
                 </div>
               )}
             </div>

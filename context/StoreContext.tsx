@@ -20,6 +20,7 @@ interface StoreContextType {
   searchResults: Product[];
   toast: ToastMessage | null;
   fetchCart: () => Promise<void>;
+  fetchWishlist: () => Promise<void>;
   addToCart: (productId: string, variantId?: string, quantity?: number) => Promise<{ success: boolean; requireLogin?: boolean; message?: string }>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -233,6 +234,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         searchResults,
         toast,
         fetchCart,
+        fetchWishlist,
         addToCart,
         removeFromCart,
         updateQuantity,

@@ -10,6 +10,8 @@ import { Product } from '@/lib/api/product';
 import { ChatCheckout } from './ChatCheckout';
 import { ChatSidebar } from './ChatSidebar';
 import { getMediaUrl } from '@/lib/media';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Message = {
   id: string;
@@ -17,19 +19,186 @@ type Message = {
   content: string;
 };
 
-// Simple Markdown to HTML parser for basic formatting (bold, italics, lists, newlines)
-const formatMarkdown = (text: string) => {
-  if (!text) return { __html: '' };
-  
-  let formatted = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n\n/g, '<br/><br/>')
-    .replace(/\n/g, '<br/>')
-    .replace(/^- (.*)$/gm, '<ul><li class="ml-4 list-disc my-1">$1</li></ul>')
-    .replace(/<\/ul><br\/><ul>/g, ''); // Fix adjacent list spacing
+const InterruptCard = ({ interruptData, onAction }: { interruptData: any, onAction: (text: string) => void }) => {
+  const maxQuantity = Math.max(0, Number(interruptData.available_stock) || 0);
+  const [qty, setQty] = useState(Math.min(interruptData.requested_quantity || 1, maxQuantity));
 
-  return { __html: formatted };
+  const handleAccept = () => {
+    if (qty < 1 || qty > maxQuantity) return;
+    if (qty !== interruptData.requested_quantity) {
+      onAction(`Yes, but update the quantity to ${qty}.`);
+    } else {
+      onAction('Yes');
+    }
+  };
+
+  return (
+    <div className="mt-2 flex flex-col border border-neutral-700/50 rounded-xl overflow-hidden bg-[#1e1e1e] shadow-lg">
+      <div className="px-4 py-2.5 bg-[#252525] border-b border-neutral-700/50 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-neutral-300 font-medium">
+          <Bot size={16} className="text-gold-500" />
+          Agent wants to use <code className="text-gold-400 bg-black/40 px-1.5 py-0.5 rounded text-xs font-mono">add_to_cart</code>
+        </div>
+      </div>
+      <div className="p-4 flex flex-col gap-4">
+        <p className="text-sm text-neutral-300 leading-relaxed">
+          The agent is requesting permission to add <strong className="text-white">{interruptData.title}</strong> to your cart.
+        </p>
+        <div className="bg-[#141414] border border-neutral-800 rounded-lg p-3 font-mono text-[13px] text-neutral-400">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-neutral-500">quantity:</span>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setQty(Math.max(1, qty - 1))}
+                className="w-6 h-6 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 rounded text-white font-bold transition-colors"
+              >-</button>
+              <span className="text-gold-400 font-bold min-w-[20px] text-center">{qty}</span>
+              <button 
+                onClick={() => setQty(Math.min(maxQuantity, qty + 1))}
+                className="w-6 h-6 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 rounded text-white font-bold transition-colors"
+              >+</button>
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-neutral-500">available_stock:</span>
+            <span className={interruptData.available_stock > 0 ? "text-green-400" : "text-red-400"}>
+              {interruptData.available_stock}
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-3 pt-1">
+          <button disabled={qty < 1} onClick={handleAccept} className="flex-1 py-2.5 bg-gold-500 hover:bg-gold-400 text-black text-sm font-bold rounded-lg transition-all transform active:scale-95 border border-gold-400 shadow-md flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            Accept
+          </button>
+          <button onClick={() => onAction('cancel')} className="flex-1 py-2.5 bg-neutral-700 hover:bg-neutral-600 text-white text-sm font-bold rounded-lg transition-all transform active:scale-95 border border-neutral-600 shadow-md">
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+const ProductCarousel = ({ products, onProductClick, onAction, defaultPlaceholder, compact = false }: any) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div className="relative group mt-2">
+      {products.length > 1 && (
+        <>
+          <button 
+            onClick={() => scroll('left')}
+            className="absolute -left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-neutral-800 hover:bg-gold-500 text-white hover:text-black rounded-full flex items-center justify-center shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button 
+            onClick={() => scroll('right')}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-neutral-800 hover:bg-gold-500 text-white hover:text-black rounded-full flex items-center justify-center shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </>
+      )}
+      
+      <div 
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        {products.map((p: any, i: number) => (
+          <div key={i} className={`${compact ? 'min-w-[150px] max-w-[150px]' : 'min-w-[240px] max-w-[240px]'} snap-center group/card relative bg-neutral-900/40 backdrop-blur-md border border-neutral-800 rounded-2xl overflow-hidden hover:border-gold-500/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] flex flex-col cursor-pointer flex-shrink-0`} onClick={() => onProductClick && onProductClick(p.sku)}>
+            <div className={`${compact ? 'aspect-square' : 'aspect-[4/3]'} bg-neutral-950 w-full relative overflow-hidden flex items-center justify-center`}>
+              <img 
+                src={getMediaUrl(p.image, defaultPlaceholder)} 
+                alt={p.title} 
+                className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500" 
+                onError={(e) => { 
+                  e.currentTarget.src = defaultPlaceholder; 
+                }} 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+            </div>
+            <div className={`${compact ? 'p-3' : 'p-4'} flex flex-col gap-3 flex-1 justify-between`}>
+              <div>
+                <h4 className="text-sm font-semibold text-white line-clamp-2 leading-tight group-hover/card:text-gold-500 transition-colors">{p.title}</h4>
+                <div className={`${compact ? 'text-sm' : 'text-lg'} font-bold text-gold-500 mt-2 tracking-tight`}>₹{p.price}</div>
+              </div>
+                {!compact && <button 
+                  onClick={(e) => { e.stopPropagation(); onAction && onAction(`Add ${p.title} (ID: ${p.sku}) to my cart`) }}
+                  className="w-full py-2.5 bg-neutral-800 hover:bg-gold-600 text-white hover:text-black text-sm font-bold rounded-xl transition-all transform active:scale-95 border border-neutral-700 hover:border-gold-500 shadow-lg"
+                >Add to Cart</button>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const OrderStatusCard = ({ orderNumber, status, paymentStatus, trackingNumber, products = [] }: any) => {
+  const stages = ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+  const currentStage = stages.indexOf(status);
+  const isCancelled = status === 'CANCELLED';
+
+  return (
+    <div className="w-full max-w-xl rounded-2xl border border-neutral-800 bg-[#151515] p-4 shadow-xl shadow-black/20">
+      <div className="flex items-center justify-between gap-3 border-b border-neutral-800 pb-3">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-neutral-500">Order</p>
+          <p className="text-sm font-semibold text-white break-all">{orderNumber}</p>
+        </div>
+        <div className="text-right">
+          <p className={`text-sm font-bold ${isCancelled ? 'text-red-400' : 'text-gold-400'}`}>{status.replaceAll('_', ' ')}</p>
+          <p className="text-xs text-neutral-500">Payment: {paymentStatus.replaceAll('_', ' ')}</p>
+        </div>
+      </div>
+      {isCancelled ? (
+        <p className="mt-4 text-sm text-red-300">This order was cancelled.</p>
+      ) : (
+        <div className="mt-5 flex items-start">
+          {stages.map((stage, index) => (
+            <React.Fragment key={stage}>
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+                <span className={`h-3 w-3 rounded-full ${index <= currentStage ? 'bg-gold-500 shadow-[0_0_10px_rgba(212,175,55,0.45)]' : 'bg-neutral-700'}`} />
+                <span className={`text-[10px] leading-tight ${index <= currentStage ? 'text-neutral-200' : 'text-neutral-600'}`}>{stage.replaceAll('_', ' ')}</span>
+              </div>
+              {index < stages.length - 1 && <span className={`mt-1.5 h-px flex-1 ${index < currentStage ? 'bg-gold-500' : 'bg-neutral-700'}`} />}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+      {trackingNumber && <p className="mt-4 text-xs text-neutral-400">Tracking: <span className="text-neutral-200">{trackingNumber}</span></p>}
+      {products.length > 0 && (
+        <div className="mt-4 border-t border-neutral-800 pt-4">
+          {products.map((product: any) => (
+            <div key={product.sku} className="flex items-center gap-3">
+              <img
+                src={getMediaUrl(product.image, '/assets/product-placeholder.png')}
+                alt={product.title}
+                className="h-14 w-14 rounded-lg object-cover"
+                onError={(event) => { event.currentTarget.src = '/assets/product-placeholder.png'; }}
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-white">{product.title}</p>
+                <p className="text-sm font-bold text-gold-400">₹{product.price}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const renderMessageContent = (content: any, onAction?: (text: string) => void, onProductClick?: (sku: string) => void) => {
@@ -41,9 +210,24 @@ const renderMessageContent = (content: any, onAction?: (text: string) => void, o
     }
   }
   // Strip out the ACTION tags from visible text (with or without brackets)
-  let displayContent = content.replace(/\[?ACTION:LOGIN\]?/g, '').replace(/\[?ACTION:ADD_ADDRESS\]?/g, '').replace(/\[?ACTION:CHECKOUT\]?/g, '');
+  let displayContent = content
+    .replace(/\[?ACTION:LOGIN\]?/g, '')
+    .replace(/\[?ACTION:ADD_ADDRESS\]?/g, '')
+    .replace(/\[?ACTION:CHECKOUT\]?/g, '')
+    .replace(/\\n/g, '\n');
   
-  // If the message is completely empty after stripping actions, we still want it to render so the form can appear inside it
+  let interruptData: any = null;
+  const interruptMatch = displayContent.match(/\[INTERRUPT:(.+?)\]/);
+  if (interruptMatch && interruptMatch[1]) {
+    try {
+      interruptData = JSON.parse(interruptMatch[1]);
+    } catch (e) {}
+    displayContent = displayContent.replace(interruptMatch[0], '');
+  }
+  
+  displayContent = displayContent.trim();
+  
+  // If the message is completely empty after stripping actions and tools, we still want it to render so the form can appear inside it
   if (!displayContent.trim()) {
     if (content.includes('ACTION:LOGIN')) {
       displayContent = "In order to add items to your cart or checkout, you need to login or sign up first.";
@@ -54,10 +238,16 @@ const renderMessageContent = (content: any, onAction?: (text: string) => void, o
     }
   }
 
-  if (!displayContent.includes('[PRODUCT:') && !displayContent.includes('[QUOTATION_FILE:')) {
+  if (!displayContent.includes('[ORDER_STATUS:') && !displayContent.includes('[PRODUCT:') && !displayContent.includes('[QUOTATION_FILE:') && !interruptData) {
     return (
       <div className="flex flex-col gap-2">
-        <div dangerouslySetInnerHTML={formatMarkdown(displayContent)} className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white leading-relaxed" />
+        {displayContent.trim() && (
+          <div className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {displayContent}
+            </ReactMarkdown>
+          </div>
+        )}
         {displayContent.trim().endsWith('WhatsApp?') && (
           <div className="flex gap-3 mt-2">
             <button onClick={() => onAction && onAction('Yes')} className="px-6 py-2 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-gold-400">Yes</button>
@@ -69,72 +259,64 @@ const renderMessageContent = (content: any, onAction?: (text: string) => void, o
   }
 
   // Split content by the PRODUCT tag and QUOTATION_FILE tag regex
-  const parts = displayContent.split(/(\[PRODUCT:[^\]]+\]|\[QUOTATION_FILE:[^\]]+\])/g);
+  const parts = displayContent.split(/(\[ORDER_STATUS:[^\]]+\]|\[PRODUCT:[^\]]+\]|\[QUOTATION_FILE:[^\]]+\])/g);
   
   const products: any[] = [];
+  const productIds = new Set<string>();
+  let orderStatus: any = null;
   const textParts: any[] = [];
   let quotationUrl: string | null = null;
 
   parts.forEach((part: string, index: number) => {
+    if (part.startsWith('[ORDER_STATUS:') && part.endsWith(']')) {
+      const data = part.slice(14, -1).split('|');
+      if (data.length === 4) orderStatus = { orderNumber: data[0], status: data[1], paymentStatus: data[2], trackingNumber: data[3] };
+      return;
+    }
     if (part.startsWith('[PRODUCT:') && part.endsWith(']')) {
       const data = part.slice(9, -1).split('|');
       if (data.length === 4) {
-        products.push({ sku: data[0], title: data[1], price: data[2], image: data[3] });
+        if (!productIds.has(data[0])) {
+          productIds.add(data[0]);
+          products.push({ sku: data[0], title: data[1], price: data[2], image: data[3] });
+        }
       }
     } else if (part.startsWith('[QUOTATION_FILE:') && part.endsWith(']')) {
       quotationUrl = part.slice(16, -1);
     } else if (part.trim()) {
-      textParts.push(<div key={`text-${index}`} dangerouslySetInnerHTML={formatMarkdown(part)} className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white mb-4 leading-relaxed" />);
+      textParts.push(
+        <div key={`text-${index}`} className="prose prose-sm md:prose-base prose-invert max-w-none prose-a:text-gold-500 prose-strong:text-white mb-4 leading-relaxed">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {part}
+          </ReactMarkdown>
+        </div>
+      );
     }
   });
 
   const defaultPlaceholder = 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80';
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full overflow-hidden">
       {textParts}
+      {orderStatus && <OrderStatusCard {...orderStatus} products={products} />}
       {quotationUrl && (
         <a href={quotationUrl} download="quotation.xlsx" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full max-w-md mt-2 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95">
           <Download size={20} />
           Download Excel Quotation
         </a>
       )}
-      {products.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-          {products.map((p, i) => (
-            <div key={i} className="group relative bg-neutral-900/40 backdrop-blur-md border border-neutral-800 rounded-2xl overflow-hidden hover:border-gold-500/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] flex flex-col cursor-pointer" onClick={() => onProductClick && onProductClick(p.sku)}>
-              <div className="aspect-[4/3] bg-neutral-950 w-full relative overflow-hidden flex items-center justify-center">
-                <img 
-                  src={getMediaUrl(p.image, defaultPlaceholder)} 
-                  alt={p.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  onError={(e) => { 
-                    e.currentTarget.src = defaultPlaceholder; 
-                  }} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <div className="p-4 flex flex-col gap-3 flex-1 justify-between">
-                <div>
-                  <h4 className="text-sm font-semibold text-white line-clamp-2 leading-tight group-hover:text-gold-500 transition-colors">{p.title}</h4>
-                  <div className="text-lg font-bold text-gold-500 mt-2 tracking-tight">₹{p.price}</div>
-                </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onAction && onAction(`Add ${p.title} (ID: ${p.sku}) to my cart`) }}
-                  className="w-full py-2.5 bg-neutral-800 hover:bg-gold-600 text-white hover:text-black text-sm font-bold rounded-xl transition-all transform active:scale-95 border border-neutral-700 hover:border-gold-500 shadow-lg"
-                >
-                  Add to Cart
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+      {products.length > 0 && !orderStatus && (
+        <ProductCarousel products={products} onProductClick={onProductClick} onAction={onAction} defaultPlaceholder={defaultPlaceholder} />
       )}
       {displayContent.trim().endsWith('WhatsApp?') && (
         <div className="flex gap-3 mt-2">
           <button onClick={() => onAction && onAction('Yes')} className="px-6 py-2 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-gold-400">Yes</button>
           <button onClick={() => onAction && onAction('No')} className="px-6 py-2 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 border border-neutral-700 hover:border-neutral-600">No</button>
         </div>
+      )}
+      {interruptData && interruptData.action === 'confirm_add_to_cart' && onAction && (
+        <InterruptCard interruptData={interruptData} onAction={onAction} />
       )}
     </div>
   );
@@ -161,6 +343,7 @@ export const ChatWidget = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const [agentStatus, setAgentStatus] = useState<string>('');
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -240,7 +423,7 @@ export const ChatWidget = () => {
     }
   }, [input]);
 
-  const handleSendMessage = async (eOrText: React.FormEvent | string, isSystem: boolean = false) => {
+  const handleSendMessage = async (eOrText: React.FormEvent | string, isSystem: boolean = false, tokenOverride?: string) => {
     if (typeof eOrText !== 'string') {
       eOrText.preventDefault();
     }
@@ -253,16 +436,17 @@ export const ChatWidget = () => {
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
     }
 
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: text };
-    
-    // Display all messages (even system-triggered ones like login success) so the user knows they were sent
-    setMessages(prev => [...prev, userMessage]);
+    if (!isSystem) {
+      const userMessage: Message = { id: Date.now().toString(), role: 'user', content: text };
+      setMessages(prev => [...prev, userMessage]);
+    }
     
     setIsLoading(true);
+    setAgentStatus('');
 
     try {
       // Get auth token from localStorage if exists
-      const authToken = localStorage.getItem('accessToken');
+      const authToken = tokenOverride || localStorage.getItem('accessToken');
       
       const payload: any = {
         session_id: sessionId,
@@ -306,14 +490,14 @@ export const ChatWidget = () => {
               if (data.session_id && data.session_id !== sessionId) {
                 setSessionId(data.session_id);
               }
+              if (data.status !== undefined) {
+                setAgentStatus(data.status);
+              }
               if (data.content) {
                 aiContent += data.content;
                 
-                // Intercept token for display purposes
-                let displayContent = aiContent.replace(/\[AUTH_TOKEN:[^\]]+\]/g, '').trim();
-                
                 setMessages(prev => prev.map(msg => 
-                  msg.id === messageId ? { ...msg, content: displayContent } : msg
+                  msg.id === messageId ? { ...msg, content: aiContent } : msg
                 ));
               }
             } catch (e) {
@@ -397,20 +581,36 @@ export const ChatWidget = () => {
                 <div className={`max-w-full md:max-w-[85%] ${msg.role === 'user' ? 'bg-[#2a2a2a] text-white px-6 py-4 rounded-3xl rounded-tr-sm border border-white/5 shadow-md' : 'text-neutral-200'}`}>
                   {msg.role === 'user' ? <div className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content.replace(/\s*\(ID:\s*[^)]+\)/g, '')}</div> : (
                     <div className="pt-1">
+                      {(() => {
+                        const needsAddressForm = /ACTION:ADD_ADDRESS|shipping address|delivery address|provide.*address|address to continue/i.test(msg.content);
+                        return needsAddressForm && typeof window !== 'undefined' && !!localStorage.getItem('accessToken') ? (
+                          <div className="mt-6">
+                            <ChatAddress onSuccess={() => handleSendMessage("I have successfully added my shipping address. Please continue with checkout.", true)} />
+                          </div>
+                        ) : null;
+                      })()}
                       {renderMessageContent(msg.content, (text) => handleSendMessage(text), (sku) => handleAddToCartClick(sku))}
                       {msg.content.includes('ACTION:LOGIN') && (
-                        <div className="mt-6"><ChatLogin onAuthSuccess={() => handleSendMessage("I have successfully logged in. Please continue.", true)} /></div>
+                        <div className="mt-6"><ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with my previous cart checkout and ask for my shipping address.", true, token)} /></div>
                       )}
                       {msg.content.includes('ACTION:ADD_ADDRESS') && (
-                        <div className="mt-6"><ChatAddress onSuccess={() => handleSendMessage("I have successfully added my address. Please continue with checkout.", true)} /></div>
+                        <div className="mt-6">
+                            {typeof window !== 'undefined' && !localStorage.getItem('accessToken') ? (
+                                <ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with adding my address.", true, token)} />
+                          ) : null}
+                        </div>
                       )}
                       {msg.content.includes('ACTION:CHECKOUT') && (
                         <div className="mt-6">
-                            <ChatCheckout 
-                                onSuccess={(orderId) => handleSendMessage(`I have successfully completed checkout and just paid for the order! My new Order ID is ${orderId}.`, true)} 
-                                onCancel={() => handleSendMessage("I cancelled the checkout process.", true)} 
-                                isHistoricallyPaid={messages.slice(index + 1).some(m => m.content && m.content.includes("I have successfully completed checkout"))}
-                            />
+                            {typeof window !== 'undefined' && !localStorage.getItem('accessToken') ? (
+                                <ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with checkout.", true, token)} />
+                            ) : (
+                                <ChatCheckout 
+                                    onSuccess={(orderId) => handleSendMessage(`I have successfully completed checkout and just paid for the order! My new Order ID is ${orderId}. Please congratulate me and tell me the current live status of this order.`, true)} 
+                                    onCancel={() => handleSendMessage("I cancelled the checkout process.", true)} 
+                                    isHistoricallyPaid={messages.slice(index + 1).some(m => m.content && m.content.includes("I have successfully completed checkout"))}
+                                />
+                            )}
                         </div>
                       )}
                     </div>
@@ -427,7 +627,7 @@ export const ChatWidget = () => {
                 </div>
                 <div className="flex flex-col justify-center pt-3">
                   <span className="text-xs text-gold-500/80 font-semibold uppercase tracking-wider animate-pulse flex items-center gap-2">
-                    Squad is thinking...
+                    {agentStatus || "Squad is thinking..."}
                   </span>
                 </div>
               </div>

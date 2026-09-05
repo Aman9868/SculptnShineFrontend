@@ -82,14 +82,8 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel,
       const paymentRes = await checkoutAPI.initiatePayment(orderId);
       if (paymentRes.success && paymentRes.data.paymentUrl) {
         if (paymentRes.data.isTestMode) {
-           // Backend handles the simulated webhook internally, so we just wait and succeed
-           setTimeout(() => {
-              fetchCart();
-              setIsPaid(true);
-              setIsLoading(false);
-              onSuccess(orderId);
-           }, 2000);
-           return;
+          void verifyPayment(orderId);
+          return;
         }
 
         // PhonePe SDK
@@ -111,9 +105,7 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel,
               if (response === 'USER_CANCEL') {
                 setIsLoading(false);
               } else {
-                setIsPaid(true);
-                setIsLoading(false);
-                onSuccess(orderId);
+                void verifyPayment(orderId);
               }
             },
           });
@@ -128,6 +120,23 @@ export const ChatCheckout: React.FC<ChatCheckoutProps> = ({ onSuccess, onCancel,
       setError(err.message || 'Failed to process checkout');
       setIsLoading(false);
     }
+  };
+
+  const verifyPayment = async (paidOrderId: string) => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const orderResponse = await checkoutAPI.getOrder(paidOrderId);
+      const order = orderResponse.data;
+      if (orderResponse.success && (order?.paymentStatus === 'COMPLETED' || order?.status === 'PAID')) {
+        await fetchCart();
+        setIsPaid(true);
+        setIsLoading(false);
+        onSuccess(paidOrderId);
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    setError('Payment was not confirmed by the server. Please check your order status.');
+    setIsLoading(false);
   };
 
   const originalTotal = cart.reduce((acc, item) => {

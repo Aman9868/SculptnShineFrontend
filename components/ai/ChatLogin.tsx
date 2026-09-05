@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useStore } from '@/context/StoreContext';
 
-export const ChatLogin = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
+export const ChatLogin = ({ onAuthSuccess }: { onAuthSuccess: (accessToken?: string) => void }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -9,36 +11,31 @@ export const ChatLogin = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const { login, register } = useAuth();
+  const { fetchCart, fetchWishlist } = useStore();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const payload = isLogin 
-        ? { email, password } 
-        : { name, email, password };
-        
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      
-      const res = await fetch(`${apiUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok && data.success) {
-        localStorage.setItem('accessToken', data.data.accessToken);
-        window.dispatchEvent(new Event('storage'));
-        onAuthSuccess();
+      if (isLogin) {
+        await login(email, password);
       } else {
-        setError(data.message || 'Authentication failed');
+        const nameParts = name.trim().split(' ');
+        const firstName = nameParts[0] || 'User';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+        await register(firstName, lastName, email, password);
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+      
+      // Refresh cart and wishlist in global store
+      if (fetchCart) await fetchCart();
+      if (fetchWishlist) await fetchWishlist();
+
+      onAuthSuccess(localStorage.getItem('accessToken') || undefined);
+    } catch (err: any) {
+      setError(err?.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

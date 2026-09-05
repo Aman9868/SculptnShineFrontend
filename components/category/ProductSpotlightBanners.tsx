@@ -42,8 +42,8 @@ export const ProductSpotlightBanners: React.FC<ProductSpotlightBannersProps> = (
 
   return (
     <div className="w-full relative">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Featured Products</h2>
+      <div className="flex items-center justify-between mb-4 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-gray-900 tracking-tight">Featured Products</h2>
         <div className="hidden sm:flex items-center gap-2">
           <button 
             onClick={() => scroll('left')} 
@@ -65,7 +65,7 @@ export const ProductSpotlightBanners: React.FC<ProductSpotlightBannersProps> = (
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 pt-2 snap-x snap-mandatory scrollbar-hide scroll-smooth" 
+        className="flex overflow-x-auto gap-3 sm:gap-6 pb-4 sm:pb-6 pt-1 sm:pt-2 snap-x snap-mandatory scrollbar-hide scroll-smooth" 
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         <style dangerouslySetInnerHTML={{__html: `
@@ -83,7 +83,7 @@ export const ProductSpotlightBanners: React.FC<ProductSpotlightBannersProps> = (
             <Link
               key={banner.id}
               href={link}
-              className="group flex-shrink-0 snap-start block w-[260px] sm:w-[280px] lg:w-[320px] relative aspect-[3/4] rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
+              className="group flex-shrink-0 snap-start block w-[190px] sm:w-[260px] lg:w-[320px] relative aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
             >
               <Image
                 src={getMediaUrl(banner.image)}

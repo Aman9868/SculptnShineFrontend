@@ -133,7 +133,7 @@ export default async function CategoryPage({
       id: 'top-subcategories',
       condition: subcategories && subcategories.length > 0,
       render: (bgClass: string) => (
-        <section key="top-subcategories" className={`${bgClass} py-10 w-full`}>
+        <section key="top-subcategories" className={`${bgClass} py-6 sm:py-10 w-full`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <TopSubcategories subcategories={subcategories} categorySlug={category.slug} />
           </div>
@@ -144,8 +144,8 @@ export default async function CategoryPage({
       id: 'promo-banners',
       condition: promoBanners && promoBanners.length > 0,
       render: (bgClass: string) => (
-        <section key="promo-banners" className={`${bgClass} py-10 w-full border-t border-cream-200`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section key="promo-banners" className={`${bgClass} py-6 sm:py-10 w-full border-t border-cream-200 overflow-hidden`}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <CategoryPromoCards banners={promoBanners} />
           </div>
         </section>
@@ -155,8 +155,8 @@ export default async function CategoryPage({
       id: 'super-savings',
       condition: superSavingsProducts && (superSavingsProducts as any).length > 0,
       render: (bgClass: string) => (
-        <section key="super-savings" className={`${bgClass} py-10 w-full border-t border-cream-200`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section key="super-savings" className={`${bgClass} py-6 sm:py-10 w-full border-t border-cream-200 overflow-hidden`}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <CategorySuperSavings products={superSavingsProducts as any} categorySlug={category.slug} />
           </div>
         </section>
@@ -166,8 +166,8 @@ export default async function CategoryPage({
       id: 'product-spotlight',
       condition: productSpotlightBanners && productSpotlightBanners.length > 0,
       render: (bgClass: string) => (
-        <section key="product-spotlight" className={`${bgClass} py-10 w-full border-t border-cream-200`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section key="product-spotlight" className={`${bgClass} py-6 sm:py-10 w-full border-t border-cream-200 overflow-hidden`}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <ProductSpotlightBanners banners={productSpotlightBanners} />
           </div>
         </section>

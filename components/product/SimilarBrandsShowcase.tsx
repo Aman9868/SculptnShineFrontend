@@ -130,7 +130,7 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
       <div
         ref={scrollRef}
         onScroll={checkScroll}
-        className="flex overflow-x-auto gap-6 pb-6 pt-1 snap-x snap-mandatory scroll-smooth hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
+        className="flex overflow-x-auto gap-3.5 sm:gap-6 pb-4 sm:pb-6 pt-1 snap-x snap-mandatory scroll-smooth hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {brandItems.map((item, idx) => {
@@ -147,10 +147,10 @@ export const SimilarBrandsShowcase: React.FC<SimilarBrandsShowcaseProps> = ({
             <div
               key={idx}
               onClick={() => router.push(productHref)}
-              className="w-[320px] sm:w-[360px] shrink-0 snap-start bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
+              className="w-[230px] sm:w-[300px] md:w-[360px] shrink-0 snap-start bg-white border border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
             >
               {/* Top Hero Lifestyle Banner */}
-              <Link href={productHref} className="relative h-44 w-full block overflow-hidden bg-gray-900">
+              <Link href={productHref} className="relative h-32 sm:h-44 w-full block overflow-hidden bg-gray-900">
                 <img
                   src={heroMediaUrl}
                   alt={brandName}
