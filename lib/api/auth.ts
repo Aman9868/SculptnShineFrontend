@@ -201,7 +201,7 @@ export const authAPI = {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to delete account');
+      throw new Error(error.message || error.error || `Failed to delete account (${response.status})`);
     }
 
     return response.json();

@@ -203,12 +203,12 @@ export const ShopByCategory: React.FC = () => {
               Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex-1 min-w-[250px] sm:min-w-[260px] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-sm animate-pulse overflow-hidden"
+                  className="flex-1 w-[160px] sm:w-[220px] md:w-[260px] min-w-[160px] sm:min-w-[220px] md:min-w-[260px] shrink-0 snap-start bg-white rounded-xl sm:rounded-2xl border border-cream-300 shadow-sm animate-pulse overflow-hidden"
                 >
                   <div className="w-full aspect-[4/3] bg-cream-200" />
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     <div className="w-16 h-3 bg-gray-200 rounded-full mb-2" />
-                    <div className="w-full h-5 bg-gray-200 rounded mb-1.5" />
+                    <div className="w-full h-4 sm:h-5 bg-gray-200 rounded mb-1.5" />
                     <div className="w-3/4 h-3 bg-gray-200 rounded" />
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export const ShopByCategory: React.FC = () => {
                 <Link
                   key={cat.id}
                   href={cat.href}
-                  className="group flex-1 min-w-[250px] sm:min-w-[260px] shrink-0 snap-start bg-white rounded-2xl border border-cream-300 shadow-luxury hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden select-none cursor-pointer flex flex-col"
+                  className="group flex-1 w-[160px] sm:w-[220px] md:w-[260px] min-w-[160px] sm:min-w-[220px] md:min-w-[260px] shrink-0 snap-start bg-white rounded-xl sm:rounded-2xl border border-cream-300 shadow-luxury hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden select-none cursor-pointer flex flex-col"
                 >
                   {/* Image Container */}
                   <div className="relative w-full aspect-[4/3] overflow-hidden bg-cream-50">
@@ -227,26 +227,26 @@ export const ShopByCategory: React.FC = () => {
                       alt={cat.name}
                       fill
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-                      sizes="(max-width: 640px) 250px, (max-width: 1024px) 260px, 20vw"
+                      sizes="(max-width: 640px) 160px, (max-width: 1024px) 220px, 20vw"
                     />
                     {/* Subtle Bottom Gradient */}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-12 sm:h-16 bg-gradient-to-t from-black/30 to-transparent" />
 
                   </div>
 
                   {/* Content Area */}
-                  <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between">
+                  <div className="p-3 sm:p-5 flex flex-col flex-1 justify-between">
                     <div>
-                      <h3 className="font-bold text-sm sm:text-base text-gray-900 leading-snug group-hover:text-gold-700 transition-colors line-clamp-2 mb-1">
+                      <h3 className="font-bold text-xs sm:text-base text-gray-900 leading-snug group-hover:text-gold-700 transition-colors line-clamp-2 mb-1">
                         {cat.name}
                       </h3>
-                      <p className="text-[11px] sm:text-xs text-gray-400 font-medium line-clamp-1">
+                      <p className="text-[10px] sm:text-xs text-gray-400 font-medium line-clamp-1">
                         {cat.tagline}
                       </p>
                     </div>
 
                     {/* Shop Now Footer */}
-                    <div className="mt-3 pt-3 border-t border-cream-200 flex items-center justify-between">
+                    <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-cream-200 flex items-center justify-between">
                       <span className="text-[11px] font-extrabold uppercase tracking-wider text-gold-600 group-hover:text-gold-700 transition-colors">
                         Shop Now
                       </span>

@@ -63,16 +63,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
         <Link href={`/product/${product.id}`} className={`cursor-pointer ${viewMode === 'list' ? 'flex flex-row w-full' : 'flex flex-col flex-grow'}`}>
           
           {/* Badges */}
-          <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 items-start">
+          <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 flex flex-col gap-1 items-start">
             {discountPercent > 0 && (
-              <span className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2 py-0.5 uppercase rounded-md tracking-wider shadow-2xs">
+              <span className="bg-red-600 text-white text-[9px] sm:text-[11px] font-black px-1.5 sm:px-2 py-0.5 uppercase rounded-md tracking-wider shadow-2xs">
                 {discountPercent}% OFF
               </span>
             )}
           </div>
 
           {/* Image Container */}
-          <div className={`relative bg-gradient-to-b from-cream-50/50 to-white p-3 sm:p-4 flex items-center justify-center overflow-hidden ${viewMode === 'list' ? 'w-32 sm:w-52 h-auto aspect-square shrink-0 border-r border-cream-200' : 'aspect-square w-full min-h-[190px] sm:min-h-[220px]'}`}>
+          <div className={`relative bg-gradient-to-b from-cream-50/50 to-white p-2.5 sm:p-4 flex items-center justify-center overflow-hidden ${viewMode === 'list' ? 'w-28 sm:w-52 h-auto aspect-square shrink-0 border-r border-cream-200' : 'aspect-square w-full'}`}>
             <img
               src={imageUrl}
               alt={product.title}
@@ -86,26 +86,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
           </div>
 
           {/* Content Details */}
-          <div className={`p-3.5 sm:p-4 flex flex-col flex-grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
+          <div className={`p-2.5 sm:p-4 flex flex-col flex-grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
             {/* Brand Name */}
-            <p className="text-[10px] sm:text-[11px] text-gold-700 font-extrabold uppercase tracking-widest mb-1 truncate">
+            <p className="text-[9px] sm:text-[11px] text-gold-700 font-extrabold uppercase tracking-widest mb-0.5 sm:mb-1 truncate">
               {product.brand?.name || 'SCULPT N SHINE'}
             </p>
             
             {/* Title */}
-            <h3 className={`text-xs sm:text-sm font-bold text-brandDark mb-2 transition-colors group-hover:text-gold-700 ${viewMode === 'list' ? 'line-clamp-2 text-sm sm:text-base mb-2' : 'line-clamp-2 min-h-[34px] sm:min-h-[38px] leading-snug'}`}>
+            <h3 className={`text-xs sm:text-sm font-bold text-brandDark mb-1.5 sm:mb-2 transition-colors group-hover:text-gold-700 ${viewMode === 'list' ? 'line-clamp-2 text-sm sm:text-base mb-2' : 'line-clamp-2 min-h-[32px] sm:min-h-[38px] leading-tight sm:leading-snug'}`}>
               {product.title}
             </h3>
             
             {/* Price & Rating Row */}
-            <div className="mt-auto pt-2 flex items-end justify-between gap-2 border-t border-cream-100">
-              <div>
-                <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className="text-sm sm:text-base font-extrabold text-brandDark">
+            <div className="mt-auto pt-1.5 sm:pt-2 flex items-end justify-between gap-1.5 sm:gap-2 border-t border-cream-100">
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-1 sm:gap-1.5 mb-0.5 sm:mb-1 flex-wrap">
+                  <span className="text-xs sm:text-base font-extrabold text-brandDark">
                     ₹{Math.round(currentPrice).toLocaleString('en-IN')}
                   </span>
                   {discountPercent > 0 && (
-                    <span className="text-[11px] text-gray-400 line-through font-medium">
+                    <span className="text-[10px] sm:text-[11px] text-gray-400 line-through font-medium">
                       ₹{Math.round(originalPrice).toLocaleString('en-IN')}
                     </span>
                   )}
@@ -113,28 +113,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'g
                 
                 {/* Rating */}
                 <div className="flex items-center gap-1">
-                  <Star className={`w-3.5 h-3.5 ${ratingValue > 0 ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'}`} />
-                  <span className="text-[11px] font-bold text-gray-700">
+                  <Star className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${ratingValue > 0 ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'}`} />
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-700">
                     {ratingValue > 0 ? ratingValue.toFixed(1) : 'New'}
                   </span>
                   {reviewCountValue > 0 && (
-                    <span className="text-[10px] text-gray-400 font-medium">({reviewCountValue})</span>
+                    <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium">({reviewCountValue})</span>
                   )}
                 </div>
               </div>
               
               {/* Quick Add Button */}
               <button 
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cream-100 hover:bg-gold-600 hover:text-white text-brandDark border border-cream-300 flex items-center justify-center transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-cream-100 hover:bg-gold-600 hover:text-white text-brandDark border border-cream-300 flex items-center justify-center transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
                 onClick={handleCartClick}
                 disabled={isAdding}
                 aria-label="Add to cart"
                 title={hasVariants ? "Choose options & Add to Cart" : "Add to Cart"}
               >
                 {isAdding ? (
-                  <Loader2 size={16} className="animate-spin text-gold-600" />
+                  <Loader2 size={14} className="animate-spin text-gold-600 sm:w-4 sm:h-4" />
                 ) : (
-                  <ShoppingBag size={16} className="transition-transform group-hover:scale-110" />
+                  <ShoppingBag size={14} className="transition-transform group-hover:scale-110 sm:w-4 sm:h-4" />
                 )}
               </button>
             </div>

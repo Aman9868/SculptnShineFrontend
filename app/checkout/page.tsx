@@ -458,31 +458,34 @@ export default function CheckoutPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Stepper */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <nav aria-label="Progress">
             <ol role="list" className="flex items-center">
               {steps.map((step, stepIdx) => (
-                <li key={step.name} className={`relative pr-8 sm:pr-20 ${stepIdx !== steps.length - 1 ? 'w-full' : ''}`}>
+                <li key={step.name} className={`relative ${stepIdx !== steps.length - 1 ? 'w-full' : ''}`}>
                   <div className="absolute inset-0 flex items-center" aria-hidden="true">
                     <div className={`h-0.5 w-full ${currentStep > step.id ? 'bg-gold-500' : 'bg-gray-200'}`} />
                   </div>
-                  <div className={`relative flex h-8 w-8 items-center justify-center rounded-full ${
+                  <div className={`relative flex h-8 w-8 items-center justify-center rounded-full mx-auto ${
                     currentStep > step.id ? 'bg-gold-500' : currentStep === step.id ? 'bg-gold-500 border-2 border-white ring-2 ring-gold-500' : 'bg-white border-2 border-gray-300'
                   }`}>
                     <span className={`text-xs font-semibold ${currentStep >= step.id ? 'text-white' : 'text-gray-500'}`}>
                       {step.id}
                     </span>
                   </div>
-                  <span className={`absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap ${currentStep >= step.id ? 'text-gold-600' : 'text-gray-500'}`}>
+                  <span className={`hidden sm:block absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap ${currentStep >= step.id ? 'text-gold-600' : 'text-gray-500'}`}>
                     {step.name}
                   </span>
                 </li>
               ))}
             </ol>
+            <div className="sm:hidden text-center mt-3 font-bold text-xs text-gold-700">
+              Step {currentStep} of 4: {steps.find(s => s.id === currentStep)?.name}
+            </div>
           </nav>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 mt-12">
+        <div className="flex flex-col lg:flex-row gap-8 mt-6 sm:mt-12">
           {/* Main Content */}
           <div className="flex-1 space-y-6">
             

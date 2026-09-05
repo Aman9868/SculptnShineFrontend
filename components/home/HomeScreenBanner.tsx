@@ -109,7 +109,7 @@ export const HomeScreenBanner: React.FC = () => {
   if (isLoading) {
     return (
       <section className="relative w-full overflow-hidden bg-zinc-950">
-        <div className="relative w-full aspect-[16/9] sm:aspect-[1920/800] bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 animate-pulse flex items-center justify-center">
+        <div className="relative w-full aspect-[1920/800] bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 animate-pulse flex items-center justify-center">
           <img
             src="/assets/sculpt.png"
             alt="Loading Sculpt N Shine"
@@ -133,8 +133,8 @@ export const HomeScreenBanner: React.FC = () => {
     >
       {/* Slider Container */}
       <div className="relative w-full flex items-center justify-center bg-black transition-all duration-700 overflow-hidden">
-        {/* Balanced, elegant 16:9 mobile aspect ratio and 1920x800 desktop aspect ratio */}
-        <div className="relative w-full aspect-[16/9] sm:aspect-[1920/800]">
+        {/* Uniform 1920x800 desktop aspect ratio scaled proportionally on all screen sizes */}
+        <div className="relative w-full aspect-[1920/800]">
           {slides.map((slide, index) => (
             <Link
               key={index}
@@ -152,27 +152,6 @@ export const HomeScreenBanner: React.FC = () => {
                   playsInline
                   className="absolute inset-0 w-full h-full object-contain sm:object-cover object-center"
                 />
-              ) : slide.mobileImage ? (
-                <>
-                  {/* Dedicated Mobile-Optimized Banner */}
-                  <Image
-                    src={slide.mobileImage}
-                    alt={slide.title || 'Sculpt and Shine Banner'}
-                    fill
-                    priority={index === 0}
-                    className="block sm:hidden object-cover object-center"
-                    sizes="(max-width: 640px) 100vw, 1px"
-                  />
-                  {/* Desktop Banner */}
-                  <Image
-                    src={slide.image}
-                    alt={slide.title || 'Sculpt and Shine Premium Banner'}
-                    fill
-                    priority={index === 0}
-                    className="hidden sm:block object-cover object-center"
-                    sizes="100vw"
-                  />
-                </>
               ) : (
                 <Image
                   src={slide.image}
@@ -180,7 +159,7 @@ export const HomeScreenBanner: React.FC = () => {
                   fill
                   priority={index === 0}
                   className="object-contain sm:object-cover object-center"
-                  sizes="100vw"
+                  sizes="(max-width: 768px) 100vw, 1920px"
                 />
               )}
 

@@ -36,10 +36,39 @@ export const CategoryBanners: React.FC<CategoryBannersProps> = ({ banners, categ
     return () => clearInterval(timer);
   }, [nextSlide, displayImages.length]);
 
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 40;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > minSwipeDistance) {
+      nextSlide();
+    } else if (distance < -minSwipeDistance) {
+      prevSlide();
+    }
+  };
+
   if (displayImages.length === 0) return null;
 
   return (
-    <div className="relative w-full overflow-hidden group bg-black aspect-[16/9] sm:aspect-[1920/800]">
+    <div 
+      className="relative w-full overflow-hidden group bg-black aspect-[1920/800]"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <div 
         className="flex transition-transform duration-700 ease-in-out h-full absolute inset-0"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -50,14 +79,14 @@ export const CategoryBanners: React.FC<CategoryBannersProps> = ({ banners, categ
               src={src}
               alt={`${categoryName} banner ${idx + 1}`}
               fill
-              className="object-cover object-center"
+              className="object-contain sm:object-cover object-center"
               priority={idx === 0}
-              sizes="(max-width: 768px) 100vw, 1200px"
+              sizes="(max-width: 768px) 100vw, 1920px"
             />
             {/* Overlay for fallback image to ensure title readability */}
             {banners.length === 0 && (
-               <div className="absolute inset-0 bg-gradient-to-r from-[#18181B] via-[#18181B]/60 to-transparent flex flex-col justify-center px-6 sm:px-12">
-                 <h1 className="text-2xl sm:text-4xl md:text-5xl font-serif font-extrabold text-white tracking-tight uppercase max-w-2xl">
+               <div className="absolute inset-0 bg-gradient-to-r from-[#18181B] via-[#18181B]/60 to-transparent flex flex-col justify-center px-4 sm:px-12">
+                 <h1 className="text-xl sm:text-4xl md:text-5xl font-serif font-extrabold text-white tracking-tight uppercase max-w-2xl">
                    {categoryName}
                  </h1>
                </div>
@@ -84,12 +113,12 @@ export const CategoryBanners: React.FC<CategoryBannersProps> = ({ banners, categ
           </button>
 
           {/* Indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+          <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-10">
             {displayImages.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
-                className={`transition-all rounded-full ${currentIndex === idx ? 'bg-gold-500 w-6 h-2' : 'bg-white/50 w-2 h-2 hover:bg-white'}`}
+                className={`transition-all rounded-full ${currentIndex === idx ? 'bg-gold-500 w-5 sm:w-6 h-1.5 sm:h-2' : 'bg-white/50 w-1.5 sm:w-2 h-1.5 sm:h-2 hover:bg-white'}`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}

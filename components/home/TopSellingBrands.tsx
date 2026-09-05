@@ -258,53 +258,53 @@ export default function TopSellingBrands({ categorySlug, bgClass = 'bg-white' }:
                   <Link
                     key={brand.id}
                     href={searchHref}
-                    className="group shrink-0 w-[280px] sm:w-[305px] md:w-[320px] snap-start rounded-3xl p-6 bg-gradient-to-b from-white via-cream-50/80 to-cream-100/90 border border-cream-300 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_32px_-6px_rgba(184,134,11,0.18)] hover:border-gold-400 hover:-translate-y-1.5 transition-all duration-400 relative overflow-hidden flex flex-col justify-between cursor-pointer"
+                    className="group shrink-0 w-[220px] sm:w-[280px] md:w-[320px] snap-start rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-gradient-to-b from-white via-cream-50/80 to-cream-100/90 border border-cream-300 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_32px_-6px_rgba(184,134,11,0.18)] hover:border-gold-400 hover:-translate-y-1.5 transition-all duration-400 relative overflow-hidden flex flex-col justify-between cursor-pointer"
                   >
                     {/* Subtle Gold Accent */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full blur-2xl pointer-events-none group-hover:bg-gold-400/15 transition-colors duration-400" />
 
                     {/* Top: Brand Logo */}
-                    <div className="relative z-10 flex items-center justify-center h-12 mb-3">
+                    <div className="relative z-10 flex items-center justify-center h-10 sm:h-12 mb-2 sm:mb-3">
                       {customSvg ? (
-                        <div className="group-hover:scale-108 transition-transform duration-300">
+                        <div className="group-hover:scale-108 transition-transform duration-300 scale-90 sm:scale-100">
                           {customSvg}
                         </div>
                       ) : logoUrl ? (
-                        <div className="h-10 flex items-center justify-center group-hover:scale-108 transition-transform duration-300">
+                        <div className="h-8 sm:h-10 flex items-center justify-center group-hover:scale-108 transition-transform duration-300">
                           <img
                             src={logoUrl}
                             alt={brand.name}
-                            className="h-full w-auto object-contain max-w-[150px]"
+                            className="h-full w-auto object-contain max-w-[120px] sm:max-w-[150px]"
                             onError={(e) => {
                               (e.target as HTMLElement).style.display = 'none';
                             }}
                           />
                         </div>
                       ) : (
-                        <span className="text-base sm:text-lg font-serif font-black uppercase tracking-wider text-brandDark">
+                        <span className="text-sm sm:text-lg font-serif font-black uppercase tracking-wider text-brandDark">
                           {brand.name}
                         </span>
                       )}
                     </div>
 
                     {/* Center: Gold Discount Badge */}
-                    <div className="relative z-10 flex justify-center my-3">
-                      <div className="bg-white rounded-2xl px-5 py-2 border border-gold-300/80 shadow-xs group-hover:border-gold-500 group-hover:shadow-md transition-all duration-300 text-center">
-                        <span className="block text-[9.5px] font-extrabold uppercase tracking-[0.2em] text-gray-500 leading-none">
+                    <div className="relative z-10 flex justify-center my-2 sm:my-3">
+                      <div className="bg-white rounded-xl sm:rounded-2xl px-3.5 sm:px-5 py-1.5 sm:py-2 border border-gold-300/80 shadow-xs group-hover:border-gold-500 group-hover:shadow-md transition-all duration-300 text-center">
+                        <span className="block text-[8.5px] sm:text-[9.5px] font-extrabold uppercase tracking-[0.2em] text-gray-500 leading-none">
                           UP TO
                         </span>
-                        <span className="block text-xl sm:text-2xl font-black text-amber-700 leading-tight">
-                          {discount || '20%'} <span className="text-xs font-black text-amber-800">OFF</span>
+                        <span className="block text-lg sm:text-2xl font-black text-amber-700 leading-tight">
+                          {discount || '20%'} <span className="text-[10px] sm:text-xs font-black text-amber-800">OFF</span>
                         </span>
                       </div>
                     </div>
 
                     {/* Bottom: 100% REAL Product Tubs (NO FAKE / UNSPLASH FALLBACKS) */}
-                    <div className="relative z-10 mt-auto pt-3 h-44 sm:h-48 flex items-end justify-center">
+                    <div className="relative z-10 mt-auto pt-2 sm:pt-3 h-32 sm:h-44 md:h-48 flex items-end justify-center">
                       {realProductImages.length >= 2 ? (
-                        <div className="relative flex items-end justify-center w-full h-full pb-2">
+                        <div className="relative flex items-end justify-center w-full h-full pb-1 sm:pb-2">
                           {/* 1st Real Product Tub */}
-                          <div className="relative w-28 sm:w-32 h-36 sm:h-40 shrink-0 transform -rotate-3 group-hover:-rotate-6 group-hover:scale-105 transition-all duration-400 z-10">
+                          <div className="relative w-20 sm:w-28 md:w-32 h-26 sm:h-36 md:h-40 shrink-0 transform -rotate-3 group-hover:-rotate-6 group-hover:scale-105 transition-all duration-400 z-10">
                             <img
                               src={realProductImages[0]}
                               alt={`${brand.name} product`}
@@ -315,7 +315,7 @@ export default function TopSellingBrands({ categorySlug, bgClass = 'bg-white' }:
                             />
                           </div>
                           {/* 2nd Real Product Tub */}
-                          <div className="relative w-28 sm:w-32 h-36 sm:h-40 shrink-0 transform rotate-3 group-hover:rotate-6 group-hover:scale-105 transition-all duration-400 -ml-7 z-20">
+                          <div className="relative w-20 sm:w-28 md:w-32 h-26 sm:h-36 md:h-40 shrink-0 transform rotate-3 group-hover:rotate-6 group-hover:scale-105 transition-all duration-400 -ml-5 sm:-ml-7 z-20">
                             <img
                               src={realProductImages[1]}
                               alt={`${brand.name} product`}
@@ -327,7 +327,7 @@ export default function TopSellingBrands({ categorySlug, bgClass = 'bg-white' }:
                           </div>
                         </div>
                       ) : realProductImages.length === 1 ? (
-                        <div className="relative w-36 sm:w-40 h-36 sm:h-40 shrink-0 group-hover:scale-108 transition-all duration-400 pb-2 flex items-center justify-center">
+                        <div className="relative w-26 sm:w-36 md:w-40 h-26 sm:h-36 md:h-40 shrink-0 group-hover:scale-108 transition-all duration-400 pb-1 sm:pb-2 flex items-center justify-center">
                           <img
                             src={realProductImages[0]}
                             alt={`${brand.name} product`}

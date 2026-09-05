@@ -38,15 +38,15 @@ export const FeatureBanners: React.FC = () => {
   })) : PROMO_BANNERS;
 
   return (
-    <section className="py-12 lg:py-16 bg-cream-100">
+    <section className="py-8 sm:py-12 lg:py-16 bg-cream-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {displayBanners.map((banner) => (
             <Link
               key={banner.id}
               href={banner.link}
-              className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-luxury border border-cream-300 flex flex-col justify-end p-6 transition-all duration-500 hover:-translate-y-1 hover:shadow-luxury-hover"
+              className="group relative h-48 sm:h-60 md:h-72 rounded-2xl sm:rounded-3xl overflow-hidden shadow-luxury border border-cream-300 flex flex-col justify-end p-4 sm:p-6 transition-all duration-500 hover:-translate-y-1 hover:shadow-luxury-hover"
             >
               {/* Image Background */}
               <Image
@@ -62,13 +62,13 @@ export const FeatureBanners: React.FC = () => {
 
               {/* Banner Content */}
               <div className="relative z-10 space-y-1 text-white">
-                <h3 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-gold-400">
+                <h3 className="font-serif text-lg sm:text-2xl font-bold tracking-tight text-gold-400">
                   {banner.title}
                 </h3>
                 <p className="text-xs uppercase font-semibold tracking-wider text-gray-200">
                   {banner.subtitle}
                 </p>
-                <div className="pt-3 inline-flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-gold-400 transition-colors">
+                <div className="pt-2 sm:pt-3 inline-flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-gold-400 transition-colors">
                   <span>{banner.actionText}</span>
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>

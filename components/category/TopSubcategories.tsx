@@ -69,9 +69,9 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
   ];
 
   return (
-    <div className="mb-10 mt-2 relative">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Explore Categories</h2>
+    <div className="mb-6 sm:mb-10 mt-2 relative">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-gray-900 tracking-tight">Explore Categories</h2>
         <div className="hidden sm:flex items-center gap-2">
           <button 
             onClick={() => scroll('left')} 
@@ -90,21 +90,17 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
         </div>
       </div>
       
-      {/* Scroll container — plain div, no flex tricks */}
+      {/* Scroll container */}
       <div 
         ref={scrollRef}
         onScroll={checkScroll}
-        className="overflow-x-auto pb-4"
+        className="overflow-x-auto pb-2 sm:pb-3 -mx-1 px-1 sm:mx-0 sm:px-0 scroll-smooth snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         <style dangerouslySetInnerHTML={{__html: `
           .cat-scroll-row::-webkit-scrollbar { display: none; }
         `}} />
-        {/* 
-          Use a single inline-flex row. Each child is a plain div with fixed inline width/height.
-          This avoids ALL flex/button sizing bugs.
-        */}
-        <div className="cat-scroll-row" style={{ display: 'inline-flex', gap: 16, paddingTop: 4, paddingBottom: 8 }}>
+        <div className="cat-scroll-row flex gap-2.5 sm:gap-4 px-1.5 py-2 sm:py-2.5">
           {allItems.map((item, idx) => {
             const isAllCard = idx === 0;
             const isActive = isAllCard ? !activeSubcategory : activeSubcategory === item.slug;
@@ -116,14 +112,13 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && handleClick(item.slug)}
-                className="cursor-pointer outline-none"
-                style={{ width: 150, minWidth: 150, height: 190 }}
+                className="cursor-pointer outline-none shrink-0 w-[112px] sm:w-[136px] md:w-[150px] h-[140px] sm:h-[168px] md:h-[190px] snap-start"
               >
                 <div
-                  className={`relative w-full h-full rounded-2xl overflow-hidden transition-all duration-300 group
+                  className={`relative w-full h-full rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 group
                     ${isActive 
-                      ? 'ring-2 ring-gold-500 ring-offset-2 shadow-lg scale-[1.02]' 
-                      : 'shadow-md hover:shadow-lg hover:scale-[1.02] ring-1 ring-black/5'
+                      ? 'border-2 border-gold-500 shadow-md shadow-gold-500/25' 
+                      : 'border border-cream-300 shadow-xs hover:shadow-md hover:border-gold-300'
                     }`}
                 >
                   {/* Background */}
@@ -135,8 +130,8 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
                         src={getMediaUrl(item.image, '/assets/promo_muscle.png')}
                         alt={item.name}
                         fill
-                        sizes="150px"
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="(max-width: 640px) 120px, 150px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       <div className={`absolute inset-0 transition-all duration-300 ${
                         isActive 
@@ -148,22 +143,22 @@ export const TopSubcategories: React.FC<TopSubcategoriesProps> = ({ subcategorie
 
                   {/* Content */}
                   {isAllCard ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3 z-10">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 shadow-sm transition-colors ${
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2 sm:p-3 z-10">
+                      <div className={`w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 shadow-sm transition-colors ${
                         isActive ? 'bg-gold-500 text-white' : 'bg-white text-gold-600 border border-cream-200 group-hover:bg-gold-50'
                       }`}>
-                        <LayoutGrid size={22} />
+                        <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5 md:w-5.5 md:h-5.5" />
                       </div>
-                      <span className={`text-sm font-semibold text-center leading-tight ${
-                        isActive ? 'text-gold-700' : 'text-gray-700 group-hover:text-gold-600'
+                      <span className={`text-xs sm:text-sm font-semibold text-center leading-tight ${
+                        isActive ? 'text-gold-700 font-bold' : 'text-gray-700 group-hover:text-gold-600'
                       }`}>
                         All Categories
                       </span>
                     </div>
                   ) : (
-                    <div className="absolute inset-0 flex flex-col justify-end p-3 z-10">
-                      <span className={`text-sm font-semibold leading-snug line-clamp-2 ${
-                        isActive ? 'text-gold-300' : 'text-white group-hover:text-gold-200'
+                    <div className="absolute inset-0 flex flex-col justify-end p-2.5 sm:p-3 z-10">
+                      <span className={`text-xs sm:text-sm font-semibold leading-snug line-clamp-2 ${
+                        isActive ? 'text-gold-300 font-bold' : 'text-white group-hover:text-gold-200'
                       }`}>
                         {item.name}
                       </span>

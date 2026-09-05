@@ -97,13 +97,13 @@ export const RelatedProductsCarousel: React.FC<RelatedProductsCarouselProps> = (
       <div
         ref={scrollRef}
         onScroll={checkScroll}
-        className="flex overflow-x-auto gap-4 sm:gap-6 pb-4 pt-1 snap-x snap-mandatory scroll-smooth hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
+        className="flex overflow-x-auto gap-3 sm:gap-6 pb-4 pt-1 snap-x snap-mandatory scroll-smooth hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {products.map((p: any) => (
           <div
             key={p.id}
-            className="w-[240px] sm:w-[270px] md:w-[290px] shrink-0 snap-start flex flex-col"
+            className="w-[155px] sm:w-[220px] md:w-[260px] shrink-0 snap-start flex flex-col"
           >
             <ProductCard product={p} viewMode="grid" />
           </div>

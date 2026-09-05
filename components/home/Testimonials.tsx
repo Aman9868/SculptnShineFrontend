@@ -188,9 +188,9 @@ export default function Testimonials() {
               return (
                 <div
                   key={review.id || idx}
-                  className="w-[300px] sm:w-[360px] lg:w-[calc(33.333%-1rem)] shrink-0 snap-start"
+                  className="w-[250px] sm:w-[330px] lg:w-[calc(33.333%-1rem)] shrink-0 snap-start"
                 >
-                  <div className="h-full rounded-3xl border border-cream-200/90 bg-gradient-to-b from-white to-cream-50/40 p-6 sm:p-7 shadow-luxury transition-all duration-300 hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden group">
+                  <div className="h-full rounded-2xl sm:rounded-3xl border border-cream-200/90 bg-gradient-to-b from-white to-cream-50/40 p-4 sm:p-7 shadow-luxury transition-all duration-300 hover:shadow-xl hover:border-gold-300/80 hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden group">
 
                     <div>
                       {/* Rating Stars & Verified Buyer Badge Header */}
