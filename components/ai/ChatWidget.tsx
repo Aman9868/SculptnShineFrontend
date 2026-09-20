@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Bot, Loader2, Sparkles, Download, Menu } from 'lucide-react';
+import { 
+  MessageCircle, X, Send, Bot, Loader2, Sparkles, Download, Menu,
+  Paperclip, Image as ImageIcon, Utensils, ShieldAlert, Clock, Package, FileSpreadsheet 
+} from 'lucide-react';
 import { ChatLogin } from './ChatLogin';
 import ChatAddress from './ChatAddress';
 import { useRouter } from 'next/navigation';
@@ -17,6 +20,7 @@ type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  image?: string;
 };
 
 const InterruptCard = ({ interruptData, onAction }: { interruptData: any, onAction: (text: string) => void }) => {
@@ -36,7 +40,9 @@ const InterruptCard = ({ interruptData, onAction }: { interruptData: any, onActi
     <div className="mt-2 flex flex-col border border-neutral-700/50 rounded-xl overflow-hidden bg-[#1e1e1e] shadow-lg">
       <div className="px-4 py-2.5 bg-[#252525] border-b border-neutral-700/50 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-neutral-300 font-medium">
-          <Bot size={16} className="text-gold-500" />
+          <div className="w-5 h-5 rounded-md overflow-hidden flex items-center justify-center bg-black/40 border border-gold-500/30 p-0.5 flex-shrink-0">
+            <img src="/apple-touch-icon.png" alt="SculptnShine" className="w-full h-full object-contain" />
+          </div>
           Agent wants to use <code className="text-gold-400 bg-black/40 px-1.5 py-0.5 rounded text-xs font-mono">add_to_cart</code>
         </div>
       </div>
@@ -117,8 +123,8 @@ const ProductCarousel = ({ products, onProductClick, onAction, defaultPlaceholde
         style={{ scrollbarWidth: 'thin' }}
       >
         {products.map((p: any, i: number) => (
-          <div key={i} className={`${compact ? 'min-w-[150px] max-w-[150px]' : 'min-w-[240px] max-w-[240px]'} snap-center group/card relative bg-neutral-900/40 backdrop-blur-md border border-neutral-800 rounded-2xl overflow-hidden hover:border-gold-500/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] flex flex-col cursor-pointer flex-shrink-0`} onClick={() => onProductClick && onProductClick(p.sku)}>
-            <div className={`${compact ? 'aspect-square' : 'aspect-[4/3]'} bg-neutral-950 w-full relative overflow-hidden flex items-center justify-center`}>
+          <div key={i} className={`${compact ? 'min-w-[160px] max-w-[160px]' : 'min-w-[250px] max-w-[250px]'} snap-center group/card relative bg-gradient-to-b from-[#18181d] via-[#141418] to-[#101014] backdrop-blur-md border border-gold-500/25 rounded-2xl overflow-hidden hover:border-gold-400/80 transition-all duration-300 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:-translate-y-1 flex flex-col cursor-pointer flex-shrink-0`} onClick={() => onProductClick && onProductClick(p.sku)}>
+            <div className={`${compact ? 'aspect-square' : 'aspect-[4/3]'} bg-black w-full relative overflow-hidden flex items-center justify-center border-b border-gold-500/15`}>
               <img 
                 src={getMediaUrl(p.image, defaultPlaceholder)} 
                 alt={p.title} 
@@ -131,12 +137,12 @@ const ProductCarousel = ({ products, onProductClick, onAction, defaultPlaceholde
             </div>
             <div className={`${compact ? 'p-3' : 'p-4'} flex flex-col gap-3 flex-1 justify-between`}>
               <div>
-                <h4 className="text-sm font-semibold text-white line-clamp-2 leading-tight group-hover/card:text-gold-500 transition-colors">{p.title}</h4>
-                <div className={`${compact ? 'text-sm' : 'text-lg'} font-bold text-gold-500 mt-2 tracking-tight`}>₹{p.price}</div>
+                <h4 className="text-sm font-bold text-white line-clamp-2 leading-snug group-hover/card:text-gold-400 transition-colors">{p.title}</h4>
+                <div className={`${compact ? 'text-base' : 'text-xl'} font-extrabold text-gold-400 mt-2 tracking-tight`}>₹{p.price}</div>
               </div>
                 {!compact && <button 
                   onClick={(e) => { e.stopPropagation(); onAction && onAction(`Add ${p.title} (ID: ${p.sku}) to my cart`) }}
-                  className="w-full py-2.5 bg-neutral-800 hover:bg-gold-600 text-white hover:text-black text-sm font-bold rounded-xl transition-all transform active:scale-95 border border-neutral-700 hover:border-gold-500 shadow-lg"
+                  className="w-full py-2.5 bg-gradient-to-r from-gold-500 via-gold-400 to-amber-600 hover:from-gold-400 hover:to-amber-500 text-black text-sm font-extrabold rounded-xl transition-all transform active:scale-95 shadow-[0_4px_15px_rgba(245,158,11,0.3)]"
                 >Add to Cart</button>}
             </div>
           </div>
@@ -266,6 +272,7 @@ const renderMessageContent = (content: any, onAction?: (text: string) => void, o
   let orderStatus: any = null;
   const textParts: any[] = [];
   let quotationUrl: string | null = null;
+  const defaultPlaceholder = 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80';
 
   parts.forEach((part: string, index: number) => {
     if (part.startsWith('[ORDER_STATUS:') && part.endsWith(']')) {
@@ -275,10 +282,15 @@ const renderMessageContent = (content: any, onAction?: (text: string) => void, o
     }
     if (part.startsWith('[PRODUCT:') && part.endsWith(']')) {
       const data = part.slice(9, -1).split('|');
-      if (data.length === 4) {
+      if (data.length >= 2) {
         if (!productIds.has(data[0])) {
           productIds.add(data[0]);
-          products.push({ sku: data[0], title: data[1], price: data[2], image: data[3] });
+          products.push({ 
+            sku: data[0], 
+            title: data[1], 
+            price: data[2] || '', 
+            image: data[3] || defaultPlaceholder 
+          });
         }
       }
     } else if (part.startsWith('[QUOTATION_FILE:') && part.endsWith(']')) {
@@ -293,8 +305,6 @@ const renderMessageContent = (content: any, onAction?: (text: string) => void, o
       );
     }
   });
-
-  const defaultPlaceholder = 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80';
 
   return (
     <div className="flex flex-col gap-4 w-full overflow-hidden">
@@ -348,8 +358,47 @@ export const ChatWidget = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ file: File; previewUrl: string; base64: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(',')[1] || '';
+      setSelectedImage({
+        file,
+        previewUrl: dataUrl,
+        base64,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          processImageFile(file);
+          break;
+        }
+      }
+    }
+  };
 
   const initMessage = {
     id: 'init',
@@ -359,11 +408,13 @@ export const ChatWidget = () => {
 
   const handleNewChat = () => {
     setSessionId(crypto.randomUUID());
+    setSelectedImage(null);
     setMessages([initMessage]);
   };
 
   const handleSelectSession = async (sid: string) => {
     setSessionId(sid);
+    setSelectedImage(null);
     const token = localStorage.getItem('accessToken');
     if (!token) return;
     
@@ -413,7 +464,7 @@ export const ChatWidget = () => {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, selectedImage]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -427,17 +478,29 @@ export const ChatWidget = () => {
     if (typeof eOrText !== 'string') {
       eOrText.preventDefault();
     }
-    const text = typeof eOrText === 'string' ? eOrText : input;
+    let text = typeof eOrText === 'string' ? eOrText : input;
     
-    if (!text.trim() && !isSystem) return;
+    const currentSelectedImage = selectedImage;
 
-    if (!isSystem && text === input) {
-      setInput('');
-      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    // If user attached an image without text, supply a natural prompt
+    if (!text.trim() && currentSelectedImage) {
+      text = "Please analyze this uploaded photo for me.";
     }
 
+    if (!text.trim() && !isSystem && !currentSelectedImage) return;
+
     if (!isSystem) {
-      const userMessage: Message = { id: Date.now().toString(), role: 'user', content: text };
+      if (text === input || currentSelectedImage) {
+        setInput('');
+        setSelectedImage(null);
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      }
+      const userMessage: Message = { 
+        id: Date.now().toString(), 
+        role: 'user', 
+        content: text,
+        image: currentSelectedImage?.previewUrl
+      };
       setMessages(prev => [...prev, userMessage]);
     }
     
@@ -452,6 +515,10 @@ export const ChatWidget = () => {
         session_id: sessionId,
         message: text
       };
+
+      if (currentSelectedImage) {
+        payload.image_base64 = currentSelectedImage.base64;
+      }
       
       if (authToken) {
         payload.auth_token = authToken;
@@ -528,6 +595,7 @@ export const ChatWidget = () => {
       <button 
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-gold-500 to-gold-700 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center text-black hover:scale-110 transition-transform z-50 border border-gold-400/30"
+        title="Open SculptnShine AI"
       >
         <Sparkles size={24} />
       </button>
@@ -535,30 +603,54 @@ export const ChatWidget = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-5xl h-[90vh] bg-[#0f0f0f] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-neutral-800 ring-1 ring-gold-500/10 relative">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="w-full max-w-5xl h-[92vh] max-h-[880px] bg-[#0c0c0e] rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.9),0_0_50px_rgba(245,158,11,0.12)] flex flex-col overflow-hidden border border-gold-500/25 ring-1 ring-gold-400/20 relative">
         
-        {/* Header */}
-        <div className="p-4 bg-[#0f0f0f]/80 backdrop-blur-md border-b border-neutral-800 flex justify-between items-center z-10 absolute top-0 w-full">
-          <div className="flex items-center gap-3 pl-2">
+        {/* Ambient Top Luxury Aura */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-48 bg-gradient-to-b from-gold-500/20 via-gold-500/5 to-transparent blur-3xl pointer-events-none rounded-full" />
+
+        {/* Clean Fixed Header */}
+        <header className="h-16 px-4 sm:px-6 bg-[#131317]/90 backdrop-blur-xl border-b border-gold-500/20 flex justify-between items-center z-20 flex-shrink-0">
+          <div className="flex items-center gap-3.5">
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors mr-1"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-gold-500/20 transition-all"
+              title="Chat History"
             >
-              <Menu size={20} />
+              <Menu size={19} />
             </button>
-            <div className="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-700 rounded-xl flex items-center justify-center text-black shadow-lg shadow-gold-500/20">
-              <Bot size={20} />
+            <div className="w-9 h-9 bg-[#17171d] rounded-xl flex items-center justify-center p-1.5 shadow-[0_0_15px_rgba(245,158,11,0.25)] border border-gold-500/30 overflow-hidden ring-1 ring-gold-400/20">
+              <img src="/apple-touch-icon.png" alt="SculptnShine" className="w-full h-full object-contain rounded-lg" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-lg leading-tight tracking-tight">SculptnShine AI</h3>
-              <p className="text-xs text-gold-500 font-medium tracking-wider uppercase">Agentic Commerce Squad</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-white text-[16px] sm:text-base tracking-tight font-sans">
+                  SculptnShine <span className="bg-gradient-to-r from-gold-400 to-amber-500 bg-clip-text text-transparent">AI</span>
+                </h3>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Intelligence
+                </span>
+              </div>
+              <p className="text-[10px] text-gold-400/90 font-semibold tracking-wider uppercase">Agentic Commerce Squad</p>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors">
-            <X size={20} />
-          </button>
-        </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleNewChat}
+              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-neutral-300 hover:text-gold-300 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-gold-500/10 border border-white/10 hover:border-gold-500/30 transition-all"
+            >
+              <Sparkles size={13} className="text-gold-400" />
+              <span>New Chat</span>
+            </button>
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-gold-500/20 transition-all"
+            >
+              <X size={19} />
+            </button>
+          </div>
+        </header>
 
         <ChatSidebar 
           isOpen={isSidebarOpen} 
@@ -568,111 +660,284 @@ export const ChatWidget = () => {
           currentSessionId={sessionId}
         />
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-12 pt-24 pb-32 bg-[#0a0a0a] scrollbar-thin scrollbar-thumb-neutral-800">
-          <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full">
-            {messages.map((msg, index) => (
-              <div key={msg.id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.role === 'assistant' && (
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 text-black flex items-center justify-center flex-shrink-0 mr-5 shadow-lg shadow-gold-500/20 mt-1">
-                    <Bot size={24} />
+        {/* Scrollable Chat / Welcome Area */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-10 py-5 bg-[#0c0c0e] scrollbar-thin scrollbar-thumb-neutral-800">
+          <div className="max-w-4xl mx-auto w-full h-full flex flex-col justify-center">
+            
+            {/* If Only Initial Greeting: Render World-Class Welcome Hero Screen */}
+            {messages.length === 1 && messages[0].id === 'init' ? (
+              <div className="flex flex-col justify-center items-center text-center py-2 animate-in fade-in duration-500">
+                {/* Brand Hero Icon */}
+                <div className="relative mb-3.5">
+                  <div className="absolute inset-0 bg-gold-500/25 blur-2xl rounded-full" />
+                  <div className="relative w-16 h-16 rounded-2xl bg-[#17171d] border border-gold-500/40 p-2.5 flex items-center justify-center shadow-[0_0_35px_rgba(245,158,11,0.35)] ring-1 ring-gold-400/30 overflow-hidden">
+                    <img src="/apple-touch-icon.png" alt="SculptnShine" className="w-full h-full object-contain rounded-xl" />
                   </div>
-                )}
-                <div className={`max-w-full md:max-w-[85%] ${msg.role === 'user' ? 'bg-[#2a2a2a] text-white px-6 py-4 rounded-3xl rounded-tr-sm border border-white/5 shadow-md' : 'text-neutral-200'}`}>
-                  {msg.role === 'user' ? <div className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content.replace(/\s*\(ID:\s*[^)]+\)/g, '')}</div> : (
-                    <div className="pt-1">
-                      {(() => {
-                        const needsAddressForm = /ACTION:ADD_ADDRESS|shipping address|delivery address|provide.*address|address to continue/i.test(msg.content);
-                        return needsAddressForm && typeof window !== 'undefined' && !!localStorage.getItem('accessToken') ? (
-                          <div className="mt-6">
-                            <ChatAddress onSuccess={() => handleSendMessage("I have successfully added my shipping address. Please continue with checkout.", true)} />
-                          </div>
-                        ) : null;
-                      })()}
-                      {renderMessageContent(msg.content, (text) => handleSendMessage(text), (sku) => handleAddToCartClick(sku))}
-                      {msg.content.includes('ACTION:LOGIN') && (
-                        <div className="mt-6"><ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with my previous cart checkout and ask for my shipping address.", true, token)} /></div>
-                      )}
-                      {msg.content.includes('ACTION:ADD_ADDRESS') && (
-                        <div className="mt-6">
-                            {typeof window !== 'undefined' && !localStorage.getItem('accessToken') ? (
-                                <ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with adding my address.", true, token)} />
-                          ) : null}
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                  Sculpt Your <span className="bg-gradient-to-r from-gold-300 via-gold-400 to-amber-500 bg-clip-text text-transparent">Peak Performance</span>
+                </h2>
+                <p className="text-neutral-400 text-xs sm:text-sm mt-1.5 max-w-lg leading-relaxed">
+                  Your autonomous clinical nutrition squad. Audit meal plate photos, check supplement toxicity, or forecast tub replenishment.
+                </p>
+
+                {/* 4 Direct Interactive Prompt Cards */}
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-left">
+                  {/* Card 1: Snap & Balance */}
+                  <div 
+                    onClick={() => handleSendMessage("Audit my meal: I had 2 rotis with paneer (100g) and yellow dal for lunch, and 2 eggs for breakfast. Training for hypertrophy. What is my protein deficit and hourly balancing plan?")}
+                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#18181f]/95 to-[#111116]/95 border border-gold-500/20 hover:border-gold-400 hover:bg-[#1f1f28] hover:shadow-[0_8px_30px_rgba(245,158,11,0.18)] transition-all duration-300 p-4 flex flex-col justify-between cursor-pointer hover:-translate-y-0.5"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="w-8 h-8 rounded-lg bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400 group-hover:bg-gold-500 group-hover:text-black transition-all">
+                          <Utensils size={16} />
                         </div>
-                      )}
-                      {msg.content.includes('ACTION:CHECKOUT') && (
-                        <div className="mt-6">
-                            {typeof window !== 'undefined' && !localStorage.getItem('accessToken') ? (
-                                <ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with checkout.", true, token)} />
-                            ) : (
-                                <ChatCheckout 
-                                    onSuccess={(orderId) => handleSendMessage(`I have successfully completed checkout and just paid for the order! My new Order ID is ${orderId}. Please congratulate me and tell me the current live status of this order.`, true)} 
-                                    onCancel={() => handleSendMessage("I cancelled the checkout process.", true)} 
-                                    isHistoricallyPaid={messages.slice(index + 1).some(m => m.content && m.content.includes("I have successfully completed checkout"))}
-                                />
-                            )}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fileInputRef.current?.click();
+                            }}
+                            className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gold-500/15 border border-gold-500/30 hover:bg-gold-500 hover:text-black text-gold-300 text-[11px] font-semibold transition-all shadow-sm"
+                            title="Upload meal plate image"
+                          >
+                            <Paperclip size={11} />
+                            <span>Upload Photo</span>
+                          </button>
+                          <span className="text-[10px] font-mono font-bold text-gold-300/80 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 tracking-wider">MULTIMODAL</span>
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-white text-[14px] group-hover:text-gold-300 transition-colors">Snap & Balance (Meal Audit)</h4>
+                      <p className="text-xs text-neutral-400 leading-relaxed mt-1">Audit meal photos or daily food intake to calculate exact protein deficit & leucine threshold.</p>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Scan My Stack */}
+                  <div 
+                    onClick={() => handleSendMessage("Audit my supplement stack for ingredient collisions, toxicity and PubMed citations: High Caffeine Pre-workout, Thermogenic Fat Burner, Iron supplement, and Calcium Citrate.")}
+                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#18181f]/95 to-[#111116]/95 border border-emerald-500/20 hover:border-emerald-400 hover:bg-[#1f1f28] hover:shadow-[0_8px_30px_rgba(16,185,129,0.18)] transition-all duration-300 p-4 flex flex-col justify-between cursor-pointer hover:-translate-y-0.5"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-all">
+                          <ShieldAlert size={16} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fileInputRef.current?.click();
+                            }}
+                            className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-300 text-[11px] font-semibold transition-all shadow-sm"
+                            title="Upload supplement label image"
+                          >
+                            <Paperclip size={11} />
+                            <span>Upload Label</span>
+                          </button>
+                          <span className="text-[10px] font-mono font-bold text-emerald-300/80 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 tracking-wider">CLINICAL</span>
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-white text-[14px] group-hover:text-emerald-300 transition-colors">Scan Stack & Lab Panel</h4>
+                      <p className="text-xs text-neutral-400 leading-relaxed mt-1">Audit supplement labels or blood tests for ingredient collisions, clinical toxicity & PubMed citations.</p>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Living Replenishment */}
+                  <div 
+                    onClick={() => handleSendMessage("When will my Whey Protein and Creatine run out? I train 5 days a week with 1 scoop per day. Forecast my burn rate.")}
+                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#18181f]/95 to-[#111116]/95 border border-amber-500/20 hover:border-amber-400 hover:bg-[#1f1f28] hover:shadow-[0_8px_30px_rgba(245,158,11,0.18)] transition-all duration-300 p-4 flex flex-col justify-between cursor-pointer hover:-translate-y-0.5"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-black transition-all">
+                          <Clock size={16} />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/25 tracking-wider">FORECAST</span>
+                      </div>
+                      <h4 className="font-bold text-white text-[14px] group-hover:text-amber-300 transition-colors">Living Replenishment</h4>
+                      <p className="text-xs text-neutral-400 leading-relaxed mt-1">Forecast tub burn-rate & predict exact empty date based on your workout volume.</p>
+                    </div>
+                  </div>
+
+                  {/* Card 4: B2B Wholesale */}
+                  <div 
+                    onClick={() => handleSendMessage("I manage a gym and need a wholesale bulk quotation for 50 units of Whey Protein and 30 units of Pre-workout. Generate bulk spreadsheet quotation.")}
+                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#18181f]/95 to-[#111116]/95 border border-gold-500/20 hover:border-gold-400 hover:bg-[#1f1f28] hover:shadow-[0_8px_30px_rgba(245,158,11,0.18)] transition-all duration-300 p-4 flex flex-col justify-between cursor-pointer hover:-translate-y-0.5"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="w-8 h-8 rounded-lg bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400 group-hover:bg-gold-500 group-hover:text-black transition-all">
+                          <FileSpreadsheet size={16} />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold text-gold-300 bg-gold-500/15 px-2 py-0.5 rounded-full border border-gold-500/25 tracking-wider">B2B SALES</span>
+                      </div>
+                      <h4 className="font-bold text-white text-[14px] group-hover:text-gold-300 transition-colors">B2B Bulk Quotation</h4>
+                      <p className="text-xs text-neutral-400 leading-relaxed mt-1">Commercial gym bulk pricing and automated quotation spreadsheet downloads.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Conversation Messages History */
+              <div className="flex flex-col gap-8">
+                {messages.map((msg, index) => (
+                  <div key={msg.id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'assistant' && (
+                      <div className="w-9 h-9 rounded-xl bg-[#17171d] border border-gold-500/30 p-1.5 flex items-center justify-center flex-shrink-0 mr-4 shadow-[0_0_12px_rgba(245,158,11,0.2)] mt-1 overflow-hidden ring-1 ring-gold-400/20">
+                        <img src="/apple-touch-icon.png" alt="SculptnShine" className="w-full h-full object-contain rounded-lg" />
+                      </div>
+                    )}
+                    <div className={`max-w-full md:max-w-[85%] ${msg.role === 'user' ? 'bg-gradient-to-r from-[#262630] to-[#1e1e24] text-white px-5 py-3.5 rounded-2xl rounded-tr-sm border border-gold-500/20 shadow-lg' : 'text-neutral-200'}`}>
+                      {msg.role === 'user' ? (
+                        <div className="flex flex-col gap-2.5">
+                          {msg.image && (
+                            <div className="max-w-xs rounded-xl overflow-hidden border border-gold-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] bg-black/90">
+                              <img src={msg.image} alt="Uploaded attachment" className="w-full max-h-56 object-cover rounded-xl" />
+                            </div>
+                          )}
+                          <div className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content.replace(/\s*\(ID:\s*[^)]+\)/g, '')}</div>
+                        </div>
+                      ) : (
+                        <div className="pt-1">
+                          {(() => {
+                            const needsAddressForm = /ACTION:ADD_ADDRESS|shipping address|delivery address|provide.*address|address to continue/i.test(msg.content);
+                            return needsAddressForm && typeof window !== 'undefined' && !!localStorage.getItem('accessToken') ? (
+                              <div className="mt-6">
+                                <ChatAddress onSuccess={() => handleSendMessage("I have successfully added my shipping address. Please continue with checkout.", true)} />
+                              </div>
+                            ) : null;
+                          })()}
+                          {renderMessageContent(msg.content, (text) => handleSendMessage(text), (sku) => handleAddToCartClick(sku))}
+                          {msg.content.includes('ACTION:LOGIN') && (
+                            <div className="mt-6"><ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with my previous cart checkout and ask for my shipping address.", true, token)} /></div>
+                          )}
+                          {msg.content.includes('ACTION:ADD_ADDRESS') && (
+                            <div className="mt-6">
+                                {typeof window !== 'undefined' && !localStorage.getItem('accessToken') ? (
+                                    <ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with adding my address.", true, token)} />
+                              ) : null}
+                            </div>
+                          )}
+                          {msg.content.includes('ACTION:CHECKOUT') && (
+                            <div className="mt-6">
+                                {typeof window !== 'undefined' && !localStorage.getItem('accessToken') ? (
+                                    <ChatLogin onAuthSuccess={(token) => handleSendMessage("I have successfully logged in. Please continue with checkout.", true, token)} />
+                                ) : (
+                                    <ChatCheckout 
+                                        onSuccess={(orderId) => handleSendMessage(`I have successfully completed checkout and just paid for the order! My new Order ID is ${orderId}. Please congratulate me and tell me the current live status of this order.`, true)} 
+                                        onCancel={() => handleSendMessage("I cancelled the checkout process.", true)} 
+                                        isHistoricallyPaid={messages.slice(index + 1).some(m => m.content && m.content.includes("I have successfully completed checkout"))}
+                                    />
+                                )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            
-            {/* Loading Indicator with Logo */}
-            {isLoading && (!messages[messages.length - 1] || messages[messages.length - 1].role !== 'assistant' || !messages[messages.length - 1].content) && (
-              <div className="flex justify-start w-full items-start mb-2">
-                <div className="w-10 h-10 rounded-xl border border-gold-500/20 bg-neutral-900 flex items-center justify-center flex-shrink-0 mr-5 mt-1 shadow-[0_0_15px_rgba(212,175,55,0.15)] overflow-hidden">
-                   <img src="/apple-touch-icon.png" alt="SculptnShine Loading" className="w-6 h-6 object-contain animate-spin" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                </div>
-                <div className="flex flex-col justify-center pt-3">
-                  <span className="text-xs text-gold-500/80 font-semibold uppercase tracking-wider animate-pulse flex items-center gap-2">
-                    {agentStatus || "Squad is thinking..."}
-                  </span>
-                </div>
+                  </div>
+                ))}
+                
+                {/* Loading Indicator */}
+                {isLoading && (!messages[messages.length - 1] || messages[messages.length - 1].role !== 'assistant' || !messages[messages.length - 1].content) && (
+                  <div className="flex justify-start w-full items-start mb-2">
+                    <div className="w-9 h-9 rounded-xl border border-gold-500/30 bg-gradient-to-br from-gold-500/10 to-[#141418] flex items-center justify-center flex-shrink-0 mr-4 mt-1 shadow-[0_0_15px_rgba(245,158,11,0.2)] overflow-hidden">
+                       <img src="/apple-touch-icon.png" alt="SculptnShine Loading" className="w-5 h-5 object-contain animate-spin" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    </div>
+                    <div className="flex flex-col justify-center pt-2">
+                      <span className="text-xs text-gold-400 font-semibold uppercase tracking-wider animate-pulse flex items-center gap-2">
+                        {agentStatus || "Squad is thinking..."}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} className="h-2" />
               </div>
             )}
-            <div ref={messagesEndRef} className="h-4" />
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="absolute bottom-0 w-full p-4 sm:p-6 bg-gradient-to-t from-black via-[#0a0a0a] to-transparent pointer-events-none">
-          <div className="max-w-4xl mx-auto pointer-events-auto">
+        {/* Clean Fixed Footer Input */}
+        <footer className="p-3 sm:px-6 bg-[#0f0f13]/95 backdrop-blur-xl border-t border-gold-500/15 z-20 flex-shrink-0">
+          <div className="max-w-4xl mx-auto w-full">
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSendMessage(input); }}
-              className="relative flex items-end bg-[#202020] rounded-[24px] border border-white/10 focus-within:border-gold-500/50 transition-all shadow-xl shadow-black/80 overflow-hidden ring-4 ring-transparent focus-within:ring-gold-500/10"
+              className="relative flex flex-col bg-[#16161c] rounded-2xl border border-gold-500/25 focus-within:border-gold-400 transition-all shadow-xl shadow-black/80 ring-2 ring-gold-500/10 focus-within:ring-gold-400/25 overflow-hidden"
             >
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (input.trim() && !isLoading) handleSendMessage(input);
-                  }
-                }}
-                placeholder="Message SculptnShine AI..."
-                className="w-full max-h-32 min-h-[56px] py-4 pl-6 pr-14 bg-transparent text-white text-[15px] outline-none placeholder:text-neutral-500 resize-none scrollbar-none leading-tight"
-                rows={1}
-                disabled={isLoading}
-              />
-              <div className="absolute right-3 bottom-2.5">
+              {/* Selected Image Preview */}
+              {selectedImage && (
+                <div className="flex items-center gap-3 px-4 py-2 bg-[#121216] border-b border-gold-500/20">
+                  <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gold-400/60 bg-black flex-shrink-0 shadow">
+                    <img src={selectedImage.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setSelectedImage(null)}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/80 hover:bg-red-600 text-white flex items-center justify-center transition-colors text-[10px]"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-xs font-semibold text-white truncate">{selectedImage.file.name}</span>
+                    <span className="text-[10px] text-gold-400 font-medium">{(selectedImage.file.size / 1024).toFixed(1)} KB • Image ready for Multimodal audit</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-end w-full">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageSelect}
+                  accept="image/*"
+                  className="hidden"
+                />
                 <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-black hover:bg-gold-500 disabled:opacity-20 disabled:hover:bg-white transition-colors"
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="w-9 h-9 flex items-center justify-center text-gold-400/80 hover:text-gold-300 hover:bg-gold-500/15 rounded-xl transition-colors ml-2 mb-1.5 flex-shrink-0"
+                  title="Upload meal plate photo, supplement label, or lab test"
                 >
-                  <Send size={16} className="ml-0.5" />
+                  <Paperclip size={18} />
                 </button>
+
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onPaste={handlePaste}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if ((input.trim() || selectedImage) && !isLoading) handleSendMessage(input);
+                    }
+                  }}
+                  placeholder={selectedImage ? "Add notes about this photo (or hit Send)..." : "Ask anything, audit a meal photo, or scan lab panel..."}
+                  className="w-full max-h-32 min-h-[50px] py-3.5 pl-2 pr-12 bg-transparent text-white text-[14.5px] outline-none placeholder:text-neutral-500 resize-none scrollbar-none leading-normal font-sans"
+                  rows={1}
+                  disabled={isLoading}
+                />
+
+                <div className="absolute right-2.5 bottom-2">
+                  <button
+                    type="submit"
+                    disabled={(!input.trim() && !selectedImage) || isLoading}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-gradient-to-r from-gold-400 via-gold-500 to-amber-600 text-black font-bold hover:brightness-110 disabled:opacity-20 disabled:grayscale transition-all shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                  >
+                    <Send size={15} className="ml-0.5 text-black" />
+                  </button>
+                </div>
               </div>
             </form>
-            <div className="text-center mt-3 text-[11px] text-neutral-500 font-medium">
-              SculptnShine AI can make mistakes. Consider verifying important information.
+            <div className="text-center mt-2 text-[11px] text-neutral-500 font-medium tracking-wide">
+              SculptnShine Live Intelligence • Powered by Multi-Agent Clinical AI
             </div>
           </div>
-        </div>
+        </footer>
 
         {/* Quick Add Modal */}
         {isQuickAddOpen && (
