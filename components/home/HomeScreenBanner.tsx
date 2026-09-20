@@ -49,7 +49,31 @@ export const HomeScreenBanner: React.FC = () => {
     return '/category/proteins-fitness-supplements';
   };
 
-  const slides: SlideData[] = dynamicSlides.map(b => ({
+  const DEFAULT_FALLBACK_SLIDES: SlideData[] = [
+    {
+      image: '/assets/bestseller_banner.jpg',
+      ctaLink: '/best-sellers',
+      title: 'SCULPT YOUR PEAK PERFORMANCE',
+      subtitle: 'Laboratory-tested sports supplements, ultra-pure whey protein, and clinical wellness essentials.',
+      ctaText: 'SHOP BEST SELLERS',
+    },
+    {
+      image: '/assets/hero_bundle.png',
+      ctaLink: '/category/proteins-fitness-supplements',
+      title: 'PREMIUM FITNESS NUTRITION',
+      subtitle: 'Fuel your muscle recovery, strength, and endurance with certified clean formulations.',
+      ctaText: 'EXPLORE SUPPLEMENTS',
+    },
+    {
+      image: '/assets/salon_banner.png',
+      ctaLink: '/category/salon-haircare-excellence',
+      title: 'LUXURY SALON & SKINCARE',
+      subtitle: 'Dermatologist-formulated beauty and hair care collections for your daily glow.',
+      ctaText: 'SHOP CARE RANGE',
+    },
+  ];
+
+  const dynamicMappedSlides: SlideData[] = dynamicSlides.map(b => ({
     image: getMediaUrl(b.image, '/assets/og-image.png'),
     mobileImage: b.mobileImage ? getMediaUrl(b.mobileImage, null as any) : null,
     ctaLink: resolveCtaLink(b),
@@ -59,6 +83,8 @@ export const HomeScreenBanner: React.FC = () => {
     type: b.type,
     video: b.video ? getMediaUrl(b.video, null as any) : null,
   }));
+
+  const slides: SlideData[] = dynamicMappedSlides.length > 0 ? dynamicMappedSlides : DEFAULT_FALLBACK_SLIDES;
 
   // Auto-scroll
   useEffect(() => {
